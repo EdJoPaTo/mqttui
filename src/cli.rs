@@ -10,7 +10,7 @@ pub struct RuntimeArguments {
 }
 
 pub fn build_cli() -> App<'static, 'static> {
-    App::new("LED Matrix Remote")
+    App::new("Quick MQTT CLI")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -19,7 +19,7 @@ pub fn build_cli() -> App<'static, 'static> {
             Arg::with_name("verbose")
                 .short("v")
                 .long("verbose")
-                .help("Still show commands instead of omitting them"),
+                .help("Show full MQTT communication"),
         )
         .arg(
             Arg::with_name("Host")

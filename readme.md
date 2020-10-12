@@ -17,7 +17,7 @@ quick-mqtt -h "test.mosquitto.org" "hello/world"
 ```
 
 ```plaintext
-LED Matrix Remote 0.1.0
+Quick MQTT CLI 0.1.0
 EdJoPaTo <quick-mqtt-cli-rust@edjopato.de>
 Small Command Line Utility to quickly publish or subscribe something to a given mqtt topic
 
@@ -27,7 +27,7 @@ USAGE:
 FLAGS:
         --help       Prints help information
     -V, --version    Prints version information
-    -v, --verbose    Still show commands instead of omitting them
+    -v, --verbose    Show full MQTT communication
 
 OPTIONS:
     -h, --host <HOST>    Host on which the MQTT Broker is running [default: localhost]
