@@ -1,0 +1,158 @@
+name: Rust
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: 'Log versions'
+        run: |
+          rustc --version
+          cargo --version
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-lint-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run clippy
+        run: cargo clippy --verbose
+      - name: Check format
+        run: cargo fmt -- --check --verbose
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: 'Log versions'
+        run: |
+          rustc --version
+          cargo --version
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-test-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build
+        run: cargo build --verbose --locked --all-targets
+
+      - name: Run tests
+        run: cargo test --verbose --all-targets
+
+  release:
+    name: Release ${{ matrix.config.triple }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - os: ubuntu-latest
+            triple: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            triple: armv7-unknown-linux-gnueabihf
+          - os: ubuntu-latest
+            triple: aarch64-unknown-linux-gnu
+          - os: macOS-latest
+            triple: x86_64-apple-darwin
+          - os: windows-latest
+            triple: x86_64-pc-windows-msvc
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Log versions
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Prepare Windows
+        if: runner.os == 'Windows'
+        run: choco install --no-progress llvm
+
+      - name: install cross-compile armv7
+        if: matrix.config.triple == 'armv7-unknown-linux-gnueabihf'
+        run: |
+          sudo apt-get install -y g++-arm-linux-gnueabihf llvm
+          mkdir -p ~/.cargo
+          echo '[target.${{ matrix.config.triple }}]' > ~/.cargo/config
+          echo 'linker = "arm-linux-gnueabihf-g++"' >> ~/.cargo/config
+
+      - name: install cross-compile arm64
+        if: matrix.config.triple == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get install -y g++-aarch64-linux-gnu llvm
+          mkdir -p ~/.cargo
+          echo '[target.${{ matrix.config.triple }}]' > ~/.cargo/config
+          echo 'linker = "aarch64-linux-gnu-g++"' >> ~/.cargo/config
+
+      - name: Add Target
+        run: rustup target add ${{ matrix.config.triple }}
+
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ matrix.config.triple }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ matrix.config.triple }}-cargo-release-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release
+        run: cargo build --release --verbose --locked --all-targets --target ${{ matrix.config.triple }}
+
+      - name: Pack release zip (linux, mac)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: |
+          rm -f *.zip
+          cd target/${{ matrix.config.triple }}/release
+          zip -r ../../../quick-mqtt-${{ matrix.config.triple }}.zip quick-mqtt
+      - name: Pack release zip (windows)
+        if: runner.os == 'Windows'
+        run: |
+          del *.zip
+          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.config.triple }}/release/quick-mqtt.exe -DestinationPath quick-mqtt-${{ matrix.config.triple }}.zip
+
+      - name: inspect target dir
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: |
+          ls -al target
+          ls -al target/*
+
+      - name: Release Artifact (linux, mac)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        uses: actions/upload-artifact@v2
+        with:
+          name: quick-mqtt-${{ matrix.config.triple }}
+          path: target/${{ matrix.config.triple }}/release/quick-mqtt
+      - name: Release Artifact (windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v2
+        with:
+          name: quick-mqtt-${{ matrix.config.triple }}
+          path: target/${{ matrix.config.triple }}/release/quick-mqtt.exe
+
+      - name: GH Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v0.1.5
+        with:
+          draft: true
+          files: '*.zip'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
