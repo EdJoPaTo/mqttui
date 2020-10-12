@@ -422,9 +422,9 @@ dependencies = [
 
 [[package]]
 name = "rumqttc"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b641c80bcbda670fef590d929ab1730a68e9b501f01e1d62d2eb96ee5b59db12"
+checksum = "82c95a88d738f7b09f0556080a9755753c825e286ede49a4b42fae453e8034a0"
 dependencies = [
  "async-channel",
  "bytes",
@@ -502,9 +502,9 @@ checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "syn"
-version = "1.0.43"
+version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e2e59c50ed8f6b050b071aa7b6865293957a9af6b58b94f97c1c9434ad440ea"
+checksum = "e03e57e4fcbfe7749842d53e24ccb9aa12b7252dbe5e91d2acad31834c8b8fdd"
 dependencies = [
  "proc-macro2",
  "quote",
