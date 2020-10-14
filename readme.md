@@ -3,6 +3,11 @@
 
 > Small Command Line Utility to quickly publish or subscribe a given mqtt topic
 
+## Install
+
+- Clone this repository
+- `cargo install --path .`
+
 ## Usage
 
 ```sh
