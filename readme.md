@@ -7,13 +7,13 @@
 
 ```sh
 # Subscribe to topic
-quick-mqtt "topic"
+mqtt "topic"
 
 # Publish to topic
-quick-mqtt "topic" "payload"
+mqtt "topic" "payload"
 
 # Subscribe to topic with a specific host (default is localhost)
-quick-mqtt -h "test.mosquitto.org" "hello/world"
+mqtt -h "test.mosquitto.org" "hello/world"
 ```
 
 ```plaintext
@@ -22,7 +22,7 @@ EdJoPaTo <quick-mqtt-cli-rust@edjopato.de>
 Small Command Line Utility to quickly publish or subscribe something to a given mqtt topic
 
 USAGE:
-    quick-mqtt [FLAGS] [OPTIONS] <TOPIC> [PAYLOAD]
+    mqtt [FLAGS] [OPTIONS] <TOPIC> [PAYLOAD]
 
 FLAGS:
         --help       Prints help information

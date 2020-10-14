@@ -1,5 +1,5 @@
 [package]
-name = "quick-mqtt"
+name = "mqtt"
 version = "0.1.0"
 description = "Small Command Line Utility to quickly publish or subscribe something to a given mqtt topic"
 authors = ["EdJoPaTo <quick-mqtt-cli-rust@edjopato.de>"]
