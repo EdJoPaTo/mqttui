@@ -42,8 +42,8 @@ pub fn build_cli() -> App<'static, 'static> {
         .arg(
             Arg::with_name("Topic")
                 .value_name("TOPIC")
-                .required(true)
-                // .takes_value(true)
+                .takes_value(true)
+                .default_value("#")
                 .help("Topic to watch or publish to"),
         )
         .arg(
