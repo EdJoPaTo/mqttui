@@ -1,3 +1,4 @@
+use chrono::Local;
 use rumqttc::{self, Client, MqttOptions, QoS};
 
 mod cli;
@@ -65,13 +66,17 @@ fn main() {
                         let payload = String::from_utf8(publish.payload.to_vec())
                             .unwrap_or_else(|err| format!("invalid UTF8: {}", err));
 
-                        if publish.retain {
-                            print!("{:51} RETAINED", publish.topic);
+                        let timestamp = if publish.retain {
+                            String::from("RETAINED")
                         } else {
-                            print!("{:60}", publish.topic);
-                        }
+                            Local::now().format("%_H:%M:%S.%3f").to_string()
+                        };
+                        print!("{:12}", timestamp);
 
-                        println!(" QoS:{:11} Payload({:>3}): {}", qos, payload_size, payload)
+                        println!(
+                            " {:50} QoS:{:11} Payload({:>3}): {}",
+                            publish.topic, qos, payload_size, payload
+                        )
                     }
                     _ => {
                         if args.verbose {
