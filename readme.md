@@ -25,12 +25,12 @@ mqtt -h "test.mosquitto.org" "hello/world"
 ```
 
 ```plaintext
-Quick MQTT CLI 0.1.0
+MQTT CLI 0.1.0
 EdJoPaTo <mqtt-cli-rust@edjopato.de>
-Small Command Line Utility to quickly publish or subscribe something to a given mqtt topic
+Subscribe to a MQTT Topic or publish something quickly from the terminal
 
 USAGE:
-    mqtt [FLAGS] [OPTIONS] <TOPIC> [PAYLOAD]
+    mqtt [FLAGS] [OPTIONS] [ARGS]
 
 FLAGS:
         --help       Prints help information
@@ -42,7 +42,7 @@ OPTIONS:
     -p, --port <INT>     Port on which the MQTT Broker is running [default: 1883]
 
 ARGS:
-    <TOPIC>      Topic to watch or publish to
+    <TOPIC>      Topic to watch or publish to [default: #]
     <PAYLOAD>    (optional) Payload to be published. If none is given it is instead subscribed to the topic.
 ```
 
