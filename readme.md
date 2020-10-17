@@ -45,3 +45,11 @@ ARGS:
     <TOPIC>      Topic to watch or publish to
     <PAYLOAD>    (optional) Payload to be published. If none is given it is instead subscribed to the topic.
 ```
+
+Tip: Create an alias for the host you are working on:
+```bash
+alias mqtt-home='mqtt -h pi-home.local'
+
+# Use the alias without having to specify the host every time
+mqtt-home "topic" "payload"
+```
