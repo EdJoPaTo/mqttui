@@ -17,6 +17,12 @@ It wont be as feature rich as something like the hivemq approach but it aims at 
 
 ## Install
 
+### Prebuilt
+
+Check the [Releases](https://github.com/EdJoPaTo/mqtt-cli/releases).
+
+### From Source
+
 - Clone this repository
 - `cargo install --path .`
 
