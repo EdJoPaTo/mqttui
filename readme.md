@@ -1,7 +1,7 @@
 # Quick MQTT CLI
 ![Rust](https://github.com/EdJoPaTo/quick-mqtt-cli/workflows/Rust/badge.svg)
 
-> Small Command Line Utility to quickly publish or subscribe a given mqtt topic
+> Subscribe to a MQTT Topic or publish something quickly from the terminal
 
 ## Install
 
