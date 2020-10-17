@@ -11,6 +11,9 @@
 ## Usage
 
 ```sh
+# Subscribe to everything (#)
+mqtt
+
 # Subscribe to topic
 mqtt "topic"
 
