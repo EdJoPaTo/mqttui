@@ -105,3 +105,29 @@ where
         timestamp, packet.topic, qos, payload_size, payload
     )
 }
+
+#[test]
+fn format_works() {
+    let time = DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
+    let packet = Publish::new("foo", QoS::AtLeastOnce, "bar");
+    assert_eq!(
+        format_published_packet(&packet, time),
+        "15:00:00.000 foo                                                QoS:AtLeastOnce Payload(  3): bar"
+    );
+}
+
+#[test]
+fn format_retained_has_no_timestamp() {
+    let time = DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
+    let packet = Publish {
+        dup: false,
+        qos: QoS::AtLeastOnce,
+        payload: bytes::Bytes::from("bar"),
+        topic: "foo".to_owned(),
+        pkid: 42,
+        retain: true,
+    };
+    let formatted = format_published_packet(&packet, time);
+
+    assert!(formatted.contains("RETAINED"));
+}
