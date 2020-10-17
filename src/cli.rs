@@ -10,7 +10,7 @@ pub struct RuntimeArguments {
 }
 
 pub fn build_cli() -> App<'static, 'static> {
-    App::new("Quick MQTT CLI")
+    App::new("MQTT CLI")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))

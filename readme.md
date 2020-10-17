@@ -1,5 +1,5 @@
-# Quick MQTT CLI
-![Rust](https://github.com/EdJoPaTo/quick-mqtt-cli/workflows/Rust/badge.svg)
+# MQTT CLI
+![Rust](https://github.com/EdJoPaTo/mqtt-cli/workflows/Rust/badge.svg)
 
 > Subscribe to a MQTT Topic or publish something quickly from the terminal
 
@@ -23,7 +23,7 @@ mqtt -h "test.mosquitto.org" "hello/world"
 
 ```plaintext
 Quick MQTT CLI 0.1.0
-EdJoPaTo <quick-mqtt-cli-rust@edjopato.de>
+EdJoPaTo <mqtt-cli-rust@edjopato.de>
 Small Command Line Utility to quickly publish or subscribe something to a given mqtt topic
 
 USAGE:

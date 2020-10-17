@@ -6,7 +6,7 @@ mod simple;
 fn main() {
     let args = cli::get_runtime_arguments();
 
-    let client_id = format!("quick-mqtt-cli-{:x}", rand::random::<u32>());
+    let client_id = format!("mqtt-cli-{:x}", rand::random::<u32>());
     let mut mqttoptions = MqttOptions::new(client_id, args.host, args.port);
     mqttoptions.set_keep_alive(5);
 
