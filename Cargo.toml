@@ -1,6 +1,6 @@
 [package]
 name = "mqtt-cli"
-version = "0.1.0"
+version = "0.2.0"
 description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
 authors = ["EdJoPaTo <mqtt-cli-rust@edjopato.de>"]
 edition = "2018"

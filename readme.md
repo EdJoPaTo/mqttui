@@ -25,7 +25,7 @@ mqtt -h "test.mosquitto.org" "hello/world"
 ```
 
 ```plaintext
-MQTT CLI 0.1.0
+MQTT CLI 0.2.0
 EdJoPaTo <mqtt-cli-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
