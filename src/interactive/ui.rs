@@ -112,6 +112,7 @@ fn draw_details_table<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryE
 where
     B: Backend,
 {
+    let title = format!("History ({})", topic_history.len());
     let header = ["Time", "QoS", "Payload"];
 
     let mut rows_content: Vec<Vec<String>> = Vec::new();
@@ -124,7 +125,7 @@ where
     let rows = rows_content.iter().map(|i| Row::Data(i.iter()));
 
     let t = Table::new(header.iter(), rows)
-        .block(Block::default().borders(Borders::ALL).title("History"))
+        .block(Block::default().borders(Borders::ALL).title(title))
         .highlight_style(Style::default().fg(Color::White))
         .widths(&[
             Constraint::Length(12),
