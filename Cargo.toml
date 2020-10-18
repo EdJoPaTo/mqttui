@@ -13,9 +13,15 @@ path="src/main.rs"
 
 [dependencies]
 chrono = "0.4"
+crossterm = "0.17"
 rand = "0.7"
 rumqttc = "0.1"
 
 [dependencies.clap]
 version = "2.33"
 features = ["wrap_help"]
+
+[dependencies.tui]
+version = "0.12"
+default-features = false
+features = ["crossterm"]

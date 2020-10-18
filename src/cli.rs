@@ -3,6 +3,7 @@ use clap::{App, AppSettings, Arg};
 #[derive(Debug)]
 pub struct RuntimeArguments {
     pub verbose: bool,
+    pub interactive: bool,
     pub host: String,
     pub port: u16,
     pub topic: String,
@@ -20,6 +21,12 @@ pub fn build_cli() -> App<'static, 'static> {
                 .short("v")
                 .long("verbose")
                 .help("Show full MQTT communication"),
+        )
+        .arg(
+            Arg::with_name("interactive")
+                .short("i")
+                .long("interactive")
+                .help("Start in interactive mode")
         )
         .arg(
             Arg::with_name("Host")
@@ -57,6 +64,7 @@ pub fn get_runtime_arguments() -> RuntimeArguments {
     let matches = build_cli().get_matches();
 
     let verbose = matches.is_present("verbose");
+    let interactive = matches.is_present("interactive");
 
     let host = matches
         .value_of("Host")
@@ -77,6 +85,7 @@ pub fn get_runtime_arguments() -> RuntimeArguments {
 
     RuntimeArguments {
         verbose,
+        interactive,
         host,
         port,
         topic,
