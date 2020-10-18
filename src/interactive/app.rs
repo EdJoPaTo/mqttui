@@ -1,4 +1,5 @@
 use crate::mqtt_history::{get_sorted_vec, HistoryArc};
+use std::cmp::{max, min};
 use tui::widgets::ListState;
 
 pub struct App<'a> {
@@ -39,7 +40,7 @@ impl<'a> App<'a> {
     pub fn on_up(&mut self) {
         self.topics_overview_state.select(
             if let Some(selected) = self.topics_overview_state.selected() {
-                Some(selected - 1)
+                Some(max(1, selected) - 1)
             } else {
                 Some(0)
             },
@@ -49,9 +50,11 @@ impl<'a> App<'a> {
     }
 
     pub fn on_down(&mut self) {
+        let topics = get_sorted_vec(self.history.lock().unwrap().keys()).len();
+
         self.topics_overview_state.select(
             if let Some(selected) = self.topics_overview_state.selected() {
-                Some(selected + 1)
+                Some(min(topics - 2, selected) + 1)
             } else {
                 Some(0)
             },
