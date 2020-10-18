@@ -36,6 +36,12 @@ pub fn format_payload(payload: Vec<u8>) -> String {
     String::from_utf8(payload).unwrap_or_else(|err| format!("invalid UTF8: {}", err))
 }
 
+pub fn format_payload_as_float(payload: Vec<u8>) -> Option<f64> {
+    String::from_utf8(payload)
+        .ok()
+        .and_then(|o| o.parse::<f64>().ok())
+}
+
 #[test]
 fn format_published_packet_works() {
     let time = DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();

@@ -2,12 +2,18 @@ use crate::format::*;
 use crate::interactive::app::App;
 use crate::mqtt_history::get_sorted_vec;
 use crate::mqtt_history::HistoryEntry;
+use chrono::{DateTime, Local};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
+    symbols,
+    text::Span,
     text::Spans,
-    widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Row, Table, TableState, Wrap},
+    widgets::{
+        Axis, Block, Borders, Chart, Dataset, GraphType, List, ListItem, ListState, Paragraph, Row,
+        Table, TableState, Wrap,
+    },
     Frame,
 };
 
@@ -93,10 +99,13 @@ where
     B: Backend,
 {
     let chunks = Layout::default()
-        .constraints([Constraint::Min(5)].as_ref())
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(area);
 
-    draw_details_table(f, chunks[0], topic_history);
+    let graph_works = draw_details_chart(f, chunks[1], topic_history);
+
+    let table_area = if graph_works { chunks[0] } else { area };
+    draw_details_table(f, table_area, topic_history);
 }
 
 fn draw_details_table<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
@@ -127,4 +136,72 @@ where
     state.select(Some(topic_history.len() - 1));
 
     f.render_stateful_widget(t, area, &mut state);
+}
+
+fn draw_details_chart<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry]) -> bool
+where
+    B: Backend,
+{
+    let mut data: Vec<(f64, f64)> = Vec::new();
+    for entry in topic_history {
+        if let Some(point) = parse_history_entry_to_chart_point(entry) {
+            data.push(point);
+        }
+    }
+
+    if data.len() < 2 {
+        return false;
+    }
+
+    let ybounds = get_y_bounds(&data);
+
+    let datasets = vec![Dataset::default()
+        .marker(symbols::Marker::Braille)
+        .style(Style::default().fg(Color::LightGreen))
+        .graph_type(GraphType::Line)
+        .data(&data)];
+
+    let first_time = topic_history.first().unwrap().time;
+    let last_time = topic_history.last().unwrap().time;
+
+    let chart = Chart::new(datasets)
+        .block(Block::default().title("Graph").borders(Borders::ALL))
+        .x_axis(
+            Axis::default()
+                .labels(vec![
+                    Span::raw(first_time.format("%H:%M:%S").to_string()),
+                    Span::raw(last_time.format("%H:%M:%S").to_string()),
+                ])
+                .bounds([
+                    parse_time_to_chart_y(first_time),
+                    parse_time_to_chart_y(last_time),
+                ]),
+        )
+        .y_axis(
+            Axis::default()
+                .labels(vec![
+                    Span::raw(format!("{}", ybounds[0])),
+                    Span::raw(format!("{}", ybounds[1])),
+                ])
+                .bounds(ybounds),
+        );
+    f.render_widget(chart, area);
+
+    true
+}
+
+fn get_y_bounds(data: &[(f64, f64)]) -> [f64; 2] {
+    let mut y_sorted = data.to_vec();
+    y_sorted.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+    [y_sorted.first().unwrap().1, y_sorted.last().unwrap().1]
+}
+
+fn parse_history_entry_to_chart_point(entry: &HistoryEntry) -> Option<(f64, f64)> {
+    let y = format_payload_as_float(entry.packet.payload.to_vec())?;
+    let x = parse_time_to_chart_y(entry.time);
+    Some((x, y))
+}
+
+fn parse_time_to_chart_y(time: DateTime<Local>) -> f64 {
+    time.timestamp_millis() as f64
 }
