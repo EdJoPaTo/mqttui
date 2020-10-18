@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local};
 use rumqttc::{Connection, Publish};
 use std::collections::HashMap;
+use std::error::Error;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
@@ -13,16 +14,19 @@ pub struct HistoryEntry {
 
 pub type HistoryArc = Arc<Mutex<HashMap<String, Vec<HistoryEntry>>>>;
 
-pub fn start(connection: Connection) -> (HistoryArc, JoinHandle<()>) {
+pub fn start(mut connection: Connection) -> Result<(HistoryArc, JoinHandle<()>), Box<dyn Error>> {
+    // TODO: weird workaround. Is there a better solution?
+    // Iterate once. This is the initial connection attempt. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
+    connection.iter().next().unwrap()?;
+
     let history = Arc::new(Mutex::new(HashMap::new()));
 
     let thread_history = Arc::clone(&history);
     let handle = thread::Builder::new()
         .name("mqtt connection".into())
-        .spawn(move || thread_logic(connection, thread_history))
-        .unwrap();
+        .spawn(move || thread_logic(connection, thread_history))?;
 
-    (history, handle)
+    Ok((history, handle))
 }
 
 fn thread_logic(mut connection: Connection, arc_history: HistoryArc) {

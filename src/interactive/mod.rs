@@ -65,7 +65,7 @@ pub fn show(
     terminal.clear()?;
 
     loop {
-        terminal.draw(|f| ui::draw(f, &mut app))?;
+        terminal.draw(|f| ui::draw(f, &mut app).expect("failed to draw ui"))?;
         match rx.recv()? {
             Event::Input(event) => match event.code {
                 KeyCode::Char('q') => {
@@ -80,9 +80,9 @@ pub fn show(
                 }
                 KeyCode::Char(c) => app.on_key(c),
                 KeyCode::Left => app.on_left(),
-                KeyCode::Up => app.on_up(),
+                KeyCode::Up => app.on_up()?,
                 KeyCode::Right => app.on_right(),
-                KeyCode::Down => app.on_down(),
+                KeyCode::Down => app.on_down()?,
                 _ => {}
             },
             Event::Tick => {}

@@ -1,5 +1,6 @@
 use crate::mqtt_history::{get_sorted_vec, HistoryArc};
 use std::cmp::{max, min};
+use std::error::Error;
 use tui::widgets::ListState;
 
 pub struct App<'a> {
@@ -27,17 +28,24 @@ impl<'a> App<'a> {
         }
     }
 
-    fn ensure_index_to_topic(&mut self) {
-        let topics = get_sorted_vec(self.history.lock().unwrap().keys());
+    fn ensure_index_to_topic(&mut self) -> Result<(), Box<dyn Error>> {
+        let topics = get_sorted_vec(
+            self.history
+                .lock()
+                .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?
+                .keys(),
+        );
 
         self.selected_topic = self
             .topics_overview_state
             .selected()
             .and_then(|index| topics.get(index))
             .map(|o| o.to_owned());
+
+        Ok(())
     }
 
-    pub fn on_up(&mut self) {
+    pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
         self.topics_overview_state.select(
             if let Some(selected) = self.topics_overview_state.selected() {
                 Some(max(1, selected) - 1)
@@ -46,11 +54,17 @@ impl<'a> App<'a> {
             },
         );
 
-        self.ensure_index_to_topic();
+        self.ensure_index_to_topic()
     }
 
-    pub fn on_down(&mut self) {
-        let topics = get_sorted_vec(self.history.lock().unwrap().keys()).len();
+    pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
+        let topics = get_sorted_vec(
+            self.history
+                .lock()
+                .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?
+                .keys(),
+        )
+        .len();
 
         self.topics_overview_state.select(
             if let Some(selected) = self.topics_overview_state.selected() {
@@ -60,7 +74,7 @@ impl<'a> App<'a> {
             },
         );
 
-        self.ensure_index_to_topic();
+        self.ensure_index_to_topic()
     }
 
     pub fn on_right(&mut self) {}

@@ -1,4 +1,5 @@
 use rumqttc::{self, Client, MqttOptions, QoS};
+use std::error::Error;
 use std::sync::Arc;
 
 mod cli;
@@ -7,7 +8,7 @@ mod interactive;
 mod mqtt_history;
 mod simple;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::get_runtime_arguments();
 
     let client_id = format!("mqtt-cli-{:x}", rand::random::<u32>());
@@ -17,24 +18,24 @@ fn main() {
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
     if let Some(payload) = args.value {
-        client
-            .publish(&args.topic, QoS::AtLeastOnce, false, payload)
-            .unwrap();
+        client.publish(&args.topic, QoS::AtLeastOnce, false, payload)?;
 
         simple::eventloop(client, connection, args.verbose);
-        return;
+        return Ok(());
     }
 
-    client.subscribe(&args.topic, QoS::ExactlyOnce).unwrap();
+    client.subscribe(&args.topic, QoS::ExactlyOnce)?;
 
     if args.interactive {
-        let (history, thread_handle) = mqtt_history::start(connection);
+        let (history, thread_handle) = mqtt_history::start(connection)?;
 
-        interactive::show(&args.host, args.port, &args.topic, Arc::clone(&history)).unwrap();
+        interactive::show(&args.host, args.port, &args.topic, Arc::clone(&history))?;
 
-        client.disconnect().unwrap();
-        thread_handle.join().unwrap();
+        client.disconnect()?;
+        thread_handle.join().expect("mqtt thread failed to finish");
     } else {
         simple::eventloop(client, connection, args.verbose);
     }
+
+    Ok(())
 }

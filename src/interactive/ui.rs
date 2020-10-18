@@ -3,6 +3,8 @@ use crate::interactive::app::App;
 use crate::mqtt_history::get_sorted_vec;
 use crate::mqtt_history::HistoryEntry;
 use chrono::{DateTime, Local};
+use std::cmp::Ordering;
+use std::error::Error;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -17,12 +19,13 @@ use tui::{
     Frame,
 };
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn Error>> {
     let chunks = Layout::default()
         .constraints([Constraint::Length(2 + 2), Constraint::Min(8)].as_ref())
         .split(f.size());
     draw_connection_info(f, app, chunks[0]);
-    draw_main(f, chunks[1], app);
+    draw_main(f, chunks[1], app)?;
+    Ok(())
 }
 
 fn draw_connection_info<B>(f: &mut Frame<B>, app: &App, area: Rect)
@@ -39,11 +42,14 @@ where
     f.render_widget(paragraph, area);
 }
 
-fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App)
+fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> Result<(), Box<dyn Error>>
 where
     B: Backend,
 {
-    let history = &app.history.lock().unwrap();
+    let history = &app
+        .history
+        .lock()
+        .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
     let topics = get_sorted_vec(history.keys());
 
     let overview_area = if let Some(selected_topic) = &app.selected_topic {
@@ -67,6 +73,7 @@ where
     };
 
     draw_overview(f, overview_area, &topics, &mut app.topics_overview_state);
+    Ok(())
 }
 
 fn draw_overview<B>(f: &mut Frame<B>, area: Rect, topics: &[String], state: &mut ListState)
@@ -102,7 +109,7 @@ where
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(area);
 
-    let graph_works = draw_details_chart(f, chunks[1], topic_history);
+    let graph_works = draw_details_chart(f, chunks[1], topic_history).is_some();
 
     let table_area = if graph_works { chunks[0] } else { area };
     draw_details_table(f, table_area, topic_history);
@@ -139,7 +146,7 @@ where
     f.render_stateful_widget(t, area, &mut state);
 }
 
-fn draw_details_chart<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry]) -> bool
+fn draw_details_chart<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry]) -> Option<()>
 where
     B: Backend,
 {
@@ -151,10 +158,10 @@ where
     }
 
     if data.len() < 2 {
-        return false;
+        return None;
     }
 
-    let ybounds = get_y_bounds(&data);
+    let ybounds = get_y_bounds(&data)?;
 
     let datasets = vec![Dataset::default()
         .marker(symbols::Marker::Braille)
@@ -162,8 +169,8 @@ where
         .graph_type(GraphType::Line)
         .data(&data)];
 
-    let first_time = topic_history.first().unwrap().time;
-    let last_time = topic_history.last().unwrap().time;
+    let first_time = topic_history.first()?.time;
+    let last_time = topic_history.last()?.time;
 
     let chart = Chart::new(datasets)
         .block(Block::default().title("Graph").borders(Borders::ALL))
@@ -188,13 +195,14 @@ where
         );
     f.render_widget(chart, area);
 
-    true
+    Some(())
 }
 
-fn get_y_bounds(data: &[(f64, f64)]) -> [f64; 2] {
+fn get_y_bounds(data: &[(f64, f64)]) -> Option<[f64; 2]> {
     let mut y_sorted = data.to_vec();
-    y_sorted.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-    [y_sorted.first().unwrap().1, y_sorted.last().unwrap().1]
+    // TODO: Use total_cmp when stable
+    y_sorted.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(Ordering::Equal));
+    Some([y_sorted.first()?.1, y_sorted.last()?.1])
 }
 
 fn parse_history_entry_to_chart_point(entry: &HistoryEntry) -> Option<(f64, f64)> {
