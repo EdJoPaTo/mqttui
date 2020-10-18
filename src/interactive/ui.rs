@@ -198,6 +198,10 @@ fn get_y_bounds(data: &[(f64, f64)]) -> [f64; 2] {
 }
 
 fn parse_history_entry_to_chart_point(entry: &HistoryEntry) -> Option<(f64, f64)> {
+    if entry.packet.retain {
+        return None;
+    }
+
     let y = format_payload_as_float(entry.packet.payload.to_vec())?;
     let x = parse_time_to_chart_y(entry.time);
     Some((x, y))
