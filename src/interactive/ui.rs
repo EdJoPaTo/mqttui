@@ -46,7 +46,7 @@ where
 
         if let Some(topic_history) = history.get(selected_topic) {
             let chunks = Layout::default()
-                .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
                 .direction(Direction::Horizontal)
                 .split(area);
 
@@ -93,58 +93,35 @@ where
     B: Backend,
 {
     let chunks = Layout::default()
-        .constraints([Constraint::Length(4 + 2), Constraint::Min(5)].as_ref())
+        .constraints([Constraint::Min(5)].as_ref())
         .split(area);
 
-    let last = topic_history.last().unwrap();
-    draw_details_current(f, chunks[0], last);
-
-    draw_details_table(f, chunks[1], topic_history);
-}
-
-fn draw_details_current<B>(f: &mut Frame<B>, area: Rect, entry: &HistoryEntry)
-where
-    B: Backend,
-{
-    let topic = entry.packet.topic.to_owned();
-
-    let qos = format!("QoS: {}", format_qos(&entry.packet.qos));
-    let timestamp = format_timestamp(entry.packet.retain, &entry.time);
-    let payload = format!(
-        "Payload ({:>3}): {}",
-        entry.packet.payload.len(),
-        format_payload(&entry.packet.payload.to_vec())
-    );
-
-    let text = vec![
-        Spans::from(topic),
-        Spans::from(qos),
-        Spans::from(timestamp),
-        Spans::from(payload),
-    ];
-    let block = Block::default().borders(Borders::ALL).title("Details");
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-    f.render_widget(paragraph, area);
+    draw_details_table(f, chunks[0], topic_history);
 }
 
 fn draw_details_table<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
 where
     B: Backend,
 {
-    let header = ["Time", "Payload"];
+    let header = ["Time", "QoS", "Payload"];
 
     let mut rows_content: Vec<Vec<String>> = Vec::new();
     for entry in topic_history {
         let time = format_timestamp(entry.packet.retain, &entry.time);
+        let qos = format_qos(&entry.packet.qos);
         let payload = format_payload(&entry.packet.payload.to_vec());
-        rows_content.push(vec![time, payload]);
+        rows_content.push(vec![time, qos, payload]);
     }
     let rows = rows_content.iter().map(|i| Row::Data(i.iter()));
 
     let t = Table::new(header.iter(), rows)
-        .block(Block::default().borders(Borders::ALL).title("Table"))
+        .block(Block::default().borders(Borders::ALL).title("History"))
         .highlight_style(Style::default().fg(Color::White))
-        .widths(&[Constraint::Length(12), Constraint::Min(10)]);
+        .widths(&[
+            Constraint::Length(12),
+            Constraint::Length(11),
+            Constraint::Min(10),
+        ]);
 
     let mut state = TableState::default();
     state.select(Some(topic_history.len() - 1));
