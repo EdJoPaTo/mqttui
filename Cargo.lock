@@ -300,7 +300,6 @@ dependencies = [
 name = "mqtt-cli"
 version = "0.2.0"
 dependencies = [
- "bytes",
  "chrono",
  "clap",
  "rand",

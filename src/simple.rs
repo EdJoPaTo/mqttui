@@ -1,5 +1,6 @@
-use chrono::{DateTime, Local, TimeZone};
-use rumqttc::{self, Client, Connection, Publish, QoS};
+use crate::format::format_published_packet;
+use chrono::Local;
+use rumqttc::{self, Client, Connection, QoS};
 
 pub fn publish(
     client: &mut Client,
@@ -72,7 +73,7 @@ pub fn subscribe(
                         continue;
                     }
 
-                    println!("{}", format_published_packet(&publish, Local::now()));
+                    println!("{}", format_published_packet(&publish, &Local::now()));
                 }
                 _ => {
                     if verbose {
@@ -82,52 +83,4 @@ pub fn subscribe(
             },
         };
     }
-}
-
-fn format_published_packet<Tz: TimeZone>(packet: &Publish, time: DateTime<Tz>) -> String
-where
-    Tz::Offset: std::fmt::Display,
-{
-    let qos = format!("{:?}", packet.qos);
-
-    let payload_size = packet.payload.len();
-    let payload = String::from_utf8(packet.payload.to_vec())
-        .unwrap_or_else(|err| format!("invalid UTF8: {}", err));
-
-    let timestamp = if packet.retain {
-        String::from("RETAINED")
-    } else {
-        time.format("%_H:%M:%S.%3f").to_string()
-    };
-
-    format!(
-        "{:12} {:50} QoS:{:11} Payload({:>3}): {}",
-        timestamp, packet.topic, qos, payload_size, payload
-    )
-}
-
-#[test]
-fn format_works() {
-    let time = DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
-    let packet = Publish::new("foo", QoS::AtLeastOnce, "bar");
-    assert_eq!(
-        format_published_packet(&packet, time),
-        "15:00:00.000 foo                                                QoS:AtLeastOnce Payload(  3): bar"
-    );
-}
-
-#[test]
-fn format_retained_has_no_timestamp() {
-    let time = DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
-    let packet = Publish {
-        dup: false,
-        qos: QoS::AtLeastOnce,
-        payload: bytes::Bytes::from("bar"),
-        topic: "foo".to_owned(),
-        pkid: 42,
-        retain: true,
-    };
-    let formatted = format_published_packet(&packet, time);
-
-    assert!(formatted.contains("RETAINED"));
 }

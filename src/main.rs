@@ -1,6 +1,7 @@
 use rumqttc::{self, Client, MqttOptions, QoS};
 
 mod cli;
+mod format;
 mod simple;
 
 fn main() {
