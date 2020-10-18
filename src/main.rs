@@ -11,26 +11,15 @@ fn main() {
     let mut mqttoptions = MqttOptions::new(client_id, args.host, args.port);
     mqttoptions.set_keep_alive(5);
 
-    let (mut client, mut connection) = Client::new(mqttoptions, 10);
+    let (mut client, connection) = Client::new(mqttoptions, 10);
 
-    match args.value {
-        Some(payload) => {
-            simple::publish(
-                &mut client,
-                &mut connection,
-                &args.topic,
-                &payload,
-                args.verbose,
-            );
-        }
-        None => {
-            simple::subscribe(
-                &mut client,
-                &mut connection,
-                &args.topic,
-                QoS::ExactlyOnce,
-                args.verbose,
-            );
-        }
+    if let Some(payload) = args.value {
+        client
+            .publish(&args.topic, QoS::AtLeastOnce, false, payload)
+            .unwrap();
+    } else {
+        client.subscribe(&args.topic, QoS::ExactlyOnce).unwrap();
     }
+
+    simple::eventloop(client, connection, args.verbose);
 }
