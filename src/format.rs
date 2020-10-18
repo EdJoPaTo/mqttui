@@ -9,7 +9,7 @@ where
     let timestamp = format_timestamp(packet.retain, time);
 
     let payload_size = packet.payload.len();
-    let payload = format_payload(&packet.payload.to_vec());
+    let payload = format_payload(packet.payload.to_vec());
 
     format!(
         "{:12} {:50} QoS:{:11} Payload({:>3}): {}",
@@ -32,8 +32,8 @@ where
     }
 }
 
-pub fn format_payload(payload: &[u8]) -> String {
-    String::from_utf8(payload.to_vec()).unwrap_or_else(|err| format!("invalid UTF8: {}", err))
+pub fn format_payload(payload: Vec<u8>) -> String {
+    String::from_utf8(payload).unwrap_or_else(|err| format!("invalid UTF8: {}", err))
 }
 
 #[test]

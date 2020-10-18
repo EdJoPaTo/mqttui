@@ -109,7 +109,7 @@ where
     for entry in topic_history {
         let time = format_timestamp(entry.packet.retain, &entry.time);
         let qos = format_qos(&entry.packet.qos);
-        let payload = format_payload(&entry.packet.payload.to_vec());
+        let payload = format_payload(entry.packet.payload.to_vec());
         rows_content.push(vec![time, qos, payload]);
     }
     let rows = rows_content.iter().map(|i| Row::Data(i.iter()));
