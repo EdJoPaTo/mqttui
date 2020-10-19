@@ -159,7 +159,7 @@ where
 
     let t = Table::new(header.iter(), rows)
         .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(Style::default().fg(Color::White))
+        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
         .widths(&[
             Constraint::Length(12),
             Constraint::Length(11),
