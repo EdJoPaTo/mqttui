@@ -45,7 +45,7 @@ mqtt -h "test.mosquitto.org" "hello/world"
 ```
 
 ```plaintext
-MQTT CLI 0.2.0
+MQTT CLI 0.4.0
 EdJoPaTo <mqtt-cli-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
@@ -53,9 +53,10 @@ USAGE:
     mqtt [FLAGS] [OPTIONS] [ARGS]
 
 FLAGS:
-        --help       Prints help information
-    -V, --version    Prints version information
-    -v, --verbose    Show full MQTT communication
+        --help           Prints help information
+    -i, --interactive    Start in interactive mode
+    -V, --version        Prints version information
+    -v, --verbose        Show full MQTT communication
 
 OPTIONS:
     -h, --host <HOST>    Host on which the MQTT Broker is running [default: localhost]
