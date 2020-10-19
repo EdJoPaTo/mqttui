@@ -58,8 +58,10 @@ impl<'a> App<'a> {
                     .unwrap_or(current_pos)
                 })
                 .unwrap_or(0)
-        } else {
+        } else if increase {
             0
+        } else {
+            usize::MAX
         };
 
         self.selected_topic = shown
