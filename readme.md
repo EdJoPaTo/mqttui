@@ -3,6 +3,8 @@
 
 > Subscribe to a MQTT Topic or publish something quickly from the terminal
 
+![Screenshot](media/screenshot.jpg)
+
 Taking a look into existing "lets just view MQTT right now" or "quickly publish something" projects they are always quite bulky and not that fast.
 
 Currently I stick with [thomasnordquist/MQTT-Explorer](https://github.com/thomasnordquist/MQTT-Explorer) as it has a great overview of whats going on, a small topic based history and a sorted main view.
