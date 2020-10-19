@@ -2,6 +2,7 @@ use crate::format::*;
 use crate::interactive::app::App;
 use crate::mqtt_history::get_sorted_vec;
 use crate::mqtt_history::HistoryEntry;
+use crate::topic_logic::get_shown_topics;
 use chrono::{DateTime, Local};
 use std::cmp::Ordering;
 use std::error::Error;
@@ -55,11 +56,17 @@ where
         .lock()
         .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
     let topics = get_sorted_vec(history.keys());
+    let shown_topics = get_shown_topics(&topics, &app.opened_topics);
+
+    // Ensure selected topic is selected index
+    app.topics_overview_state
+        .select(if let Some(selected_topic) = &app.selected_topic {
+            shown_topics.iter().position(|t| t == selected_topic)
+        } else {
+            None
+        });
 
     let overview_area = if let Some(selected_topic) = &app.selected_topic {
-        let pos = topics.iter().position(|t| t == selected_topic);
-        app.topics_overview_state.select(pos);
-
         if let Some(topic_history) = history.get(selected_topic) {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -76,17 +83,28 @@ where
         area
     };
 
-    draw_overview(f, overview_area, &topics, &mut app.topics_overview_state);
+    draw_overview(
+        f,
+        overview_area,
+        topics.len(),
+        &shown_topics,
+        &mut app.topics_overview_state,
+    );
     Ok(())
 }
 
-fn draw_overview<B>(f: &mut Frame<B>, area: Rect, topics: &[String], state: &mut ListState)
-where
+fn draw_overview<B>(
+    f: &mut Frame<B>,
+    area: Rect,
+    topic_amount: usize,
+    shown_topics: &[String],
+    state: &mut ListState,
+) where
     B: Backend,
 {
-    let title = format!("Topics ({})", topics.len());
+    let title = format!("Topics ({})", topic_amount);
 
-    let items: Vec<ListItem> = topics
+    let items: Vec<ListItem> = shown_topics
         .iter()
         .map(|i| {
             let lines: Vec<Spans> = vec![Spans::from(i.to_owned())];

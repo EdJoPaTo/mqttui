@@ -7,6 +7,7 @@ mod format;
 mod interactive;
 mod mqtt_history;
 mod simple;
+mod topic_logic;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::get_runtime_arguments();

@@ -1,5 +1,8 @@
-use crate::mqtt_history::{get_sorted_vec, HistoryArc};
-use std::cmp::{max, min};
+use crate::{
+    mqtt_history::{get_sorted_vec, HistoryArc},
+    topic_logic::{get_parent, get_shown_topics},
+};
+use std::collections::HashSet;
 use std::error::Error;
 use tui::widgets::ListState;
 
@@ -9,6 +12,7 @@ pub struct App<'a> {
     pub subscribe_topic: &'a str,
     pub history: HistoryArc,
 
+    pub opened_topics: HashSet<String>,
     pub selected_topic: Option<String>,
     pub topics_overview_state: ListState,
 
@@ -21,67 +25,67 @@ impl<'a> App<'a> {
             host,
             port,
             subscribe_topic,
-            should_quit: false,
             history,
+
+            opened_topics: HashSet::new(),
             selected_topic: None,
             topics_overview_state: ListState::default(),
+
+            should_quit: false,
         }
     }
 
-    fn ensure_index_to_topic(&mut self) -> Result<(), Box<dyn Error>> {
+    fn change_seleted_topic(&mut self, increase: bool) -> Result<(), Box<dyn Error>> {
         let topics = get_sorted_vec(
             self.history
                 .lock()
                 .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?
                 .keys(),
         );
+        let shown = get_shown_topics(&topics, &self.opened_topics);
 
-        self.selected_topic = self
-            .topics_overview_state
-            .selected()
-            .and_then(|index| topics.get(index))
-            .map(|o| o.to_owned());
+        let new_index = if let Some(topic) = &self.selected_topic {
+            shown
+                .iter()
+                .position(|o| o == topic)
+                .map(|current_pos| {
+                    if increase {
+                        current_pos.checked_add(1)
+                    } else {
+                        current_pos.checked_sub(1)
+                    }
+                    .unwrap_or(current_pos)
+                })
+                .unwrap_or(0)
+        } else {
+            0
+        };
+
+        self.selected_topic = shown.get(new_index).map(|s| s.to_owned());
 
         Ok(())
     }
 
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
-        self.topics_overview_state.select(
-            if let Some(selected) = self.topics_overview_state.selected() {
-                Some(max(1, selected) - 1)
-            } else {
-                Some(0)
-            },
-        );
-
-        self.ensure_index_to_topic()
+        self.change_seleted_topic(false)
     }
 
     pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
-        let topics = get_sorted_vec(
-            self.history
-                .lock()
-                .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?
-                .keys(),
-        )
-        .len();
-
-        self.topics_overview_state.select(
-            if let Some(selected) = self.topics_overview_state.selected() {
-                Some(min(topics - 2, selected) + 1)
-            } else {
-                Some(0)
-            },
-        );
-
-        self.ensure_index_to_topic()
+        self.change_seleted_topic(true)
     }
 
-    pub fn on_right(&mut self) {}
+    pub fn on_right(&mut self) {
+        if let Some(topic) = &self.selected_topic {
+            self.opened_topics.insert(topic.to_owned());
+        }
+    }
 
     pub fn on_left(&mut self) {
-        self.topics_overview_state.select(None);
-        self.selected_topic = None;
+        if let Some(topic) = &self.selected_topic {
+            if let false = self.opened_topics.remove(topic) {
+                self.selected_topic = get_parent(topic).map(|s| s.to_owned());
+            }
+        }
     }
 
     pub fn on_key(&mut self, c: char) {

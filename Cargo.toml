@@ -14,6 +14,7 @@ path="src/main.rs"
 [dependencies]
 chrono = "0.4"
 crossterm = "0.17"
+itertools = "0.9.0"
 rand = "0.7"
 rumqttc = "0.1"
 
