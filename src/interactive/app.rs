@@ -2,6 +2,7 @@ use crate::{
     mqtt_history::{get_sorted_vec, HistoryArc},
     topic_logic::{get_parent, get_shown_topics},
 };
+use std::cmp::min;
 use std::collections::HashSet;
 use std::error::Error;
 use tui::widgets::ListState;
@@ -61,7 +62,9 @@ impl<'a> App<'a> {
             0
         };
 
-        self.selected_topic = shown.get(new_index).map(|s| s.to_owned());
+        self.selected_topic = shown
+            .get(min(new_index, shown.len() - 1))
+            .map(|s| s.to_owned());
 
         Ok(())
     }
