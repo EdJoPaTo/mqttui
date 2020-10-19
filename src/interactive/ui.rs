@@ -21,21 +21,25 @@ use tui::{
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn Error>> {
     let chunks = Layout::default()
-        .constraints([Constraint::Length(2 + 2), Constraint::Min(8)].as_ref())
+        .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
         .split(f.size());
-    draw_connection_info(f, app, chunks[0]);
+    draw_info_header(f, chunks[0], app);
     draw_main(f, chunks[1], app)?;
     Ok(())
 }
 
-fn draw_connection_info<B>(f: &mut Frame<B>, app: &App, area: Rect)
+fn draw_info_header<B>(f: &mut Frame<B>, area: Rect, app: &App)
 where
     B: Backend,
 {
     let host = format!("MQTT Broker: {} (Port {})", app.host, app.port);
     let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
+    let mut text = vec![Spans::from(host), Spans::from(subscribed)];
 
-    let text = vec![Spans::from(host), Spans::from(subscribed)];
+    if let Some(topic) = &app.selected_topic {
+        text.push(Spans::from(format!("Selected Topic: {}", topic)));
+    }
+
     let title = format!("MQTT CLI {}", env!("CARGO_PKG_VERSION"));
     let block = Block::default().borders(Borders::ALL).title(title);
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
