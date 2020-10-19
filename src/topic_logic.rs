@@ -45,6 +45,14 @@ pub fn get_parent(topic: &str) -> Option<&str> {
     topic.rfind('/').map(|i| &topic[0..i])
 }
 
+pub fn get_leaf(topic: &str) -> &str {
+    topic.rfind('/').map(|i| &topic[i + 1..]).unwrap_or(topic)
+}
+
+pub fn get_topic_depth(topic: &str) -> usize {
+    topic.matches('/').count()
+}
+
 #[test]
 fn tree_variants_empty_stays_emty() {
     let actual = build_all_tree_variants(&[]);
@@ -75,6 +83,22 @@ fn parent_works() {
     assert_eq!(Some("a"), get_parent("a/b"));
     assert_eq!(Some("a/b"), get_parent("a/b/c"));
     assert_eq!(Some("a/b/c"), get_parent("a/b/c/d"));
+}
+
+#[test]
+fn leaf_works() {
+    assert_eq!("a", get_leaf("a"));
+    assert_eq!("b", get_leaf("a/b"));
+    assert_eq!("c", get_leaf("a/b/c"));
+    assert_eq!("d", get_leaf("a/b/c/d"));
+}
+
+#[test]
+fn topic_depth_works() {
+    assert_eq!(0, get_topic_depth("a"));
+    assert_eq!(1, get_topic_depth("a/b"));
+    assert_eq!(2, get_topic_depth("a/b/c"));
+    assert_eq!(3, get_topic_depth("a/b/c/d"));
 }
 
 #[cfg(test)]

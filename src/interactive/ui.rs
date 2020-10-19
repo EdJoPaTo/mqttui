@@ -3,6 +3,7 @@ use crate::interactive::app::App;
 use crate::mqtt_history::get_sorted_vec;
 use crate::mqtt_history::HistoryEntry;
 use crate::topic_logic::get_shown_topics;
+use crate::topic_logic::*;
 use chrono::{DateTime, Local};
 use std::cmp::Ordering;
 use std::error::Error;
@@ -69,7 +70,7 @@ where
     let overview_area = if let Some(selected_topic) = &app.selected_topic {
         if let Some(topic_history) = history.get(selected_topic) {
             let chunks = Layout::default()
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
                 .direction(Direction::Horizontal)
                 .split(area);
 
@@ -106,8 +107,11 @@ fn draw_overview<B>(
 
     let items: Vec<ListItem> = shown_topics
         .iter()
-        .map(|i| {
-            let lines: Vec<Spans> = vec![Spans::from(i.to_owned())];
+        .map(|topic| {
+            let depth = get_topic_depth(topic);
+            let leaf = get_leaf(topic);
+            let text = format!("{:>width$}{}", "", leaf, width = depth * 3);
+            let lines: Vec<Spans> = vec![Spans::from(text)];
             ListItem::new(lines)
         })
         .collect();
