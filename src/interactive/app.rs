@@ -93,9 +93,13 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn on_key(&mut self, c: char) {
-        if let 'q' = c {
-            self.should_quit = true;
+    pub fn on_toggle(&mut self) {
+        if let Some(topic) = &self.selected_topic {
+            if self.opened_topics.contains(topic) {
+                self.opened_topics.remove(topic);
+            } else {
+                self.opened_topics.insert(topic.to_owned());
+            }
         }
     }
 }

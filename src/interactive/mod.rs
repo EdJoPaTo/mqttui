@@ -78,7 +78,12 @@ pub fn show(
                     terminal.show_cursor()?;
                     break;
                 }
-                KeyCode::Char(c) => app.on_key(c),
+                KeyCode::Char(c) => match c {
+                    'q' => app.should_quit = true,
+                    ' ' => app.on_toggle(),
+                    _ => {}
+                },
+                KeyCode::Enter => app.on_toggle(),
                 KeyCode::Left => app.on_left(),
                 KeyCode::Up => app.on_up()?,
                 KeyCode::Right => app.on_right(),
