@@ -1,5 +1,5 @@
-# MQTT CLI
-![Rust](https://github.com/EdJoPaTo/mqtt-cli/workflows/Rust/badge.svg)
+# MQTT TUI
+![Rust](https://github.com/EdJoPaTo/mqttui/workflows/Rust/badge.svg)
 
 > Subscribe to a MQTT Topic or publish something quickly from the terminal
 
@@ -21,7 +21,7 @@ It wont be as feature rich as something like the hivemq approach but it aims at 
 
 ### Prebuilt
 
-Check the [Releases](https://github.com/EdJoPaTo/mqtt-cli/releases).
+Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
 ### From Source
 

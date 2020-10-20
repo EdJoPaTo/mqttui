@@ -122,12 +122,12 @@ jobs:
         run: |
           rm -f *.zip
           cd target/${{ matrix.config.triple }}/release
-          zip -r ../../../mqtt-${{ matrix.config.triple }}.zip mqtt
+          zip -r ../../../mqttui-${{ matrix.config.triple }}.zip mqttui
       - name: Pack release zip (windows)
         if: runner.os == 'Windows'
         run: |
           del *.zip
-          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.config.triple }}/release/mqtt.exe -DestinationPath mqtt-${{ matrix.config.triple }}.zip
+          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.config.triple }}/release/mqttui.exe -DestinationPath mqttui-${{ matrix.config.triple }}.zip
 
       - name: inspect target dir
         if: runner.os == 'Linux' || runner.os == 'macOS'
@@ -139,14 +139,14 @@ jobs:
         if: runner.os == 'Linux' || runner.os == 'macOS'
         uses: actions/upload-artifact@v2
         with:
-          name: mqtt-${{ matrix.config.triple }}
-          path: target/${{ matrix.config.triple }}/release/mqtt
+          name: mqttui-${{ matrix.config.triple }}
+          path: target/${{ matrix.config.triple }}/release/mqttui
       - name: Release Artifact (windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v2
         with:
-          name: mqtt-${{ matrix.config.triple }}
-          path: target/${{ matrix.config.triple }}/release/mqtt.exe
+          name: mqttui-${{ matrix.config.triple }}
+          path: target/${{ matrix.config.triple }}/release/mqttui.exe
 
       - name: GH Release
         if: startsWith(github.ref, 'refs/tags/')

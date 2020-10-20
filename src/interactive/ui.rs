@@ -42,7 +42,7 @@ where
         text.push(Spans::from(format!("Selected Topic: {}", topic)));
     }
 
-    let title = format!("MQTT CLI {}", env!("CARGO_PKG_VERSION"));
+    let title = format!("MQTT TUI {}", env!("CARGO_PKG_VERSION"));
     let block = Block::default().borders(Borders::ALL).title(title);
     let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
     f.render_widget(paragraph, area);

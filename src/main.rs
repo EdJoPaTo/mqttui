@@ -12,7 +12,7 @@ mod topic_logic;
 fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::get_runtime_arguments();
 
-    let client_id = format!("mqtt-cli-{:x}", rand::random::<u32>());
+    let client_id = format!("mqttui-{:x}", rand::random::<u32>());
     let mut mqttoptions = MqttOptions::new(client_id, &args.host, args.port);
     mqttoptions.set_keep_alive(5);
 

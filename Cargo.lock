@@ -359,7 +359,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "mqtt-cli"
+name = "mqtt4bytes"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c179518ace4914d2532e5f733891c032fcebf6641a03d8349fdf0cec7ee4f94"
+dependencies = [
+ "bytes",
+]
+
+[[package]]
+name = "mqttui"
 version = "0.4.0"
 dependencies = [
  "chrono",
@@ -368,15 +377,6 @@ dependencies = [
  "rand",
  "rumqttc",
  "tui",
-]
-
-[[package]]
-name = "mqtt4bytes"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c179518ace4914d2532e5f733891c032fcebf6641a03d8349fdf0cec7ee4f94"
-dependencies = [
- "bytes",
 ]
 
 [[package]]

@@ -1,15 +1,11 @@
 [package]
-name = "mqtt-cli"
+name = "mqttui"
 version = "0.4.0"
 description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
-authors = ["EdJoPaTo <mqtt-cli-rust@edjopato.de>"]
+authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name="mqtt"
-path="src/main.rs"
 
 [dependencies]
 chrono = "0.4"
