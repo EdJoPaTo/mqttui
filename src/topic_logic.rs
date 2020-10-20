@@ -28,10 +28,10 @@ pub fn filter_topics_by_opened(all: &[String], opened: &HashSet<String>) -> Vec<
     let mut shown = Vec::new();
 
     for entry in all {
-        let show = match get_parent(entry) {
-            Some(parent) => opened.contains(parent),
-            None => true,
-        };
+        let show = get_all_parents(entry)
+            .iter()
+            .cloned()
+            .all(|t| opened.contains(t));
 
         if show {
             shown.push(entry.to_owned());
@@ -39,6 +39,24 @@ pub fn filter_topics_by_opened(all: &[String], opened: &HashSet<String>) -> Vec<
     }
 
     shown
+}
+
+pub fn get_all_parents(topic: &str) -> Vec<&str> {
+    let mut result = Vec::new();
+    let mut current = topic;
+
+    loop {
+        match get_parent(current) {
+            Some(parent) => {
+                result.push(parent);
+                current = parent;
+            }
+            None => break,
+        }
+    }
+
+    result.reverse();
+    result
 }
 
 pub fn get_parent(topic: &str) -> Option<&str> {
@@ -75,6 +93,14 @@ fn tree_variants_path_gets_splitted() {
 fn tree_variants_dont_duplicate() {
     let actual = build_all_tree_variants(&["a/b".into(), "a/b/c".into(), "a/d".into()]);
     assert_eq!(actual, ["a", "a/b", "a/b/c", "a/d"]);
+}
+
+#[test]
+fn all_parents_works() {
+    assert_eq!(get_all_parents("a").len(), 0);
+    assert_eq!(get_all_parents("a/b"), ["a"]);
+    assert_eq!(get_all_parents("a/b/c"), ["a", "a/b"]);
+    assert_eq!(get_all_parents("a/b/c/d"), ["a", "a/b", "a/b/c"]);
 }
 
 #[test]
@@ -139,6 +165,20 @@ fn filter_topics_by_opened_shows_some() {
 
     let actual = filter_topics_by_opened(&all, &opened);
     assert_eq!(actual, ["a", "a/b", "a/d", "e"]);
+}
+
+#[test]
+fn filter_topics_by_opened_shows_only_when_all_parents_are_opened() {
+    let all = ALL_EXAMPLES
+        .iter()
+        .cloned()
+        .map(|o| o.to_owned())
+        .collect_vec();
+    let mut opened = HashSet::new();
+    opened.insert("a/b".to_string());
+
+    let actual = filter_topics_by_opened(&all, &opened);
+    assert_eq!(actual, ["a", "e"]);
 }
 
 #[test]
