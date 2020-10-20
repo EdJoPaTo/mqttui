@@ -81,6 +81,10 @@ pub fn show(
                 KeyCode::Char(c) => match c {
                     'q' => app.should_quit = true,
                     ' ' => app.on_toggle(),
+                    'h' => app.on_left(),
+                    'j' => app.on_down()?,
+                    'k' => app.on_up()?,
+                    'l' => app.on_right(),
                     _ => {}
                 },
                 KeyCode::Enter => app.on_toggle(),
