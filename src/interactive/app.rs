@@ -66,7 +66,7 @@ impl<'a> App<'a> {
 
         self.selected_topic = shown
             .get(min(new_index, shown.len() - 1))
-            .map(|s| s.to_owned());
+            .map(|s| s.to_owned().to_owned());
 
         Ok(())
     }

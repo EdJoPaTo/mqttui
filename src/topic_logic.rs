@@ -1,21 +1,19 @@
-use itertools::Itertools;
 use std::collections::HashSet;
 
-pub fn get_shown_topics(existing: &[String], opened: &HashSet<String>) -> Vec<String> {
+pub fn get_shown_topics<'a>(existing: &'a [String], opened: &HashSet<String>) -> Vec<&'a str> {
     let all = build_all_tree_variants(existing);
     filter_topics_by_opened(&all, opened)
 }
 
-pub fn build_all_tree_variants(existing: &[String]) -> Vec<String> {
+pub fn build_all_tree_variants<'a>(existing: &'a [String]) -> Vec<&'a str> {
     let mut result = Vec::new();
 
     for entry in existing {
-        let parts = entry.split('/').collect_vec();
-
-        for l in 0..parts.len() {
-            let topic: String = parts.iter().take(l + 1).cloned().intersperse("/").collect();
-            result.push(topic)
+        for parent in get_all_parents(entry) {
+            result.push(parent);
         }
+
+        result.push(entry);
     }
 
     result.sort();
@@ -24,7 +22,7 @@ pub fn build_all_tree_variants(existing: &[String]) -> Vec<String> {
     result
 }
 
-pub fn filter_topics_by_opened(all: &[String], opened: &HashSet<String>) -> Vec<String> {
+pub fn filter_topics_by_opened<'a>(all: &[&'a str], opened: &HashSet<String>) -> Vec<&'a str> {
     let mut shown = Vec::new();
 
     for entry in all {
@@ -79,19 +77,22 @@ fn tree_variants_empty_stays_emty() {
 
 #[test]
 fn tree_variants_shortest_path() {
-    let actual = build_all_tree_variants(&["foo".into()]);
+    let topics = ["foo".to_owned()];
+    let actual = build_all_tree_variants(&topics);
     assert_eq!(actual, ["foo"]);
 }
 
 #[test]
 fn tree_variants_path_gets_splitted() {
-    let actual = build_all_tree_variants(&["foo/bar".into()]);
+    let topics = ["foo/bar".to_owned()];
+    let actual = build_all_tree_variants(&topics);
     assert_eq!(actual, ["foo", "foo/bar"]);
 }
 
 #[test]
 fn tree_variants_dont_duplicate() {
-    let actual = build_all_tree_variants(&["a/b".into(), "a/b/c".into(), "a/d".into()]);
+    let topics = ["a/b".to_owned(), "a/b/c".to_owned(), "a/d".to_owned()];
+    let actual = build_all_tree_variants(&topics);
     assert_eq!(actual, ["a", "a/b", "a/b/c", "a/d"]);
 }
 
@@ -143,51 +144,31 @@ const ALL_EXAMPLES: [&str; 10] = [
 
 #[test]
 fn filter_topics_by_opened_shows_only_top_level() {
-    let all = ALL_EXAMPLES
-        .iter()
-        .cloned()
-        .map(|o| o.to_owned())
-        .collect_vec();
     let opened = HashSet::new();
-    let actual = filter_topics_by_opened(&all, &opened);
+    let actual = filter_topics_by_opened(&ALL_EXAMPLES, &opened);
     assert_eq!(actual, ["a", "e"]);
 }
 
 #[test]
 fn filter_topics_by_opened_shows_some() {
-    let all = ALL_EXAMPLES
-        .iter()
-        .cloned()
-        .map(|o| o.to_owned())
-        .collect_vec();
     let mut opened = HashSet::new();
     opened.insert("a".to_string());
 
-    let actual = filter_topics_by_opened(&all, &opened);
+    let actual = filter_topics_by_opened(&ALL_EXAMPLES, &opened);
     assert_eq!(actual, ["a", "a/b", "a/d", "e"]);
 }
 
 #[test]
 fn filter_topics_by_opened_shows_only_when_all_parents_are_opened() {
-    let all = ALL_EXAMPLES
-        .iter()
-        .cloned()
-        .map(|o| o.to_owned())
-        .collect_vec();
     let mut opened = HashSet::new();
     opened.insert("a/b".to_string());
 
-    let actual = filter_topics_by_opened(&all, &opened);
+    let actual = filter_topics_by_opened(&ALL_EXAMPLES, &opened);
     assert_eq!(actual, ["a", "e"]);
 }
 
 #[test]
 fn filter_topics_by_opened_shows_all() {
-    let all = ALL_EXAMPLES
-        .iter()
-        .cloned()
-        .map(|o| o.to_owned())
-        .collect_vec();
     let mut opened = HashSet::new();
     opened.insert("a".to_string());
     opened.insert("a/b".to_string());
@@ -196,6 +177,6 @@ fn filter_topics_by_opened_shows_all() {
     opened.insert("e/f/g".to_string());
     opened.insert("e/f/g/h".to_string());
 
-    let actual = filter_topics_by_opened(&all, &opened);
+    let actual = filter_topics_by_opened(&ALL_EXAMPLES, &opened);
     assert_eq!(actual, ALL_EXAMPLES);
 }

@@ -98,7 +98,7 @@ fn draw_overview<B>(
     f: &mut Frame<B>,
     area: Rect,
     topic_amount: usize,
-    shown_topics: &[String],
+    shown_topics: &[&str],
     state: &mut ListState,
 ) where
     B: Backend,
