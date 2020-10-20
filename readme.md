@@ -32,25 +32,31 @@ Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
 ```sh
 # Subscribe to everything (#)
-mqtt
+mqttui
 
 # Subscribe to topic
-mqtt "topic"
+mqttui "topic"
 
 # Publish to topic
-mqtt "topic" "payload"
+mqttui "topic" "payload"
 
 # Subscribe to topic with a specific host (default is localhost)
-mqtt -h "test.mosquitto.org" "hello/world"
+mqttui -h "test.mosquitto.org" "hello/world"
+
+# Subscribe to everything (#) in interactive mode
+mqttui --interactive
+
+# Subscribe to topic
+mqttui --interactive "topic"
 ```
 
 ```plaintext
-MQTT CLI 0.4.0
-EdJoPaTo <mqtt-cli-rust@edjopato.de>
+MQTT TUI 0.5.0
+EdJoPaTo <mqttui-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
 USAGE:
-    mqtt [FLAGS] [OPTIONS] [ARGS]
+    mqttui [FLAGS] [OPTIONS] [ARGS]
 
 FLAGS:
         --help           Prints help information
@@ -69,10 +75,10 @@ ARGS:
 
 Tip: Create an alias for the host you are working on:
 ```bash
-alias mqtt-home='mqtt -h pi-home.local'
+alias mqttui-home='mqttui -h pi-home.local'
 
 # Use the alias without having to specify the host every time
-mqtt-home "topic" "payload"
+mqttui-home "topic" "payload"
 ```
 
 # Interesting Alternatives
