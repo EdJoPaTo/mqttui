@@ -16,7 +16,7 @@ pub fn build_all_tree_variants<'a>(existing: &'a [String]) -> Vec<&'a str> {
         result.push(entry);
     }
 
-    result.sort();
+    result.sort_unstable();
     result.dedup();
 
     result
