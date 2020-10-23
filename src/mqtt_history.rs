@@ -24,14 +24,14 @@ pub fn start(mut connection: Connection) -> Result<(HistoryArc, JoinHandle<()>),
     let thread_history = Arc::clone(&history);
     let handle = thread::Builder::new()
         .name("mqtt connection".into())
-        .spawn(move || thread_logic(connection, thread_history))?;
+        .spawn(move || thread_logic(connection, &thread_history))?;
 
     Ok((history, handle))
 }
 
-fn thread_logic(mut connection: Connection, arc_history: HistoryArc) {
+fn thread_logic(mut connection: Connection, arc_history: &HistoryArc) {
     for notification in connection.iter() {
-        // While only writing to history onn Incoming Publish locking the mutex here is still useful
+        // While only writing to history on Incoming Publish locking the mutex here is still useful
         // When something panics here, it will poison the mutex and end the main process
         let mut history = arc_history.lock().unwrap();
 
