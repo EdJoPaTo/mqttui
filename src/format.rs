@@ -5,7 +5,7 @@ pub fn published_packet<Tz: TimeZone>(packet: &Publish, time: &DateTime<Tz>) -> 
 where
     Tz::Offset: std::fmt::Display,
 {
-    let qos = qos(&packet.qos);
+    let qos = qos(packet.qos);
     let timestamp = timestamp(packet.retain, time);
 
     let payload_size = packet.payload.len();
@@ -17,7 +17,7 @@ where
     )
 }
 
-pub fn qos(qos: &QoS) -> String {
+pub fn qos(qos: QoS) -> String {
     format!("{:?}", qos)
 }
 
@@ -61,7 +61,7 @@ fn formatted_timestamp_retained_has_no_timestamp() {
 
 #[test]
 fn formats_qos() {
-    assert_eq!("AtLeastOnce", qos(&QoS::AtLeastOnce));
-    assert_eq!("AtMostOnce", qos(&QoS::AtMostOnce));
-    assert_eq!("ExactlyOnce", qos(&QoS::ExactlyOnce));
+    assert_eq!("AtLeastOnce", qos(QoS::AtLeastOnce));
+    assert_eq!("AtMostOnce", qos(QoS::AtMostOnce));
+    assert_eq!("ExactlyOnce", qos(QoS::ExactlyOnce));
 }

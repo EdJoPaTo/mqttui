@@ -150,7 +150,7 @@ where
     let mut rows_content: Vec<Vec<String>> = Vec::new();
     for entry in topic_history {
         let time = format::timestamp(entry.packet.retain, &entry.time);
-        let qos = format::qos(&entry.packet.qos);
+        let qos = format::qos(entry.packet.qos);
         let payload = format::payload(entry.packet.payload.to_vec());
         rows_content.push(vec![time, qos, payload]);
     }
