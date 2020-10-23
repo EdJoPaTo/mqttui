@@ -235,6 +235,7 @@ fn parse_history_entry_to_chart_point(entry: &HistoryEntry) -> Option<(f64, f64)
     Some((x, y))
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn parse_time_to_chart_y(time: DateTime<Local>) -> f64 {
     time.timestamp_millis() as f64
 }
