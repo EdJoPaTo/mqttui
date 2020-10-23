@@ -43,14 +43,9 @@ pub fn get_all_parents(topic: &str) -> Vec<&str> {
     let mut result = Vec::new();
     let mut current = topic;
 
-    loop {
-        match get_parent(current) {
-            Some(parent) => {
-                result.push(parent);
-                current = parent;
-            }
-            None => break,
-        }
+    while let Some(parent) = get_parent(current) {
+        result.push(parent);
+        current = parent;
     }
 
     result.reverse();
