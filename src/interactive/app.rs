@@ -88,7 +88,7 @@ impl<'a> App<'a> {
     pub fn on_left(&mut self) {
         if let Some(topic) = &self.selected_topic {
             if let false = self.opened_topics.remove(topic) {
-                self.selected_topic = get_parent(topic).map(|s| s.to_owned());
+                self.selected_topic = get_parent(topic).map(std::borrow::ToOwned::to_owned);
             }
         }
     }

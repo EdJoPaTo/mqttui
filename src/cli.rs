@@ -81,7 +81,9 @@ pub fn get_runtime_arguments() -> RuntimeArguments {
         .expect("MQTT Base Topic could not be read from command line")
         .to_owned();
 
-    let value = matches.value_of("Payload").map(|o| o.to_owned());
+    let value = matches
+        .value_of("Payload")
+        .map(std::borrow::ToOwned::to_owned);
 
     RuntimeArguments {
         verbose,
