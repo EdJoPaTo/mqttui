@@ -26,7 +26,7 @@ jobs:
           key: ${{ runner.os }}-cargo-lint-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run clippy
-        run: cargo clippy --verbose
+        run: cargo clippy --verbose --all-targets --all-features -- -D warnings
       - name: Check format
         run: cargo fmt -- --check --verbose
 
