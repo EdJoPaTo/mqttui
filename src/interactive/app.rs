@@ -49,7 +49,7 @@ impl<'a> App<'a> {
             shown
                 .iter()
                 .position(|o| o == topic)
-                .map(|current_pos| {
+                .map_or(0, |current_pos| {
                     if increase {
                         current_pos.checked_add(1)
                     } else {
@@ -57,7 +57,6 @@ impl<'a> App<'a> {
                     }
                     .unwrap_or(current_pos)
                 })
-                .unwrap_or(0)
         } else if increase {
             0
         } else {

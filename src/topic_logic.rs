@@ -57,7 +57,7 @@ pub fn get_parent(topic: &str) -> Option<&str> {
 }
 
 pub fn get_leaf(topic: &str) -> &str {
-    topic.rfind('/').map(|i| &topic[i + 1..]).unwrap_or(topic)
+    topic.rfind('/').map_or(topic, |i| &topic[i + 1..])
 }
 
 pub fn get_topic_depth(topic: &str) -> usize {

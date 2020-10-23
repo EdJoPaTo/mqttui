@@ -59,15 +59,14 @@ where
     let shown_topics = topic_logic::get_shown_topics(&topics, &app.opened_topics);
 
     // Ensure selected topic is selected index
-    app.topics_overview_state
-        .select(if let Some(selected_topic) = &app.selected_topic {
-            shown_topics.iter().position(|t| t == selected_topic)
-        } else {
-            None
-        });
+    app.topics_overview_state.select(
+        app.selected_topic
+            .as_ref()
+            .and_then(|selected_topic| shown_topics.iter().position(|t| t == selected_topic)),
+    );
 
-    let overview_area = if let Some(selected_topic) = &app.selected_topic {
-        if let Some(topic_history) = history.get(selected_topic) {
+    let overview_area = app.selected_topic.as_ref().map_or(area, |selected_topic| {
+        history.get(selected_topic).map_or(area, |topic_history| {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
                 .direction(Direction::Horizontal)
@@ -76,12 +75,8 @@ where
             draw_details(f, chunks[1], topic_history);
 
             chunks[0]
-        } else {
-            area
-        }
-    } else {
-        area
-    };
+        })
+    });
 
     draw_overview(
         f,
