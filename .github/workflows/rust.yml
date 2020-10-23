@@ -135,13 +135,13 @@ jobs:
           ls -al target
           ls -al target/*
 
-      - name: Release Artifact (linux, mac)
+      - name: Publish Artifact (linux, mac)
         if: runner.os == 'Linux' || runner.os == 'macOS'
         uses: actions/upload-artifact@v2
         with:
           name: mqttui-${{ matrix.config.triple }}
           path: target/${{ matrix.config.triple }}/release/mqttui
-      - name: Release Artifact (windows)
+      - name: Publish Artifact (windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v2
         with:
