@@ -1,4 +1,4 @@
-use crate::format::format_published_packet;
+use crate::format;
 use chrono::Local;
 use rumqttc::{self, Client, Connection};
 
@@ -26,7 +26,7 @@ pub fn eventloop(mut client: Client, mut connection: Connection, verbose: bool) 
                             continue;
                         }
 
-                        println!("{}", format_published_packet(&publish, &Local::now()));
+                        println!("{}", format::published_packet(&publish, &Local::now()));
                     }
                     _ => {
                         if verbose {

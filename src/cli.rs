@@ -10,7 +10,7 @@ pub struct RuntimeArguments {
     pub value: Option<String>,
 }
 
-pub fn build_cli() -> App<'static, 'static> {
+pub fn build() -> App<'static, 'static> {
     App::new("MQTT TUI")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
@@ -61,7 +61,7 @@ pub fn build_cli() -> App<'static, 'static> {
 }
 
 pub fn get_runtime_arguments() -> RuntimeArguments {
-    let matches = build_cli().get_matches();
+    let matches = build().get_matches();
 
     let verbose = matches.is_present("verbose");
     let interactive = matches.is_present("interactive");

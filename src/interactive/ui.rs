@@ -1,9 +1,8 @@
-use crate::format::*;
+use crate::format;
 use crate::interactive::app::App;
 use crate::mqtt_history::get_sorted_vec;
 use crate::mqtt_history::HistoryEntry;
-use crate::topic_logic::get_shown_topics;
-use crate::topic_logic::*;
+use crate::topic_logic;
 use chrono::{DateTime, Local};
 use std::cmp::Ordering;
 use std::error::Error;
@@ -57,7 +56,7 @@ where
         .lock()
         .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
     let topics = get_sorted_vec(history.keys());
-    let shown_topics = get_shown_topics(&topics, &app.opened_topics);
+    let shown_topics = topic_logic::get_shown_topics(&topics, &app.opened_topics);
 
     // Ensure selected topic is selected index
     app.topics_overview_state
@@ -108,8 +107,8 @@ fn draw_overview<B>(
     let items: Vec<ListItem> = shown_topics
         .iter()
         .map(|topic| {
-            let depth = get_topic_depth(topic);
-            let leaf = get_leaf(topic);
+            let depth = topic_logic::get_topic_depth(topic);
+            let leaf = topic_logic::get_leaf(topic);
             let text = format!("{:>width$}{}", "", leaf, width = depth * 3);
             let lines: Vec<Spans> = vec![Spans::from(text)];
             ListItem::new(lines)
@@ -150,9 +149,9 @@ where
 
     let mut rows_content: Vec<Vec<String>> = Vec::new();
     for entry in topic_history {
-        let time = format_timestamp(entry.packet.retain, &entry.time);
-        let qos = format_qos(&entry.packet.qos);
-        let payload = format_payload(entry.packet.payload.to_vec());
+        let time = format::timestamp(entry.packet.retain, &entry.time);
+        let qos = format::qos(&entry.packet.qos);
+        let payload = format::payload(entry.packet.payload.to_vec());
         rows_content.push(vec![time, qos, payload]);
     }
     let rows = rows_content.iter().map(|i| Row::Data(i.iter()));
@@ -236,7 +235,7 @@ fn parse_history_entry_to_chart_point(entry: &HistoryEntry) -> Option<(f64, f64)
         return None;
     }
 
-    let y = format_payload_as_float(entry.packet.payload.to_vec())?;
+    let y = format::payload_as_float(entry.packet.payload.to_vec())?;
     let x = parse_time_to_chart_y(entry.time);
     Some((x, y))
 }
