@@ -2,7 +2,8 @@ use crate::format;
 use crate::interactive::app::App;
 use crate::mqtt_history::get_sorted_vec;
 use crate::mqtt_history::HistoryEntry;
-use crate::topic_logic;
+use crate::topic;
+use crate::topic_view;
 use chrono::{DateTime, Local};
 use std::cmp::Ordering;
 use std::error::Error;
@@ -56,7 +57,7 @@ where
         .lock()
         .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
     let topics = get_sorted_vec(history.keys());
-    let shown_topics = topic_logic::get_shown_topics(&topics, &app.opened_topics);
+    let shown_topics = topic_view::get_shown_topics(&topics, &app.opened_topics);
 
     // Ensure selected topic is selected index
     app.topics_overview_state.select(
@@ -102,8 +103,8 @@ fn draw_overview<B>(
     let items: Vec<ListItem> = shown_topics
         .iter()
         .map(|topic| {
-            let depth = topic_logic::get_topic_depth(topic);
-            let leaf = topic_logic::get_leaf(topic);
+            let depth = topic::get_depth(topic);
+            let leaf = topic::get_leaf(topic);
             let text = format!("{:>width$}{}", "", leaf, width = depth * 3);
             let lines: Vec<Spans> = vec![Spans::from(text)];
             ListItem::new(lines)

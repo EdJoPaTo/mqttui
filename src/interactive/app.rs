@@ -1,7 +1,6 @@
-use crate::{
-    mqtt_history::{get_sorted_vec, HistoryArc},
-    topic_logic::{get_parent, get_shown_topics},
-};
+use crate::mqtt_history::{get_sorted_vec, HistoryArc};
+use crate::topic;
+use crate::topic_view::get_shown_topics;
 use std::cmp::min;
 use std::collections::HashSet;
 use std::error::Error;
@@ -87,7 +86,7 @@ impl<'a> App<'a> {
     pub fn on_left(&mut self) {
         if let Some(topic) = &self.selected_topic {
             if let false = self.opened_topics.remove(topic) {
-                self.selected_topic = get_parent(topic).map(std::borrow::ToOwned::to_owned);
+                self.selected_topic = topic::get_parent(topic).map(std::borrow::ToOwned::to_owned);
             }
         }
     }
