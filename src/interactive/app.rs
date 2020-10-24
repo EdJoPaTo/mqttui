@@ -14,9 +14,8 @@ pub struct App<'a> {
 
     pub opened_topics: HashSet<String>,
     pub selected_topic: Option<String>,
-    pub topics_overview_state: ListState,
-
     pub should_quit: bool,
+    pub topics_overview_state: ListState,
 }
 
 impl<'a> App<'a> {
@@ -29,9 +28,8 @@ impl<'a> App<'a> {
 
             opened_topics: HashSet::new(),
             selected_topic: None,
-            topics_overview_state: ListState::default(),
-
             should_quit: false,
+            topics_overview_state: ListState::default(),
         }
     }
 
