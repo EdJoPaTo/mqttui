@@ -148,11 +148,29 @@ where
     draw_details_table(f, table_area, topic_history);
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn draw_details_table<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
 where
     B: Backend,
 {
-    let title = format!("History ({})", topic_history.len());
+    let mut title = format!("History ({}", topic_history.len());
+
+    let without_retain: Vec<_> = topic_history.iter().filter(|o| !o.packet.retain).collect();
+    let amount_without_retain = without_retain.len().saturating_sub(1);
+    if amount_without_retain > 0 {
+        title += ", every ~";
+
+        let seconds_since_start = without_retain.last().unwrap().time.timestamp()
+            - without_retain.first().unwrap().time.timestamp();
+        let message_every_n_seconds = seconds_since_start as f64 / amount_without_retain as f64;
+        if message_every_n_seconds < 100.0 {
+            title += &format!("{:.1} seconds", message_every_n_seconds);
+        } else {
+            title += &format!("{:.1} minutes", message_every_n_seconds / 60.0);
+        }
+    }
+    title += ")";
+
     let header = ["Time", "QoS", "Payload"];
 
     let mut rows_content: Vec<Vec<String>> = Vec::new();
