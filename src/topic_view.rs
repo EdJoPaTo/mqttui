@@ -27,12 +27,7 @@ pub fn filter_topics_by_opened<'a>(all: &[&'a str], opened: &HashSet<String>) ->
     let mut shown = Vec::new();
 
     for entry in all {
-        let show = topic::get_all_parents(entry)
-            .iter()
-            .cloned()
-            .all(|t| opened.contains(t));
-
-        if show {
+        if is_topic_opened(opened, entry) {
             shown.push(entry.to_owned());
         }
     }
@@ -40,8 +35,15 @@ pub fn filter_topics_by_opened<'a>(all: &[&'a str], opened: &HashSet<String>) ->
     shown
 }
 
+fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
+    topic::get_all_parents(topic)
+        .iter()
+        .cloned()
+        .all(|t| opened.contains(t))
+}
+
 #[test]
-fn tree_variants_empty_stays_emty() {
+fn tree_variants_empty_stays_empty() {
     let actual = build_all_tree_variants(&[]);
     assert_eq!(0, actual.len());
 }
