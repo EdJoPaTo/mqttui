@@ -1,6 +1,6 @@
 [package]
 name = "mqttui"
-version = "0.5.0"
+version = "0.6.0"
 description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
 authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
 edition = "2018"
@@ -9,7 +9,7 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4"
-crossterm = "0.17"
+crossterm = "0.18"
 rand = "0.7"
 rumqttc = "0.1"
 
