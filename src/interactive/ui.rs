@@ -117,8 +117,7 @@ fn draw_overview<B>(
                 .fg(Color::Black)
                 .bg(Color::LightGreen)
                 .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol("> ");
+        );
     f.render_stateful_widget(list_widget, area, state);
 }
 
