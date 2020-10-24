@@ -1,41 +1,60 @@
+use crate::mqtt_history::TopicMessagesLastPayload;
 use crate::topic;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
-pub fn get_shown_topics<'a>(existing: &'a [String], opened: &HashSet<String>) -> Vec<&'a str> {
-    let all = build_all_tree_variants(existing);
-    filter_topics_by_opened(&all, opened)
+#[derive(Debug, Clone, PartialEq)]
+pub struct TopicTreeEntry<'a> {
+    pub topic: &'a str,
+    pub topics_below: usize,
+    pub messages_below: usize,
+    pub last_payload: Option<&'a [u8]>,
 }
 
-pub fn build_all_tree_variants<'a>(existing: &'a [String]) -> Vec<&'a str> {
-    let mut result = Vec::new();
+pub fn get_tree_with_metadata<'a>(
+    entries: &'a [TopicMessagesLastPayload],
+) -> Vec<TopicTreeEntry<'a>> {
+    let mut result: HashMap<&'a str, TopicTreeEntry<'a>> = HashMap::new();
 
-    for entry in existing {
-        for parent in topic::get_all_parents(entry) {
-            result.push(parent);
+    for tmlp in entries {
+        for parent in topic::get_all_parents(&tmlp.topic) {
+            if let Some(entry) = result.get_mut(parent) {
+                entry.messages_below += tmlp.messages;
+                entry.topics_below += 1;
+            } else {
+                result.insert(
+                    parent,
+                    TopicTreeEntry {
+                        topic: parent,
+                        messages_below: tmlp.messages,
+                        topics_below: 1,
+                        last_payload: None,
+                    },
+                );
+            }
         }
 
-        result.push(entry);
-    }
-
-    result.sort_unstable();
-    result.dedup();
-
-    result
-}
-
-pub fn filter_topics_by_opened<'a>(all: &[&'a str], opened: &HashSet<String>) -> Vec<&'a str> {
-    let mut shown = Vec::new();
-
-    for entry in all {
-        if is_topic_opened(opened, entry) {
-            shown.push(entry.to_owned());
+        if let Some(entry) = result.get_mut(&tmlp.topic[0..]) {
+            entry.messages_below += tmlp.messages;
+            entry.last_payload = Some(&tmlp.last_payload);
+        } else {
+            result.insert(
+                &tmlp.topic,
+                TopicTreeEntry {
+                    topic: &tmlp.topic,
+                    messages_below: tmlp.messages,
+                    topics_below: 0,
+                    last_payload: Some(&tmlp.last_payload),
+                },
+            );
         }
     }
 
-    shown
+    let mut vec: Vec<_> = result.values().cloned().collect();
+    vec.sort_by_key(|o| o.topic);
+    vec
 }
 
-fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
+pub fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
     topic::get_all_parents(topic)
         .iter()
         .cloned()
@@ -43,30 +62,53 @@ fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
 }
 
 #[test]
-fn tree_variants_empty_stays_empty() {
-    let actual = build_all_tree_variants(&[]);
-    assert_eq!(0, actual.len());
-}
+fn tree_with_metadata_works() {
+    let mut entries: Vec<TopicMessagesLastPayload> = Vec::new();
+    entries.push(TopicMessagesLastPayload {
+        topic: "a/b".to_string(),
+        messages: 4,
+        last_payload: b"bla".to_vec(),
+    });
+    entries.push(TopicMessagesLastPayload {
+        topic: "a/c".to_string(),
+        messages: 6,
+        last_payload: b"blubb".to_vec(),
+    });
+    entries.push(TopicMessagesLastPayload {
+        topic: "d".to_string(),
+        messages: 5,
+        last_payload: b"fish".to_vec(),
+    });
 
-#[test]
-fn tree_variants_shortest_path() {
-    let topics = ["foo".to_owned()];
-    let actual = build_all_tree_variants(&topics);
-    assert_eq!(actual, ["foo"]);
-}
-
-#[test]
-fn tree_variants_path_gets_splitted() {
-    let topics = ["foo/bar".to_owned()];
-    let actual = build_all_tree_variants(&topics);
-    assert_eq!(actual, ["foo", "foo/bar"]);
-}
-
-#[test]
-fn tree_variants_dont_duplicate() {
-    let topics = ["a/b".to_owned(), "a/b/c".to_owned(), "a/d".to_owned()];
-    let actual = build_all_tree_variants(&topics);
-    assert_eq!(actual, ["a", "a/b", "a/b/c", "a/d"]);
+    assert_eq!(
+        get_tree_with_metadata(&entries),
+        [
+            TopicTreeEntry {
+                topic: "a",
+                topics_below: 2,
+                messages_below: 10,
+                last_payload: None,
+            },
+            TopicTreeEntry {
+                topic: "a/b",
+                topics_below: 0,
+                messages_below: 4,
+                last_payload: Some(b"bla"),
+            },
+            TopicTreeEntry {
+                topic: "a/c",
+                topics_below: 0,
+                messages_below: 6,
+                last_payload: Some(b"blubb"),
+            },
+            TopicTreeEntry {
+                topic: "d",
+                topics_below: 0,
+                messages_below: 5,
+                last_payload: Some(b"fish"),
+            },
+        ]
+    );
 }
 
 #[cfg(test)]

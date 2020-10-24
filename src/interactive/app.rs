@@ -1,6 +1,6 @@
-use crate::mqtt_history::{get_sorted_vec, HistoryArc};
+use crate::mqtt_history::{self, HistoryArc};
 use crate::topic;
-use crate::topic_view::get_shown_topics;
+use crate::topic_view;
 use std::cmp::min;
 use std::collections::HashSet;
 use std::error::Error;
@@ -36,18 +36,22 @@ impl<'a> App<'a> {
     }
 
     fn change_seleted_topic(&mut self, increase: bool) -> Result<(), Box<dyn Error>> {
-        let topics = get_sorted_vec(
-            self.history
-                .lock()
-                .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?
-                .keys(),
-        );
-        let shown = get_shown_topics(&topics, &self.opened_topics);
+        let history = self
+            .history
+            .lock()
+            .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
+
+        let topics = mqtt_history::history_to_tmlp(history.iter());
+        let entries = topic_view::get_tree_with_metadata(&topics);
+        let visible_entries: Vec<_> = entries
+            .iter()
+            .filter(|o| topic_view::is_topic_opened(&self.opened_topics, o.topic))
+            .collect();
 
         let new_index = if let Some(topic) = &self.selected_topic {
-            shown
+            visible_entries
                 .iter()
-                .position(|o| o == topic)
+                .position(|o| o.topic == topic)
                 .map_or(0, |current_pos| {
                     if increase {
                         current_pos.checked_add(1)
@@ -62,9 +66,9 @@ impl<'a> App<'a> {
             usize::MAX
         };
 
-        self.selected_topic = shown
-            .get(min(new_index, shown.len() - 1))
-            .map(|s| s.to_owned().to_owned());
+        self.selected_topic = visible_entries
+            .get(min(new_index, visible_entries.len() - 1))
+            .map(|s| s.topic.to_owned());
 
         Ok(())
     }

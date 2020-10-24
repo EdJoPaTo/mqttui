@@ -1,9 +1,8 @@
 use crate::format;
 use crate::interactive::app::App;
-use crate::mqtt_history::get_sorted_vec;
-use crate::mqtt_history::HistoryEntry;
+use crate::mqtt_history::{self, HistoryEntry};
 use crate::topic;
-use crate::topic_view;
+use crate::topic_view::{self, TopicTreeEntry};
 use chrono::{DateTime, Local};
 use std::cmp::Ordering;
 use std::error::Error;
@@ -56,15 +55,21 @@ where
         .history
         .lock()
         .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
-    let topics = get_sorted_vec(history.keys());
-    let shown_topics = topic_view::get_shown_topics(&topics, &app.opened_topics);
+
+    let topics = mqtt_history::history_to_tmlp(history.iter());
+    let entries = topic_view::get_tree_with_metadata(&topics);
+    let visible_entries: Vec<_> = entries
+        .iter()
+        .filter(|o| topic_view::is_topic_opened(&app.opened_topics, o.topic))
+        .collect();
 
     // Ensure selected topic is selected index
-    app.topics_overview_state.select(
-        app.selected_topic
-            .as_ref()
-            .and_then(|selected_topic| shown_topics.iter().position(|t| t == selected_topic)),
-    );
+    app.topics_overview_state
+        .select(app.selected_topic.as_ref().and_then(|selected_topic| {
+            visible_entries
+                .iter()
+                .position(|t| t.topic == selected_topic)
+        }));
 
     let overview_area = app.selected_topic.as_ref().map_or(area, |selected_topic| {
         history.get(selected_topic).map_or(area, |topic_history| {
@@ -83,7 +88,7 @@ where
         f,
         overview_area,
         topics.len(),
-        &shown_topics,
+        &visible_entries,
         &mut app.topics_overview_state,
     );
     Ok(())
@@ -93,31 +98,39 @@ fn draw_overview<B>(
     f: &mut Frame<B>,
     area: Rect,
     topic_amount: usize,
-    shown_topics: &[&str],
+    visible_entries: &[&TopicTreeEntry],
     state: &mut ListState,
 ) where
     B: Backend,
 {
     let title = format!("Topics ({})", topic_amount);
 
-    let items: Vec<ListItem> = shown_topics
+    let items: Vec<ListItem> = visible_entries
         .iter()
-        .map(|topic| {
-            let depth = topic::get_depth(topic);
-            let leaf = topic::get_leaf(topic);
-            let text = format!("{:>width$}{}", "", leaf, width = depth * 3);
-            let lines: Vec<Spans> = vec![Spans::from(text)];
-            ListItem::new(lines)
+        .map(|entry| {
+            let depth = topic::get_depth(entry.topic);
+            let leaf = topic::get_leaf(entry.topic);
+            let topic = format!("{:>width$}{}", "", leaf, width = depth * 3);
+
+            let meta = if let Some(payload) = &entry.last_payload {
+                format!("= {}", format::payload(payload.to_vec()))
+            } else {
+                format!(
+                    "({} topics, {} messages)",
+                    entry.topics_below, entry.messages_below
+                )
+            };
+
+            ListItem::new(vec![Spans::from(vec![
+                Span::styled(topic, Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" "),
+                Span::styled(meta, Style::default().fg(Color::DarkGray)),
+            ])])
         })
         .collect();
     let list_widget = List::new(items)
         .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(
-            Style::default()
-                .fg(Color::Black)
-                .bg(Color::LightGreen)
-                .add_modifier(Modifier::BOLD),
-        );
+        .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
     f.render_stateful_widget(list_widget, area, state);
 }
 

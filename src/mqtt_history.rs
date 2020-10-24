@@ -65,15 +65,24 @@ fn thread_logic(mut connection: Connection, arc_history: &HistoryArc) {
     }
 }
 
-pub fn get_sorted_vec<'a, I>(input: I) -> Vec<String>
+pub struct TopicMessagesLastPayload {
+    pub topic: String,
+    pub messages: usize,
+    pub last_payload: Vec<u8>,
+}
+
+/// Get History Entries into the simpler `TopicMessagesLastPayload`
+pub fn history_to_tmlp<'a, I>(items: I) -> Vec<TopicMessagesLastPayload>
 where
-    I: IntoIterator<Item = &'a String>,
+    I: IntoIterator<Item = (&'a String, &'a Vec<HistoryEntry>)>,
 {
     let mut result = Vec::new();
-    for entry in input {
-        result.push(entry.to_owned());
+    for (topic, history) in items {
+        result.push(TopicMessagesLastPayload {
+            topic: topic.to_owned(),
+            messages: history.len(),
+            last_payload: history.last().unwrap().packet.payload.to_vec(),
+        });
     }
-
-    result.sort();
     result
 }
