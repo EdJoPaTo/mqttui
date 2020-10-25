@@ -52,11 +52,10 @@ impl<'a> App<'a> {
                 .position(|o| o.topic == topic)
                 .map_or(0, |current_pos| {
                     if increase {
-                        current_pos.checked_add(1)
+                        current_pos.saturating_add(1)
                     } else {
-                        current_pos.checked_sub(1)
+                        current_pos.saturating_sub(1)
                     }
-                    .unwrap_or(current_pos)
                 })
         } else if increase {
             0
