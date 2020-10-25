@@ -52,9 +52,9 @@ impl<'a> App<'a> {
                 .position(|o| o.topic == topic)
                 .map_or(0, |current_pos| {
                     if increase {
-                        current_pos.saturating_add(1)
+                        current_pos.saturating_add(1) % visible_entries.len()
                     } else {
-                        current_pos.saturating_sub(1)
+                        current_pos.overflowing_sub(1).0
                     }
                 })
         } else if increase {
