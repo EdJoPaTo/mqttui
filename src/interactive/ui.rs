@@ -4,7 +4,7 @@ use crate::mqtt_history::{self, HistoryEntry};
 use crate::topic;
 use crate::topic_view::{self, TopicTreeEntry};
 use chrono::{DateTime, Local};
-use std::cmp::Ordering;
+use std::cmp::{min, Ordering};
 use std::error::Error;
 use tui::{
     backend::Backend,
@@ -135,6 +135,47 @@ fn draw_overview<B>(
 }
 
 fn draw_details<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
+where
+    B: Backend,
+{
+    let last = topic_history.last().unwrap();
+    let payload_length = last.packet.payload.len();
+    let payload_json = format::payload_as_pretty_json(last.packet.payload.to_vec());
+
+    let payload = payload_json.map_or(
+        format::payload_as_utf8(last.packet.payload.to_vec()),
+        |payload| json::stringify_pretty(payload, 2),
+    );
+    let lines = payload.matches('\n').count().saturating_add(1);
+
+    let chunks = Layout::default()
+        .constraints(
+            [
+                #[allow(clippy::cast_possible_truncation)]
+                Constraint::Length(2 + min(area.height as usize / 3, lines) as u16),
+                Constraint::Min(16),
+            ]
+            .as_ref(),
+        )
+        .split(area);
+
+    draw_payload(f, chunks[0], payload_length, &payload);
+    draw_history(f, chunks[1], topic_history);
+}
+
+fn draw_payload<B>(f: &mut Frame<B>, area: Rect, bytes: usize, payload: &str)
+where
+    B: Backend,
+{
+    let title = format!("Payload (Bytes: {})", bytes);
+    let items: Vec<_> = payload.split('\n').map(ListItem::new).collect();
+    let paragraph = List::new(items)
+        .block(Block::default().borders(Borders::ALL).title(title))
+        .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
+    f.render_widget(paragraph, area);
+}
+
+fn draw_history<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
 where
     B: Backend,
 {

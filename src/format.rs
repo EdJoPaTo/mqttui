@@ -1,4 +1,5 @@
 use chrono::{DateTime, TimeZone};
+use json::JsonValue;
 use rumqttc::{Publish, QoS};
 
 pub fn published_packet<Tz: TimeZone>(packet: &Publish, time: &DateTime<Tz>) -> String
@@ -42,6 +43,12 @@ pub fn payload_as_float(payload: Vec<u8>) -> Option<f64> {
         .and_then(|o| o.parse::<f64>().ok())
 }
 
+pub fn payload_as_pretty_json(payload: Vec<u8>) -> Option<JsonValue> {
+    String::from_utf8(payload)
+        .ok()
+        .and_then(|s| json::parse(&s).ok())
+}
+
 #[test]
 fn formats_published_packet() {
     let time = DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
@@ -64,4 +71,25 @@ fn formats_qos() {
     assert_eq!("AtLeastOnce", qos(QoS::AtLeastOnce));
     assert_eq!("AtMostOnce", qos(QoS::AtMostOnce));
     assert_eq!("ExactlyOnce", qos(QoS::ExactlyOnce));
+}
+
+#[test]
+fn payload_pretty_json_ignores_plain() {
+    assert_eq!(None, payload_as_pretty_json(b"bob".to_vec()))
+}
+
+#[test]
+fn payload_pretty_json_object_works() {
+    assert_eq!(
+        payload_as_pretty_json(br#"{"a": "alpha", "b": "beta"}"#.to_vec()).map(json::stringify),
+        Some(r#"{"a":"alpha","b":"beta"}"#.to_string())
+    );
+}
+
+#[test]
+fn payload_pretty_json_number_works() {
+    assert_eq!(
+        payload_as_pretty_json(b"42".to_vec()).map(json::stringify),
+        Some("42".to_string())
+    );
 }

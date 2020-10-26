@@ -10,6 +10,7 @@ edition = "2018"
 [dependencies]
 chrono = "0.4"
 crossterm = "0.18"
+json = "0.12"
 rand = "0.7"
 rumqttc = "0.1"
 
