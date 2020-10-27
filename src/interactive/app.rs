@@ -33,7 +33,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn change_seleted_topic(&mut self, increase: bool) -> Result<(), Box<dyn Error>> {
+    fn change_selected_topic(&mut self, increase: bool) -> Result<(), Box<dyn Error>> {
         let history = self
             .history
             .lock()
@@ -71,11 +71,11 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
-        self.change_seleted_topic(false)
+        self.change_selected_topic(false)
     }
 
     pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
-        self.change_seleted_topic(true)
+        self.change_selected_topic(true)
     }
 
     pub fn on_right(&mut self) {
