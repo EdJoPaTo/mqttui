@@ -43,7 +43,7 @@ pub fn payload_as_float(payload: Vec<u8>) -> Option<f64> {
         .and_then(|o| o.parse::<f64>().ok())
 }
 
-pub fn payload_as_pretty_json(payload: Vec<u8>) -> Option<JsonValue> {
+pub fn payload_as_json(payload: Vec<u8>) -> Option<JsonValue> {
     String::from_utf8(payload)
         .ok()
         .and_then(|s| json::parse(&s).ok())
@@ -75,13 +75,13 @@ fn formats_qos() {
 
 #[test]
 fn payload_pretty_json_ignores_plain() {
-    assert_eq!(None, payload_as_pretty_json(b"bob".to_vec()))
+    assert_eq!(None, payload_as_json(b"bob".to_vec()))
 }
 
 #[test]
 fn payload_pretty_json_object_works() {
     assert_eq!(
-        payload_as_pretty_json(br#"{"a": "alpha", "b": "beta"}"#.to_vec()).map(json::stringify),
+        payload_as_json(br#"{"a": "alpha", "b": "beta"}"#.to_vec()).map(json::stringify),
         Some(r#"{"a":"alpha","b":"beta"}"#.to_string())
     );
 }
@@ -89,7 +89,7 @@ fn payload_pretty_json_object_works() {
 #[test]
 fn payload_pretty_json_number_works() {
     assert_eq!(
-        payload_as_pretty_json(b"42".to_vec()).map(json::stringify),
+        payload_as_json(b"42".to_vec()).map(json::stringify),
         Some("42".to_string())
     );
 }

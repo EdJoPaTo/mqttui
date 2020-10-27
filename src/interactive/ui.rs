@@ -140,7 +140,7 @@ where
 {
     let last = topic_history.last().unwrap();
     let payload_length = last.packet.payload.len();
-    let payload_json = format::payload_as_pretty_json(last.packet.payload.to_vec());
+    let payload_json = format::payload_as_json(last.packet.payload.to_vec());
 
     let payload = payload_json.map_or(
         format::payload_as_utf8(last.packet.payload.to_vec()),
