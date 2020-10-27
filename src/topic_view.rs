@@ -10,9 +10,10 @@ pub struct TopicTreeEntry<'a> {
     pub last_payload: Option<&'a [u8]>,
 }
 
-pub fn get_tree_with_metadata<'a>(
-    entries: &'a [TopicMessagesLastPayload],
-) -> Vec<TopicTreeEntry<'a>> {
+pub fn get_tree_with_metadata<'a, I>(entries: I) -> Vec<TopicTreeEntry<'a>>
+where
+    I: IntoIterator<Item = &'a TopicMessagesLastPayload>,
+{
     let mut result: HashMap<&'a str, TopicTreeEntry<'a>> = HashMap::new();
 
     for tmlp in entries {
