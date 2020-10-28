@@ -169,10 +169,10 @@ where
 {
     let title = format!("Payload (Bytes: {})", bytes);
     let items: Vec<_> = payload.split('\n').map(ListItem::new).collect();
-    let paragraph = List::new(items)
+    let widget = List::new(items)
         .block(Block::default().borders(Borders::ALL).title(title))
         .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
-    f.render_widget(paragraph, area);
+    f.render_widget(widget, area);
 }
 
 fn draw_history<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
