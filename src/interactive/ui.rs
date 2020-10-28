@@ -71,18 +71,23 @@ where
                 .position(|t| t.topic == selected_topic)
         }));
 
-    let overview_area = app.selected_topic.as_ref().map_or(area, |selected_topic| {
-        history.get(selected_topic).map_or(area, |topic_history| {
-            let chunks = Layout::default()
-                .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
-                .direction(Direction::Horizontal)
-                .split(area);
+    #[allow(clippy::option_if_let_else)]
+    let overview_area = if let Some(topic_history) = app
+        .selected_topic
+        .as_ref()
+        .and_then(|selected_topic| history.get(selected_topic))
+    {
+        let chunks = Layout::default()
+            .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
+            .direction(Direction::Horizontal)
+            .split(area);
 
-            draw_details(f, chunks[1], topic_history);
+        draw_details(f, chunks[1], topic_history);
 
-            chunks[0]
-        })
-    });
+        chunks[0]
+    } else {
+        area
+    };
 
     draw_overview(
         f,
