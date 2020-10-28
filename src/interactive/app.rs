@@ -71,11 +71,13 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
-        self.change_selected_topic(false)
+        let increase = false;
+        self.change_selected_topic(increase)
     }
 
     pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
-        self.change_selected_topic(true)
+        let increase = true;
+        self.change_selected_topic(increase)
     }
 
     pub fn on_right(&mut self) {
