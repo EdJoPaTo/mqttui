@@ -1,7 +1,6 @@
 use crate::mqtt_history::{self, HistoryArc};
 use crate::topic;
 use crate::topic_view;
-use std::cmp::min;
 use std::collections::HashSet;
 use std::error::Error;
 use tui::widgets::ListState;
@@ -61,11 +60,10 @@ impl<'a> App<'a> {
             0
         } else {
             usize::MAX
-        };
+        }
+        .min(visible_entries.len() - 1);
 
-        self.selected_topic = visible_entries
-            .get(min(new_index, visible_entries.len() - 1))
-            .map(|s| s.topic.to_owned());
+        self.selected_topic = visible_entries.get(new_index).map(|s| s.topic.to_owned());
 
         Ok(())
     }
