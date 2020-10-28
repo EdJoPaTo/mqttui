@@ -157,7 +157,7 @@ where
         .constraints(
             [
                 #[allow(clippy::cast_possible_truncation)]
-                Constraint::Length(2 + min(area.height as usize / 3, lines) as u16),
+                Constraint::Length(min(area.height as usize / 3, 2 + lines) as u16),
                 Constraint::Min(16),
             ]
             .as_ref(),
