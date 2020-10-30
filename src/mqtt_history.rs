@@ -15,9 +15,14 @@ pub struct HistoryEntry {
 pub type HistoryArc = Arc<Mutex<HashMap<String, Vec<HistoryEntry>>>>;
 
 pub fn start(mut connection: Connection) -> Result<(HistoryArc, JoinHandle<()>), Box<dyn Error>> {
-    // TODO: weird workaround. Is there a better solution?
-    // Iterate once. This is the initial connection attempt. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
-    connection.iter().next().unwrap()?;
+    // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
+    for notification in connection.iter() {
+        if let rumqttc::Event::Incoming(packet) = notification.expect("connection error") {
+            if let rumqttc::Packet::ConnAck(_) = packet {
+                break;
+            }
+        }
+    }
 
     let history = Arc::new(Mutex::new(HashMap::new()));
 
