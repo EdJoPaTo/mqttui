@@ -21,19 +21,21 @@ pub fn start(mut connection: Connection) -> Result<(HistoryArc, JoinHandle<()>),
 
     let history = Arc::new(Mutex::new(HashMap::new()));
 
-    let thread_history = Arc::clone(&history);
-    let handle = thread::Builder::new()
-        .name("mqtt connection".into())
-        .spawn(move || thread_logic(connection, &thread_history))?;
+    let handle = {
+        let history = Arc::clone(&history);
+        thread::Builder::new()
+            .name("mqtt connection".into())
+            .spawn(move || thread_logic(connection, &history))?
+    };
 
     Ok((history, handle))
 }
 
-fn thread_logic(mut connection: Connection, arc_history: &HistoryArc) {
+fn thread_logic(mut connection: Connection, history: &HistoryArc) {
     for notification in connection.iter() {
         // While only writing to history on Incoming Publish locking the mutex here is still useful
         // When something panics here, it will poison the mutex and end the main process
-        let mut history = arc_history.lock().unwrap();
+        let mut history = history.lock().unwrap();
 
         match notification.expect("connection error") {
             rumqttc::Event::Incoming(packet) => {
