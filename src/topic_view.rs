@@ -1,58 +1,133 @@
 use crate::mqtt_history::TopicMessagesLastPayload;
-use crate::topic;
+use crate::{format, topic};
 use std::collections::{HashMap, HashSet};
+use tui::style::{Color, Modifier, Style};
+use tui::text::{Span, Spans};
+use tui_tree_widget::identifier::TreeIdentifierVec;
+use tui_tree_widget::TreeItem;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct TopicTreeEntry<'a> {
-    pub topic: &'a str,
-    pub topics_below: usize,
-    pub messages_below: usize,
-    pub last_payload: Option<&'a [u8]>,
+#[derive(Debug)]
+pub struct TopicTreeEntry {
+    pub topic: String,
+    pub messages: usize,
+    pub last_payload: Option<Vec<u8>>,
+    pub entries_below: Vec<TopicTreeEntry>,
 }
 
-pub fn get_tree_with_metadata<'a, I>(entries: I) -> Vec<TopicTreeEntry<'a>>
+impl TopicTreeEntry {
+    pub fn leaf(&self) -> &str {
+        topic::get_leaf(&self.topic)
+    }
+
+    pub fn topics_below(&self) -> usize {
+        let mut counter = 0;
+        for below in &self.entries_below {
+            if below.messages > 0 {
+                counter += 1;
+            }
+
+            counter += below.topics_below();
+        }
+
+        counter
+    }
+
+    pub fn messages_below(&self) -> usize {
+        let mut counter = self.messages;
+        for below in &self.entries_below {
+            counter += below.messages_below();
+        }
+
+        counter
+    }
+}
+
+pub fn get_tmlp_as_tree<'a, I>(entries: I) -> Vec<TopicTreeEntry>
 where
     I: IntoIterator<Item = &'a TopicMessagesLastPayload>,
 {
-    let mut result: HashMap<&'a str, TopicTreeEntry<'a>> = HashMap::new();
-
-    for tmlp in entries {
-        for parent in topic::get_all_parents(&tmlp.topic) {
-            if let Some(entry) = result.get_mut(parent) {
-                entry.messages_below += tmlp.messages;
-                entry.topics_below += 1;
-            } else {
-                result.insert(
-                    parent,
-                    TopicTreeEntry {
-                        topic: parent,
-                        messages_below: tmlp.messages,
-                        topics_below: 1,
-                        last_payload: None,
-                    },
-                );
-            }
-        }
-
-        if let Some(entry) = result.get_mut(&tmlp.topic[0..]) {
-            entry.messages_below += tmlp.messages;
-            entry.last_payload = Some(&tmlp.last_payload);
-        } else {
-            result.insert(
-                &tmlp.topic,
-                TopicTreeEntry {
-                    topic: &tmlp.topic,
-                    messages_below: tmlp.messages,
-                    topics_below: 0,
-                    last_payload: Some(&tmlp.last_payload),
-                },
-            );
-        }
+    let mut map: HashMap<&str, &TopicMessagesLastPayload> = HashMap::new();
+    for entry in entries {
+        map.insert(&entry.topic, entry);
     }
 
-    let mut vec: Vec<_> = result.values().cloned().collect();
-    vec.sort_by_key(|o| o.topic);
-    vec
+    let mut keys = map.keys().cloned().collect::<Vec<_>>();
+    keys.sort_unstable();
+
+    let roots = topic::get_all_roots(keys.to_owned());
+    let topics = topic::get_all_with_parents(keys);
+
+    let mut result = Vec::new();
+    for root in roots {
+        result.push(build_recursive(&map, &topics, root));
+    }
+
+    result
+}
+
+fn build_recursive(
+    map: &HashMap<&str, &TopicMessagesLastPayload>,
+    all_topics: &[&str],
+    topic: &str,
+) -> TopicTreeEntry {
+    let mut entries_below: Vec<TopicTreeEntry> = Vec::new();
+    for child in topic::get_direct_children(topic, all_topics) {
+        entries_below.push(build_recursive(map, all_topics, child));
+    }
+
+    let info = map.get(topic);
+
+    TopicTreeEntry {
+        topic: topic.to_owned(),
+        messages: info.map_or(0, |o| o.messages),
+        last_payload: info.map(|o| o.last_payload.to_vec()),
+        entries_below,
+    }
+}
+
+pub fn get_identifier_of_topic(
+    tree_items: &[TopicTreeEntry],
+    topic: &str,
+) -> Option<TreeIdentifierVec> {
+    let mut identifier = Vec::new();
+    let mut current = tree_items;
+    for part in topic::get_parts(topic) {
+        let index = current
+            .iter()
+            .position(|o| topic::get_leaf(&o.topic) == part)?;
+        current = &current.get(index).unwrap().entries_below;
+        identifier.push(index);
+    }
+
+    Some(identifier)
+}
+
+pub fn tree_items_from_tmlp_tree(entries: &[TopicTreeEntry]) -> Vec<TreeItem> {
+    let mut result = Vec::new();
+
+    for entry in entries {
+        let children = tree_items_from_tmlp_tree(&entry.entries_below);
+
+        let meta = if let Some(payload) = &entry.last_payload {
+            format!("= {}", format::payload_as_utf8(payload.to_vec()))
+        } else {
+            format!(
+                "({} topics, {} messages)",
+                entry.topics_below(),
+                entry.messages_below()
+            )
+        };
+
+        let text = vec![Spans::from(vec![
+            Span::styled(entry.leaf(), Style::default().add_modifier(Modifier::BOLD)),
+            Span::raw(" "),
+            Span::styled(meta, Style::default().fg(Color::DarkGray)),
+        ])];
+
+        result.push(TreeItem::new(text, children));
+    }
+
+    result
 }
 
 pub fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
@@ -60,56 +135,6 @@ pub fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
         .iter()
         .cloned()
         .all(|t| opened.contains(t))
-}
-
-#[test]
-fn tree_with_metadata_works() {
-    let mut entries: Vec<TopicMessagesLastPayload> = Vec::new();
-    entries.push(TopicMessagesLastPayload {
-        topic: "a/b".to_string(),
-        messages: 4,
-        last_payload: b"bla".to_vec(),
-    });
-    entries.push(TopicMessagesLastPayload {
-        topic: "a/c".to_string(),
-        messages: 6,
-        last_payload: b"blubb".to_vec(),
-    });
-    entries.push(TopicMessagesLastPayload {
-        topic: "d".to_string(),
-        messages: 5,
-        last_payload: b"fish".to_vec(),
-    });
-
-    assert_eq!(
-        get_tree_with_metadata(&entries),
-        [
-            TopicTreeEntry {
-                topic: "a",
-                topics_below: 2,
-                messages_below: 10,
-                last_payload: None,
-            },
-            TopicTreeEntry {
-                topic: "a/b",
-                topics_below: 0,
-                messages_below: 4,
-                last_payload: Some(b"bla"),
-            },
-            TopicTreeEntry {
-                topic: "a/c",
-                topics_below: 0,
-                messages_below: 6,
-                last_payload: Some(b"blubb"),
-            },
-            TopicTreeEntry {
-                topic: "d",
-                topics_below: 0,
-                messages_below: 5,
-                last_payload: Some(b"fish"),
-            },
-        ]
-    );
 }
 
 #[cfg(test)]

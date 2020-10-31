@@ -91,5 +91,6 @@ where
             last_payload: history.last().unwrap().packet.payload.to_vec(),
         });
     }
+    result.sort_by_key(|o| o.topic.to_owned());
     result
 }

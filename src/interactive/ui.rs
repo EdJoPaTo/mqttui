@@ -1,7 +1,6 @@
 use crate::format;
 use crate::interactive::app::App;
 use crate::mqtt_history::{self, HistoryEntry};
-use crate::topic;
 use crate::topic_view::{self, TopicTreeEntry};
 use chrono::{DateTime, Local};
 use std::cmp::{min, Ordering};
@@ -14,11 +13,12 @@ use tui::{
     text::Span,
     text::Spans,
     widgets::{
-        Axis, Block, Borders, Chart, Dataset, GraphType, List, ListItem, ListState, Paragraph, Row,
-        Table, TableState, Wrap,
+        Axis, Block, Borders, Chart, Dataset, GraphType, List, ListItem, Paragraph, Row, Table,
+        TableState, Wrap,
     },
     Frame,
 };
+use tui_tree_widget::{Tree, TreeState};
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn Error>> {
     let chunks = Layout::default()
@@ -57,19 +57,24 @@ where
         .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
 
     let topics = mqtt_history::history_to_tmlp(history.iter());
-    let entries = topic_view::get_tree_with_metadata(&topics);
-    let visible_entries: Vec<_> = entries
-        .iter()
-        .filter(|o| topic_view::is_topic_opened(&app.opened_topics, o.topic))
-        .collect();
+    let tree_items = topic_view::get_tmlp_as_tree(&topics);
+
+    // Move opened_topics over to TreeState
+    app.topic_overview_state.close_all();
+    for topic in &app.opened_topics {
+        app.topic_overview_state
+            .open(topic_view::get_identifier_of_topic(&tree_items, topic).unwrap_or_default());
+    }
 
     // Ensure selected topic is selected index
-    app.topics_overview_state
-        .select(app.selected_topic.as_ref().and_then(|selected_topic| {
-            visible_entries
-                .iter()
-                .position(|t| t.topic == selected_topic)
-        }));
+    app.topic_overview_state.select(
+        app.selected_topic
+            .as_ref()
+            .and_then(|selected_topic| {
+                topic_view::get_identifier_of_topic(&tree_items, selected_topic)
+            })
+            .unwrap_or_default(),
+    );
 
     #[allow(clippy::option_if_let_else)]
     let overview_area = if let Some(topic_history) = app
@@ -93,8 +98,8 @@ where
         f,
         overview_area,
         topics.len(),
-        &visible_entries,
-        &mut app.topics_overview_state,
+        &tree_items,
+        &mut app.topic_overview_state,
     );
     Ok(())
 }
@@ -103,40 +108,19 @@ fn draw_overview<B>(
     f: &mut Frame<B>,
     area: Rect,
     topic_amount: usize,
-    visible_entries: &[&TopicTreeEntry],
-    state: &mut ListState,
+    tree_items: &[TopicTreeEntry],
+    state: &mut TreeState,
 ) where
     B: Backend,
 {
     let title = format!("Topics ({})", topic_amount);
 
-    let items: Vec<ListItem> = visible_entries
-        .iter()
-        .map(|entry| {
-            let depth = topic::get_depth(entry.topic);
-            let leaf = topic::get_leaf(entry.topic);
-            let topic = format!("{:>width$}{}", "", leaf, width = depth * 3);
+    let tree_items = topic_view::tree_items_from_tmlp_tree(&tree_items);
 
-            let meta = if let Some(payload) = &entry.last_payload {
-                format!("= {}", format::payload_as_utf8(payload.to_vec()))
-            } else {
-                format!(
-                    "({} topics, {} messages)",
-                    entry.topics_below, entry.messages_below
-                )
-            };
-
-            ListItem::new(vec![Spans::from(vec![
-                Span::styled(topic, Style::default().add_modifier(Modifier::BOLD)),
-                Span::raw(" "),
-                Span::styled(meta, Style::default().fg(Color::DarkGray)),
-            ])])
-        })
-        .collect();
-    let list_widget = List::new(items)
+    let widget = Tree::new(tree_items)
         .block(Block::default().borders(Borders::ALL).title(title))
         .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
-    f.render_stateful_widget(list_widget, area, state);
+    f.render_stateful_widget(widget, area, state);
 }
 
 fn draw_details<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])

@@ -433,6 +433,7 @@ dependencies = [
  "rand",
  "rumqttc",
  "tui",
+ "tui-tree-widget",
 ]
 
 [[package]]
@@ -860,6 +861,16 @@ dependencies = [
  "cassowary",
  "crossterm 0.17.7",
  "unicode-segmentation",
+ "unicode-width",
+]
+
+[[package]]
+name = "tui-tree-widget"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b313ba24c6f33666f25d9427bdf93853456fed83d98394d6e379786319ff551"
+dependencies = [
+ "tui",
  "unicode-width",
 ]
 
