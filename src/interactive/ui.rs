@@ -173,7 +173,7 @@ where
     B: Backend,
 {
     let title = format!("Payload (Bytes: {})", bytes);
-    let items: Vec<_> = payload.split('\n').map(ListItem::new).collect();
+    let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
     let widget = List::new(items)
         .block(Block::default().borders(Borders::ALL).title(title))
         .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
