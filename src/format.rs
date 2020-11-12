@@ -2,6 +2,9 @@ use chrono::{DateTime, TimeZone};
 use json::JsonValue;
 use rumqttc::{Publish, QoS};
 
+pub const TIMESTAMP_FORMAT: &str = "%_H:%M:%S.%3f";
+pub const TIMESTAMP_RETAINED: &str = "RETAINED";
+
 pub fn published_packet<Tz: TimeZone>(packet: &Publish, time: &DateTime<Tz>) -> String
 where
     Tz::Offset: std::fmt::Display,
@@ -27,9 +30,9 @@ where
     Tz::Offset: std::fmt::Display,
 {
     if retained {
-        String::from("RETAINED")
+        String::from(TIMESTAMP_RETAINED)
     } else {
-        time.format("%_H:%M:%S.%3f").to_string()
+        time.format(TIMESTAMP_FORMAT).to_string()
     }
 }
 
