@@ -11,6 +11,7 @@ pub struct App<'a> {
     pub subscribe_topic: &'a str,
     pub history: HistoryArc,
 
+    pub json_view_state: TreeState,
     pub opened_topics: HashSet<String>,
     pub selected_topic: Option<String>,
     pub should_quit: bool,
@@ -25,6 +26,7 @@ impl<'a> App<'a> {
             subscribe_topic,
             history,
 
+            json_view_state: TreeState::default(),
             opened_topics: HashSet::new(),
             selected_topic: None,
             should_quit: false,

@@ -5,6 +5,7 @@ use std::sync::Arc;
 mod cli;
 mod format;
 mod interactive;
+mod json_view;
 mod mqtt_history;
 mod simple;
 mod topic;

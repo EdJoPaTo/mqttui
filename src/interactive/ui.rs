@@ -1,9 +1,7 @@
-use crate::format;
-use crate::interactive::app::App;
-use crate::mqtt_history::{self, HistoryEntry};
-use crate::topic_view::{self, TopicTreeEntry};
 use std::cmp::min;
 use std::error::Error;
+
+use json::JsonValue;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
@@ -13,6 +11,12 @@ use tui::{
     Frame,
 };
 use tui_tree_widget::{Tree, TreeState};
+
+use crate::format;
+use crate::interactive::app::App;
+use crate::json_view::root_tree_items_from_json;
+use crate::mqtt_history::{self, HistoryEntry};
+use crate::topic_view::{self, TopicTreeEntry};
 
 mod history;
 
@@ -83,7 +87,7 @@ where
             .direction(Direction::Horizontal)
             .split(area);
 
-        draw_details(f, chunks[1], topic_history);
+        draw_details(f, chunks[1], topic_history, &mut app.json_view_state);
 
         chunks[0]
     } else {
@@ -119,36 +123,57 @@ fn draw_overview<B>(
     f.render_stateful_widget(widget, area, state);
 }
 
-fn draw_details<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
-where
+fn draw_details<B>(
+    f: &mut Frame<B>,
+    area: Rect,
+    topic_history: &[HistoryEntry],
+    json_view_state: &mut TreeState,
+) where
     B: Backend,
 {
     let last = topic_history.last().unwrap();
     let payload_length = last.packet.payload.len();
     let payload_json = format::payload_as_json(last.packet.payload.to_vec());
 
-    let payload = payload_json.map_or(
-        format::payload_as_utf8(last.packet.payload.to_vec()),
-        |payload| json::stringify_pretty(payload, 2),
-    );
-    let lines = payload.matches('\n').count().saturating_add(1);
+    #[allow(clippy::option_if_let_else)]
+    let history_area = if let Some(json) = payload_json {
+        let chunks = Layout::default()
+            .constraints(
+                [
+                    #[allow(clippy::cast_possible_truncation)]
+                    Constraint::Percentage(25),
+                    Constraint::Min(16),
+                ]
+                .as_ref(),
+            )
+            .split(area);
 
-    let chunks = Layout::default()
-        .constraints(
-            [
-                #[allow(clippy::cast_possible_truncation)]
-                Constraint::Length(min(area.height as usize / 3, 2 + lines) as u16),
-                Constraint::Min(16),
-            ]
-            .as_ref(),
-        )
-        .split(area);
+        draw_payload_json(f, chunks[0], payload_length, &json, json_view_state);
+        chunks[1]
+    } else {
+        let payload = format::payload_as_utf8(last.packet.payload.to_vec());
+        let lines = payload.matches('\n').count().saturating_add(1);
 
-    draw_payload(f, chunks[0], payload_length, &payload);
-    history::draw(f, chunks[1], topic_history);
+        let max_payload_height = area.height / 3;
+        let chunks = Layout::default()
+            .constraints(
+                [
+                    #[allow(clippy::cast_possible_truncation)]
+                    Constraint::Length(min(max_payload_height as usize, 2 + lines) as u16),
+                    Constraint::Min(16),
+                ]
+                .as_ref(),
+            )
+            .split(area);
+
+        draw_payload_string(f, chunks[0], payload_length, &payload);
+        chunks[1]
+    };
+
+    history::draw(f, history_area, topic_history);
 }
 
-fn draw_payload<B>(f: &mut Frame<B>, area: Rect, bytes: usize, payload: &str)
+fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, bytes: usize, payload: &str)
 where
     B: Backend,
 {
@@ -158,4 +183,21 @@ where
         .block(Block::default().borders(Borders::ALL).title(title))
         .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
     f.render_widget(widget, area);
+}
+
+fn draw_payload_json<B>(
+    f: &mut Frame<B>,
+    area: Rect,
+    bytes: usize,
+    json: &JsonValue,
+    view_state: &mut TreeState,
+) where
+    B: Backend,
+{
+    let title = format!("JSON Payload (Bytes: {})", bytes);
+    let items = root_tree_items_from_json(json);
+    let widget = Tree::new(items)
+        .block(Block::default().borders(Borders::ALL).title(title))
+        .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
+    f.render_stateful_widget(widget, area, view_state);
 }
