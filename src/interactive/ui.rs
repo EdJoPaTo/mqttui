@@ -200,7 +200,7 @@ fn draw_details<B>(
         chunks[1]
     };
 
-    history::draw(f, history_area, topic_history);
+    history::draw(f, history_area, topic_history, &json_view_state.selected());
 }
 
 fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, bytes: usize, payload: &str)

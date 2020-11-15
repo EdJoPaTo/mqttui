@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use chrono::{DateTime, Local};
+use json::JsonValue;
 use rumqttc::QoS;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Layout, Rect};
@@ -10,6 +11,7 @@ use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, 
 use tui::{symbols, Frame};
 
 use crate::format::{self};
+use crate::json_view;
 use crate::mqtt_history::HistoryEntry;
 
 #[derive(Debug, PartialEq)]
@@ -24,8 +26,15 @@ pub struct DataPoint {
     pub value: Result<String, String>,
 }
 
+fn stringify_jsonlike_string(source: &str, selection: &[usize]) -> Result<String, String> {
+    let root = json::parse(source).map_err(|err| format!("invalid json: {}", err))?;
+    json_view::get_selected_subvalue(&root, selection)
+        .ok_or_else(|| String::from("selection is not possible in json"))
+        .map(JsonValue::dump)
+}
+
 impl DataPoint {
-    pub fn parse_from_history_entry(entry: &HistoryEntry) -> Self {
+    pub fn parse_from_history_entry(entry: &HistoryEntry, json_selector: &[usize]) -> Self {
         let time = if entry.packet.retain {
             PacketTime::Retained
         } else {
@@ -34,16 +43,10 @@ impl DataPoint {
 
         let qos = entry.packet.qos;
         let value = String::from_utf8(entry.packet.payload.to_vec())
-            .map_err(|err| format!("invalid UTF8: {}", err));
-        DataPoint { time, qos, value }
-    }
+            .map_err(|err| format!("invalid UTF8: {}", err))
+            .map(|string| stringify_jsonlike_string(&string, json_selector).map_or(string, |s| s));
 
-    pub fn parse_from_history_entries(entries: &[HistoryEntry]) -> Vec<Self> {
-        let mut data = Vec::new();
-        for entry in entries {
-            data.push(DataPoint::parse_from_history_entry(entry));
-        }
-        data
+        DataPoint { time, qos, value }
     }
 
     fn optional_time(&self) -> Option<DateTime<Local>> {
@@ -143,11 +146,18 @@ impl GraphDataPoints {
     }
 }
 
-pub fn draw<B>(f: &mut Frame<B>, area: Rect, topic_history: &[HistoryEntry])
-where
+pub fn draw<B>(
+    f: &mut Frame<B>,
+    area: Rect,
+    topic_history: &[HistoryEntry],
+    json_selector: &[usize],
+) where
     B: Backend,
 {
-    let data = DataPoint::parse_from_history_entries(&topic_history);
+    let mut data = Vec::new();
+    for entry in topic_history {
+        data.push(DataPoint::parse_from_history_entry(entry, json_selector));
+    }
 
     let table_area = GraphDataPoints::parse_from_datapoints(&data).map_or(area, |points| {
         let chunks = Layout::default()
@@ -199,7 +209,7 @@ where
     }
     title += ")";
 
-    let header = ["Time", "QoS", "Payload"];
+    let header = ["Time", "QoS", "Value"];
 
     let mut rows_content: Vec<Vec<String>> = Vec::new();
     for entry in topic_history {

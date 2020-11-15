@@ -9,10 +9,13 @@ fn get_nth_subvalue(root: &JsonValue, select: usize) -> Option<&JsonValue> {
     }
 }
 
-pub fn get_selected_subvalue<'a>(root: &'a JsonValue, selection: &[u8]) -> Option<&'a JsonValue> {
+pub fn get_selected_subvalue<'a>(
+    root: &'a JsonValue,
+    selection: &[usize],
+) -> Option<&'a JsonValue> {
     let mut current = root;
     for select in selection {
-        current = get_nth_subvalue(current, select.to_owned() as usize)?;
+        current = get_nth_subvalue(current, select.to_owned())?;
     }
 
     Some(current)
