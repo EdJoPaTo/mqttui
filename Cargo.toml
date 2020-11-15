@@ -13,13 +13,13 @@ crossterm = "0.18"
 json = "0.12"
 rand = "0.7"
 rumqttc = "0.2"
-tui-tree-widget = "0.1"
+tui-tree-widget = "0.2"
 
 [dependencies.clap]
 version = "2.33"
 features = ["wrap_help"]
 
 [dependencies.tui]
-version = "0.12"
+version = "0.13"
 default-features = false
 features = ["crossterm"]
