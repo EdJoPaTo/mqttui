@@ -26,7 +26,7 @@ pub fn root_tree_items_from_json<'a>(root: &'a JsonValue) -> Vec<TreeItem<'a>> {
     }
 }
 
-pub fn tree_items_from_json<'a>(key: &str, value: &'a JsonValue) -> TreeItem<'a> {
+fn tree_items_from_json<'a>(key: &str, value: &'a JsonValue) -> TreeItem<'a> {
     match value {
         JsonValue::Null => TreeItem::new_leaf(format!("{}: Null", key)),
         JsonValue::Short(short_string) => TreeItem::new_leaf(format!("{}: {}", key, short_string)),

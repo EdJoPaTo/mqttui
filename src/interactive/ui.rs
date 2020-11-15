@@ -13,12 +13,20 @@ use tui::{
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::format;
-use crate::interactive::app::App;
+use crate::interactive::app::{App, ElementInFocus};
 use crate::json_view::root_tree_items_from_json;
 use crate::mqtt_history::{self, HistoryEntry};
 use crate::topic_view::{self, TopicTreeEntry};
 
 mod history;
+
+fn focus_color(has_focus: bool) -> Color {
+    if has_focus {
+        Color::LightGreen
+    } else {
+        Color::Gray
+    }
+}
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn Error>> {
     let chunks = Layout::default()
@@ -87,7 +95,13 @@ where
             .direction(Direction::Horizontal)
             .split(area);
 
-        draw_details(f, chunks[1], topic_history, &mut app.json_view_state);
+        draw_details(
+            f,
+            chunks[1],
+            topic_history,
+            app.focus == ElementInFocus::JsonPayload,
+            &mut app.json_view_state,
+        );
 
         chunks[0]
     } else {
@@ -99,6 +113,7 @@ where
         overview_area,
         topics.len(),
         &tree_items,
+        app.focus == ElementInFocus::TopicOverview,
         &mut app.topic_overview_state,
     );
     Ok(())
@@ -109,6 +124,7 @@ fn draw_overview<B>(
     area: Rect,
     topic_amount: usize,
     tree_items: &[TopicTreeEntry],
+    has_focus: bool,
     state: &mut TreeState,
 ) where
     B: Backend,
@@ -117,9 +133,15 @@ fn draw_overview<B>(
 
     let tree_items = topic_view::tree_items_from_tmlp_tree(&tree_items);
 
+    let focus_color = focus_color(has_focus);
     let widget = Tree::new(tree_items)
-        .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(focus_color))
+                .title(title),
+        )
+        .highlight_style(Style::default().fg(Color::Black).bg(focus_color));
     f.render_stateful_widget(widget, area, state);
 }
 
@@ -127,6 +149,7 @@ fn draw_details<B>(
     f: &mut Frame<B>,
     area: Rect,
     topic_history: &[HistoryEntry],
+    json_payload_has_focus: bool,
     json_view_state: &mut TreeState,
 ) where
     B: Backend,
@@ -148,7 +171,14 @@ fn draw_details<B>(
             )
             .split(area);
 
-        draw_payload_json(f, chunks[0], payload_length, &json, json_view_state);
+        draw_payload_json(
+            f,
+            chunks[0],
+            payload_length,
+            &json,
+            json_payload_has_focus,
+            json_view_state,
+        );
         chunks[1]
     } else {
         let payload = format::payload_as_utf8(last.packet.payload.to_vec());
@@ -179,9 +209,7 @@ where
 {
     let title = format!("Payload (Bytes: {})", bytes);
     let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
-    let widget = List::new(items)
-        .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
+    let widget = List::new(items).block(Block::default().borders(Borders::ALL).title(title));
     f.render_widget(widget, area);
 }
 
@@ -190,14 +218,21 @@ fn draw_payload_json<B>(
     area: Rect,
     bytes: usize,
     json: &JsonValue,
+    has_focus: bool,
     view_state: &mut TreeState,
 ) where
     B: Backend,
 {
-    let title = format!("JSON Payload (Bytes: {})", bytes);
+    let title = format!("JSON Payload (Bytes: {})  (TAB to switch)", bytes);
     let items = root_tree_items_from_json(json);
+    let focus_color = focus_color(has_focus);
     let widget = Tree::new(items)
-        .block(Block::default().borders(Borders::ALL).title(title))
-        .highlight_style(Style::default().fg(Color::Black).bg(Color::LightGreen));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(focus_color))
+                .title(title),
+        )
+        .highlight_style(Style::default().fg(Color::Black).bg(focus_color));
     f.render_stateful_widget(widget, area, view_state);
 }

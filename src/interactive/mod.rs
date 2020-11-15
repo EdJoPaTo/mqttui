@@ -87,6 +87,7 @@ pub fn show(
                     'l' => app.on_right(),
                     _ => {}
                 },
+                KeyCode::Tab | KeyCode::BackTab => app.on_tab()?,
                 KeyCode::Enter => app.on_toggle(),
                 KeyCode::Left => app.on_left(),
                 KeyCode::Up => app.on_up()?,

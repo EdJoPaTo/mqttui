@@ -1,9 +1,15 @@
-use crate::mqtt_history::{self, HistoryArc};
-use crate::topic;
-use crate::topic_view;
+use crate::mqtt_history::HistoryArc;
+use crate::{format, json_view, mqtt_history, topic, topic_view};
+use json::JsonValue;
 use std::collections::HashSet;
 use std::error::Error;
 use tui_tree_widget::{flatten, TreeState};
+
+#[derive(Debug, PartialEq)]
+pub enum ElementInFocus {
+    TopicOverview,
+    JsonPayload,
+}
 
 pub struct App<'a> {
     pub host: &'a str,
@@ -11,6 +17,7 @@ pub struct App<'a> {
     pub subscribe_topic: &'a str,
     pub history: HistoryArc,
 
+    pub focus: ElementInFocus,
     pub json_view_state: TreeState,
     pub opened_topics: HashSet<String>,
     pub selected_topic: Option<String>,
@@ -26,6 +33,7 @@ impl<'a> App<'a> {
             subscribe_topic,
             history,
 
+            focus: ElementInFocus::TopicOverview,
             json_view_state: TreeState::default(),
             opened_topics: HashSet::new(),
             selected_topic: None,
@@ -77,37 +85,116 @@ impl<'a> App<'a> {
         Ok(())
     }
 
+    fn get_json_of_current_topic(&self) -> Result<Option<JsonValue>, Box<dyn Error>> {
+        let history = self
+            .history
+            .lock()
+            .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
+
+        let json = self
+            .selected_topic
+            .as_ref()
+            .and_then(|topic| history.get(topic))
+            .map(|o| o.last().expect("History always has at least one entry"))
+            .and_then(|value| format::payload_as_json(value.packet.payload.to_vec()));
+
+        Ok(json)
+    }
+
+    fn change_selected_json_property(&mut self, down: bool) -> Result<(), Box<dyn Error>> {
+        let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+        let tree_items = json_view::root_tree_items_from_json(&json);
+
+        let visible = flatten(&self.json_view_state.get_all_opened(), &tree_items);
+        let current_identifier = self.json_view_state.selected();
+        let current_index = visible
+            .iter()
+            .position(|o| o.identifier == current_identifier);
+        let new_index = current_index.map_or(0, |current_index| {
+            if down {
+                current_index.saturating_add(1)
+            } else {
+                current_index.saturating_sub(1)
+            }
+            .min(visible.len() - 1)
+        });
+        let new_identifier = visible.get(new_index).unwrap().identifier.to_owned();
+        self.json_view_state.select(new_identifier);
+        Ok(())
+    }
+
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
         let increase = false;
-        self.change_selected_topic(increase)
+        match self.focus {
+            ElementInFocus::TopicOverview => self.change_selected_topic(increase),
+            ElementInFocus::JsonPayload => self.change_selected_json_property(increase),
+        }
     }
 
     pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
         let increase = true;
-        self.change_selected_topic(increase)
+        match self.focus {
+            ElementInFocus::TopicOverview => self.change_selected_topic(increase),
+            ElementInFocus::JsonPayload => self.change_selected_json_property(increase),
+        }
     }
 
     pub fn on_right(&mut self) {
-        if let Some(topic) = &self.selected_topic {
-            self.opened_topics.insert(topic.to_owned());
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                if let Some(topic) = &self.selected_topic {
+                    self.opened_topics.insert(topic.to_owned());
+                }
+            }
+            ElementInFocus::JsonPayload => {
+                self.json_view_state.open(self.json_view_state.selected());
+            }
         }
     }
 
     pub fn on_left(&mut self) {
-        if let Some(topic) = &self.selected_topic {
-            if let false = self.opened_topics.remove(topic) {
-                self.selected_topic = topic::get_parent(topic).map(std::borrow::ToOwned::to_owned);
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                if let Some(topic) = &self.selected_topic {
+                    if let false = self.opened_topics.remove(topic) {
+                        self.selected_topic =
+                            topic::get_parent(topic).map(std::borrow::ToOwned::to_owned);
+                    }
+                }
+            }
+            ElementInFocus::JsonPayload => {
+                let selected = self.json_view_state.selected();
+                if !self.json_view_state.close(&selected) {
+                    let (head, _) = tui_tree_widget::identifier::get_without_leaf(&selected);
+                    self.json_view_state.select(head);
+                }
             }
         }
     }
 
     pub fn on_toggle(&mut self) {
-        if let Some(topic) = &self.selected_topic {
-            if self.opened_topics.contains(topic) {
-                self.opened_topics.remove(topic);
-            } else {
-                self.opened_topics.insert(topic.to_owned());
+        if ElementInFocus::TopicOverview == self.focus {
+            if let Some(topic) = &self.selected_topic {
+                if self.opened_topics.contains(topic) {
+                    self.opened_topics.remove(topic);
+                } else {
+                    self.opened_topics.insert(topic.to_owned());
+                }
             }
         }
+    }
+
+    pub fn on_tab(&mut self) -> Result<(), Box<dyn Error>> {
+        let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
+        self.focus = if is_json_on_topic {
+            match self.focus {
+                ElementInFocus::TopicOverview => ElementInFocus::JsonPayload,
+                ElementInFocus::JsonPayload => ElementInFocus::TopicOverview,
+            }
+        } else {
+            ElementInFocus::TopicOverview
+        };
+
+        Ok(())
     }
 }
