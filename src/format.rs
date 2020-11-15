@@ -40,12 +40,6 @@ pub fn payload_as_utf8(payload: Vec<u8>) -> String {
     String::from_utf8(payload).unwrap_or_else(|err| format!("invalid UTF8: {}", err))
 }
 
-pub fn payload_as_float(payload: Vec<u8>) -> Option<f64> {
-    String::from_utf8(payload)
-        .ok()
-        .and_then(|o| o.parse::<f64>().ok())
-}
-
 pub fn payload_as_json(payload: Vec<u8>) -> Option<JsonValue> {
     String::from_utf8(payload)
         .ok()

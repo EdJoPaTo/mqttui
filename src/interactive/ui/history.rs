@@ -21,7 +21,7 @@ pub enum PacketTime {
 pub struct DataPoint {
     pub time: PacketTime,
     pub qos: QoS,
-    pub payload: Vec<u8>,
+    pub value: Result<String, String>,
 }
 
 impl DataPoint {
@@ -33,8 +33,9 @@ impl DataPoint {
         };
 
         let qos = entry.packet.qos;
-        let payload = entry.packet.payload.to_vec();
-        DataPoint { time, qos, payload }
+        let value = String::from_utf8(entry.packet.payload.to_vec())
+            .map_err(|err| format!("invalid UTF8: {}", err));
+        DataPoint { time, qos, value }
     }
 
     pub fn parse_from_history_entries(entries: &[HistoryEntry]) -> Vec<Self> {
@@ -69,7 +70,7 @@ impl GraphDataPoint {
         // TODO: Impl into instead of randomly named function?
 
         let time = entry.optional_time()?;
-        let y = format::payload_as_float(entry.payload.to_owned())?;
+        let y = entry.value.as_ref().ok()?.parse::<f64>().ok()?;
         Some(GraphDataPoint { time, y })
     }
 
@@ -207,8 +208,8 @@ where
             PacketTime::Local(time) => time.format(format::TIMESTAMP_FORMAT).to_string(),
         };
         let qos = format::qos(entry.qos);
-        let payload = format::payload_as_utf8(entry.payload.to_vec());
-        rows_content.push(vec![time, qos, payload]);
+        let value = entry.value.to_owned().unwrap_or_else(|err| err);
+        rows_content.push(vec![time, qos, value]);
     }
     let rows = rows_content.iter().map(|i| Row::Data(i.iter()));
 
