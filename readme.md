@@ -37,17 +37,14 @@ mqttui
 # Subscribe to topic
 mqttui "topic"
 
-# Publish to topic
-mqttui "topic" "payload"
-
 # Subscribe to topic with a specific host (default is localhost)
 mqttui -h "test.mosquitto.org" "hello/world"
 
-# Subscribe to everything (#) in interactive mode
-mqttui --interactive
+# Publish to topic
+mqttui publish "topic" "payload"
 
-# Subscribe to topic
-mqttui --interactive "topic"
+# Publish to topic with a specific host
+mqttui publish -h "test.mosquitto.org" "topic" "payload"
 ```
 
 ```plaintext
@@ -78,7 +75,7 @@ Tip: Create an alias for the host you are working on:
 alias mqttui-home='mqttui -h pi-home.local'
 
 # Use the alias without having to specify the host every time
-mqttui-home "topic" "payload"
+mqttui-home "topic"
 ```
 
 # Interesting Alternatives

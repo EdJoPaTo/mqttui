@@ -7,7 +7,7 @@ mod format;
 mod interactive;
 mod json_view;
 mod mqtt_history;
-mod simple;
+mod publish;
 mod topic;
 mod topic_view;
 
@@ -20,25 +20,21 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
-    if let Some(payload) = args.value {
+    if let Some(payload) = args.payload {
         client.publish(&args.topic, QoS::AtLeastOnce, false, payload)?;
 
-        simple::eventloop(client, connection, args.verbose);
+        publish::eventloop(client, connection, args.verbose);
         return Ok(());
     }
 
     client.subscribe(&args.topic, QoS::ExactlyOnce)?;
 
-    if args.interactive {
-        let (history, thread_handle) = mqtt_history::start(connection)?;
+    let (history, thread_handle) = mqtt_history::start(connection)?;
 
-        interactive::show(&args.host, args.port, &args.topic, Arc::clone(&history))?;
+    interactive::show(&args.host, args.port, &args.topic, Arc::clone(&history))?;
 
-        client.disconnect()?;
-        thread_handle.join().expect("mqtt thread failed to finish");
-    } else {
-        simple::eventloop(client, connection, args.verbose);
-    }
+    client.disconnect()?;
+    thread_handle.join().expect("mqtt thread failed to finish");
 
     Ok(())
 }
