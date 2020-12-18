@@ -21,6 +21,12 @@ It wont be as feature rich as something like the hivemq approach but it aims at 
 
 ### Prebuilt
 
+#### Arch Linux (AUR)
+
+`paru -S mqttui-bin` or `yay -S mqttui-bin`
+
+#### Other
+
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
 ### From Source
