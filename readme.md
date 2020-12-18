@@ -54,26 +54,48 @@ mqttui publish -h "test.mosquitto.org" "topic" "payload"
 ```
 
 ```plaintext
-MQTT TUI 0.5.0
+MQTT TUI 0.10.0
 EdJoPaTo <mqttui-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
 USAGE:
-    mqttui [FLAGS] [OPTIONS] [ARGS]
+    mqttui [OPTIONS] [TOPIC] [SUBCOMMAND]
 
 FLAGS:
-        --help           Prints help information
-    -i, --interactive    Start in interactive mode
-    -V, --version        Prints version information
-    -v, --verbose        Show full MQTT communication
+        --help       Prints help information
+    -V, --version    Prints version information
 
 OPTIONS:
     -h, --host <HOST>    Host on which the MQTT Broker is running [default: localhost]
     -p, --port <INT>     Port on which the MQTT Broker is running [default: 1883]
 
 ARGS:
-    <TOPIC>      Topic to watch or publish to [default: #]
-    <PAYLOAD>    (optional) Payload to be published. If none is given it is instead subscribed to the topic.
+    <TOPIC>    Topic to watch [default: #]
+
+SUBCOMMANDS:
+    help       Prints this message or the help of the given subcommand(s)
+    publish    Publish a value quickly
+```
+
+```plaintext
+mqttui-publish
+Publish a value quickly
+
+USAGE:
+    mqttui publish [FLAGS] [OPTIONS] <TOPIC> <PAYLOAD>
+
+FLAGS:
+        --help       Prints help information
+    -V, --version    Prints version information
+    -v, --verbose    Show full MQTT communication
+
+OPTIONS:
+    -h, --host <HOST>    Host on which the MQTT Broker is running [default: localhost]
+    -p, --port <INT>     Port on which the MQTT Broker is running [default: 1883]
+
+ARGS:
+    <TOPIC>      Topic to publish to
+    <PAYLOAD>    Payload to be published
 ```
 
 Tip: Create an alias for the host you are working on:
