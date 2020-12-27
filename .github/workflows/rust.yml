@@ -117,42 +117,43 @@ jobs:
       - name: Build release
         run: cargo build --release --verbose --locked --all-targets --target ${{ matrix.config.triple }}
 
-      - name: Pack release zip (linux, mac)
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        run: |
-          rm -f *.zip
-          cd target/${{ matrix.config.triple }}/release
-          zip -r ../../../mqttui-${{ matrix.config.triple }}.zip mqttui
-      - name: Pack release zip (windows)
-        if: runner.os == 'Windows'
-        run: |
-          del *.zip
-          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.config.triple }}/release/mqttui.exe -DestinationPath mqttui-${{ matrix.config.triple }}.zip
-
       - name: inspect target dir
         if: runner.os == 'Linux' || runner.os == 'macOS'
         run: |
           ls -al target
           ls -al target/*
 
-      - name: Publish Artifact (linux, mac)
+      - name: Upload Artifact (linux, mac)
         if: runner.os == 'Linux' || runner.os == 'macOS'
         uses: actions/upload-artifact@v2
         with:
           name: mqttui-${{ matrix.config.triple }}
           path: target/${{ matrix.config.triple }}/release/mqttui
-      - name: Publish Artifact (windows)
+      - name: Upload Artifact (windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v2
         with:
           name: mqttui-${{ matrix.config.triple }}
           path: target/${{ matrix.config.triple }}/release/mqttui.exe
 
+      - name: Pack release (linux, mac)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: |
+          rm -f *.tar.gz
+          tar -czf mqttui-${{ matrix.config.triple }}.tar.gz -C target/${{ matrix.config.triple }}/release mqttui
+      - name: Pack release (windows)
+        if: runner.os == 'Windows'
+        run: |
+          del *.zip
+          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.config.triple }}/release/mqttui.exe -DestinationPath mqttui-${{ matrix.config.triple }}.zip
+
       - name: GH Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v0.1.5
         with:
           draft: true
-          files: '*.zip'
+          files: |
+            *.zip
+            *.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
