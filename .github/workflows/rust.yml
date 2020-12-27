@@ -13,21 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: macOS-11.0
             toolchain: stable
-          - os: macOS-latest
-            toolchain: stable
-          - os: windows-latest
-            toolchain: stable
-
-          - os: ubuntu-latest
-            toolchain: nightly
-          # - os: ubuntu-latest
-          #   toolchain: 1.41.1 # Debian 10 Buster
-          # - os: ubuntu-latest
-          #   toolchain: 1.47.0 # Alpine 3.13
-          # - os: ubuntu-latest
-          #   toolchain: 1.48.0 # Debian 11 Bullseye
     steps:
       - uses: actions/checkout@v2
 
@@ -59,23 +46,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            triple: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            triple: arm-unknown-linux-gnueabihf
-          - os: ubuntu-latest
-            triple: armv7-unknown-linux-gnueabihf
-          - os: ubuntu-latest
-            triple: aarch64-unknown-linux-gnu
-          - os: macOS-latest
+          - os: macOS-11.0
             triple: x86_64-apple-darwin
-          - os: macOS-latest
+          - os: macOS-11.0
             triple: aarch64-apple-darwin
-          - os: windows-latest
-            triple: x86_64-pc-windows-msvc
-          # - os: windows-latest
-          #   triple: aarch64-pc-windows-msvc
-
     steps:
       - uses: actions/checkout@v2
         with:
@@ -98,9 +72,6 @@ jobs:
 
       - name: Build release
         uses: actions-rs/cargo@v1
-        env:
-          # TODO: Remove this once it's the default
-          SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk
         with:
           command: build
           args: --release --verbose --locked --target ${{ matrix.triple }}
