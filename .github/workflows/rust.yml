@@ -119,9 +119,7 @@ jobs:
 
       - name: inspect target dir
         if: runner.os == 'Linux' || runner.os == 'macOS'
-        run: |
-          ls -al target
-          ls -al target/*
+        run: ls -al target/*/release
 
       - name: Upload Artifact (linux, mac)
         if: runner.os == 'Linux' || runner.os == 'macOS'
