@@ -80,10 +80,6 @@ jobs:
           rustc --version
           cargo --version
 
-      - name: Prepare Windows
-        if: runner.os == 'Windows'
-        run: choco install --no-progress llvm
-
       - name: install cross-compile armv7
         if: matrix.config.triple == 'armv7-unknown-linux-gnueabihf'
         run: |
