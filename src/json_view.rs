@@ -21,7 +21,7 @@ pub fn get_selected_subvalue<'a>(
     Some(current)
 }
 
-pub fn root_tree_items_from_json<'a>(root: &'a JsonValue) -> Vec<TreeItem<'a>> {
+pub fn root_tree_items_from_json(root: &JsonValue) -> Vec<TreeItem<'_>> {
     match root {
         JsonValue::Object(object) => tree_items_from_json_object(object),
         JsonValue::Array(array) => tree_items_from_json_array(array),
@@ -47,7 +47,7 @@ fn tree_items_from_json<'a>(key: &str, value: &'a JsonValue) -> TreeItem<'a> {
     }
 }
 
-fn tree_items_from_json_object<'a>(object: &'a json::object::Object) -> Vec<TreeItem<'a>> {
+fn tree_items_from_json_object(object: &json::object::Object) -> Vec<TreeItem<'_>> {
     object
         .iter()
         .map(|(key, value)| tree_items_from_json(key, value))
