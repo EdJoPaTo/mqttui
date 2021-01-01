@@ -15,9 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let args = cli::get_runtime_arguments();
 
     let client_id = format!("mqttui-{:x}", rand::random::<u32>());
-    let mut mqttoptions = MqttOptions::new(client_id, &args.host, args.port);
-    mqttoptions.set_keep_alive(5);
-
+    let mqttoptions = MqttOptions::new(client_id, &args.host, args.port);
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
     if let Some(payload) = args.payload {
