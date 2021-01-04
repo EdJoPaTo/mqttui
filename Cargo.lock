@@ -1008,9 +1008,9 @@ dependencies = [
 
 [[package]]
 name = "tui"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d4e6c82bb967df89f20b875fa8835fab5d5622c6a5efa574a1f0b6d0aa6e8f6"
+checksum = "9ced152a8e9295a5b168adc254074525c17ac4a83c90b2716274cc38118bddc9"
 dependencies = [
  "bitflags",
  "cassowary",
@@ -1021,9 +1021,9 @@ dependencies = [
 
 [[package]]
 name = "tui-tree-widget"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f67bc354a414b8dec1d4c78999a8a84e808a10d822249786eb099616f42c7a9e"
+checksum = "4591a098db6ae140b021f43a0c5d8eb15624cb1f0ae65452214e9aa38d165022"
 dependencies = [
  "tui",
  "unicode-width",

@@ -209,8 +209,6 @@ where
     }
     title += ")";
 
-    let header = ["Time", "QoS", "Value"];
-
     let mut rows_content: Vec<Vec<String>> = Vec::new();
     for entry in topic_history {
         let time = match entry.time {
@@ -221,10 +219,14 @@ where
         let value = entry.value.to_owned().unwrap_or_else(|err| err);
         rows_content.push(vec![time, qos, value]);
     }
-    let rows = rows_content.iter().map(|i| Row::Data(i.iter()));
+    let rows = rows_content.iter().map(|i| Row::new(i.to_owned()));
 
-    let t = Table::new(header.iter(), rows)
+    let t = Table::new(rows)
         .block(Block::default().borders(Borders::ALL).title(title))
+        .header(
+            Row::new(vec!["Time", "QoS", "Value"])
+                .style(Style::default().add_modifier(Modifier::BOLD)),
+        )
         .highlight_style(Style::default().add_modifier(Modifier::BOLD))
         .widths(&[
             Constraint::Length(12),
