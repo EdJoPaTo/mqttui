@@ -9,7 +9,7 @@ pub fn build() -> App<'static, 'static> {
         .subcommand(
             SubCommand::with_name("publish")
                 .about("Publish a value quickly")
-                .alias("p")
+                .aliases(&["p", "pub"])
                 .arg(
                     Arg::with_name("Topic")
                         .value_name("TOPIC")
