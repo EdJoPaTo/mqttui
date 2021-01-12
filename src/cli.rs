@@ -1,14 +1,5 @@
 use clap::{App, AppSettings, Arg, SubCommand};
 
-#[derive(Debug)]
-pub struct RuntimeArguments {
-    pub verbose: bool,
-    pub host: String,
-    pub port: u16,
-    pub topic: String,
-    pub payload: Option<String>,
-}
-
 pub fn build() -> App<'static, 'static> {
     App::new("MQTT TUI")
         .version(env!("CARGO_PKG_VERSION"))
@@ -66,39 +57,4 @@ pub fn build() -> App<'static, 'static> {
                 .default_value("#")
                 .help("Topic to watch"),
         )
-}
-
-pub fn get_runtime_arguments() -> RuntimeArguments {
-    let main_matches = build().get_matches();
-    let publish_matches = main_matches.subcommand_matches("publish");
-    let matches = publish_matches.unwrap_or(&main_matches);
-
-    let host = matches
-        .value_of("Host")
-        .expect("Host could not be read from command line")
-        .to_owned();
-
-    let port = matches
-        .value_of("Port")
-        .and_then(|s| s.parse::<u16>().ok())
-        .expect("MQTT Server Port could not be read from command line.");
-
-    let topic = matches
-        .value_of("Topic")
-        .expect("Topic could not be read from command line")
-        .to_owned();
-
-    let verbose = publish_matches.map_or(false, |matches| matches.is_present("verbose"));
-
-    let payload = publish_matches
-        .and_then(|matches| matches.value_of("Payload"))
-        .map(std::borrow::ToOwned::to_owned);
-
-    RuntimeArguments {
-        verbose,
-        host,
-        port,
-        topic,
-        payload,
-    }
 }
