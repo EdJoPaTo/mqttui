@@ -24,6 +24,12 @@ pub fn build() -> App<'static, 'static> {
                         .required(true),
                 )
                 .arg(
+                    Arg::with_name("retain")
+                        .short("r")
+                        .long("retain")
+                        .help("Publish the MQTT message retained"),
+                )
+                .arg(
                     Arg::with_name("verbose")
                         .short("v")
                         .long("verbose")

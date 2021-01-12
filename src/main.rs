@@ -33,6 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if let Some(matches) = matches.subcommand_matches("publish") {
         let verbose = matches.is_present("verbose");
+        let retain = matches.is_present("retain");
 
         let topic = matches
             .value_of("Topic")
@@ -42,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .value_of("Payload")
             .expect("Topic could not be read from command line");
 
-        client.publish(topic, QoS::AtLeastOnce, false, payload)?;
+        client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
 
         publish::eventloop(client, connection, verbose);
     } else {
