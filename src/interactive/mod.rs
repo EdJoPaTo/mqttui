@@ -1,7 +1,9 @@
 use crate::interactive::app::App;
 use crate::mqtt_history::HistoryArc;
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode},
+    event::{
+        DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, MouseEventKind,
+    },
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -17,8 +19,14 @@ use tui::{backend::CrosstermBackend, Terminal};
 mod app;
 mod ui;
 
-enum Event<I> {
-    Input(I),
+enum MouseScrollDirection {
+    Up,
+    Down,
+}
+
+enum Event {
+    Key(KeyEvent),
+    MouseScroll(MouseScrollDirection),
     Tick,
 }
 
@@ -48,9 +56,21 @@ pub fn show(
             let timeout = tick_rate
                 .checked_sub(last_tick.elapsed())
                 .unwrap_or_else(|| Duration::from_secs(0));
-            if event::poll(timeout).unwrap() {
-                if let CEvent::Key(key) = event::read().unwrap() {
-                    tx.send(Event::Input(key)).unwrap();
+            if crossterm::event::poll(timeout).unwrap() {
+                match crossterm::event::read().unwrap() {
+                    CEvent::Key(key) => {
+                        tx.send(Event::Key(key)).unwrap();
+                    }
+                    CEvent::Mouse(mouse) => match mouse.kind {
+                        MouseEventKind::ScrollUp => tx
+                            .send(Event::MouseScroll(MouseScrollDirection::Up))
+                            .unwrap(),
+                        MouseEventKind::ScrollDown => tx
+                            .send(Event::MouseScroll(MouseScrollDirection::Down))
+                            .unwrap(),
+                        _ => {}
+                    },
+                    CEvent::Resize(_, _) => {}
                 }
             }
             if last_tick.elapsed() >= tick_rate {
@@ -67,7 +87,7 @@ pub fn show(
     loop {
         terminal.draw(|f| ui::draw(f, &mut app).expect("failed to draw ui"))?;
         match rx.recv()? {
-            Event::Input(event) => match event.code {
+            Event::Key(event) => match event.code {
                 KeyCode::Char('q') => {
                     disable_raw_mode()?;
                     execute!(
@@ -94,6 +114,10 @@ pub fn show(
                 KeyCode::Right => app.on_right(),
                 KeyCode::Down => app.on_down()?,
                 _ => {}
+            },
+            Event::MouseScroll(direction) => match direction {
+                MouseScrollDirection::Up => app.on_up()?,
+                MouseScrollDirection::Down => app.on_down()?,
             },
             Event::Tick => {}
         }
