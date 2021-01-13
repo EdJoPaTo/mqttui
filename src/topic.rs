@@ -65,26 +65,26 @@ pub fn get_leaf(topic: &str) -> &str {
     topic.rfind('/').map_or(topic, |i| &topic[i + 1..])
 }
 
-pub fn get_depth(topic: &str) -> usize {
-    topic.matches('/').count()
-}
-
 pub fn is_below(parent: &str, child: &str) -> bool {
-    if let Some(first_char_after) = child.chars().nth(parent.len()) {
-        if first_char_after != '/' {
-            return false;
-        }
-    }
-
-    child.starts_with(parent)
-}
-
-pub fn is_direct_child(parent: &str, child: &str) -> bool {
-    if get_depth(parent) + 1 != get_depth(child) {
+    if child.len() < parent.len() + 1 {
         return false;
     }
 
-    is_below(parent, child)
+    if !child.starts_with(parent) {
+        return false;
+    }
+
+    Some("/") == child.get(parent.len()..=parent.len())
+}
+
+pub fn is_direct_child(parent: &str, child: &str) -> bool {
+    if !is_below(parent, child) {
+        return false;
+    }
+
+    let only_child = &child[parent.len() + 1..];
+    let has_depth = only_child.contains('/');
+    !has_depth
 }
 
 #[test]
@@ -143,14 +143,6 @@ fn leaf_works() {
     assert_eq!("b", get_leaf("a/b"));
     assert_eq!("c", get_leaf("a/b/c"));
     assert_eq!("d", get_leaf("a/b/c/d"));
-}
-
-#[test]
-fn depth_works() {
-    assert_eq!(0, get_depth("a"));
-    assert_eq!(1, get_depth("a/b"));
-    assert_eq!(2, get_depth("a/b/c"));
-    assert_eq!(3, get_depth("a/b/c/d"));
 }
 
 #[test]
