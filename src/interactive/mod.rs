@@ -90,17 +90,12 @@ pub fn show(
         match rx.recv()? {
             Event::Key(event) => match event.code {
                 KeyCode::Char('q') => app.should_quit = true,
-                KeyCode::Char(' ') => app.on_toggle(),
-                KeyCode::Char('h') => app.on_left(),
-                KeyCode::Char('j') => app.on_down()?,
-                KeyCode::Char('k') => app.on_up()?,
-                KeyCode::Char('l') => app.on_right(),
+                KeyCode::Enter | KeyCode::Char(' ') => app.on_toggle(),
+                KeyCode::Left | KeyCode::Char('h') => app.on_left(),
+                KeyCode::Down | KeyCode::Char('j') => app.on_down()?,
+                KeyCode::Up | KeyCode::Char('k') => app.on_up()?,
+                KeyCode::Right | KeyCode::Char('l') => app.on_right(),
                 KeyCode::Tab | KeyCode::BackTab => app.on_tab()?,
-                KeyCode::Enter => app.on_toggle(),
-                KeyCode::Left => app.on_left(),
-                KeyCode::Up => app.on_up()?,
-                KeyCode::Right => app.on_right(),
-                KeyCode::Down => app.on_down()?,
                 _ => {}
             },
             Event::MouseScroll(direction) => match direction {
