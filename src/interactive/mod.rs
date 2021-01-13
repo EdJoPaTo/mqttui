@@ -89,25 +89,12 @@ pub fn show(
         terminal.draw(|f| ui::draw(f, &mut app).expect("failed to draw ui"))?;
         match rx.recv()? {
             Event::Key(event) => match event.code {
-                KeyCode::Char('q') => {
-                    disable_raw_mode()?;
-                    execute!(
-                        terminal.backend_mut(),
-                        LeaveAlternateScreen,
-                        DisableMouseCapture
-                    )?;
-                    terminal.show_cursor()?;
-                    break;
-                }
-                KeyCode::Char(c) => match c {
-                    'q' => app.should_quit = true,
-                    ' ' => app.on_toggle(),
-                    'h' => app.on_left(),
-                    'j' => app.on_down()?,
-                    'k' => app.on_up()?,
-                    'l' => app.on_right(),
-                    _ => {}
-                },
+                KeyCode::Char('q') => app.should_quit = true,
+                KeyCode::Char(' ') => app.on_toggle(),
+                KeyCode::Char('h') => app.on_left(),
+                KeyCode::Char('j') => app.on_down()?,
+                KeyCode::Char('k') => app.on_up()?,
+                KeyCode::Char('l') => app.on_right(),
                 KeyCode::Tab | KeyCode::BackTab => app.on_tab()?,
                 KeyCode::Enter => app.on_toggle(),
                 KeyCode::Left => app.on_left(),
@@ -126,6 +113,14 @@ pub fn show(
             break;
         }
     }
+
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
 
     Ok(())
 }
