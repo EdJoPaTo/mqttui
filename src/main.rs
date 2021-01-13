@@ -23,10 +23,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .and_then(|s| s.parse::<u16>().ok())
         .expect("MQTT Server Port could not be read from command line.");
 
-    let topic = matches
-        .value_of("Topic")
-        .expect("Topic could not be read from command line");
-
     let client_id = format!("mqttui-{:x}", rand::random::<u32>());
     let mqttoptions = MqttOptions::new(client_id, host, port);
     let (mut client, connection) = Client::new(mqttoptions, 10);
@@ -47,6 +43,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         publish::eventloop(client, connection, verbose);
     } else {
+        let topic = matches
+            .value_of("Topic")
+            .expect("Topic could not be read from command line");
+
         client.subscribe(topic, QoS::ExactlyOnce)?;
 
         let (history, thread_handle) = mqtt_history::start(connection)?;
