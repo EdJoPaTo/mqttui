@@ -30,6 +30,8 @@ enum Event {
     Tick,
 }
 
+const TICK_RATE: Duration = Duration::from_millis(500);
+
 pub fn show(
     host: &str,
     port: u16,
@@ -48,12 +50,11 @@ pub fn show(
     // Setup input handling
     let (tx, rx) = mpsc::channel();
 
-    let tick_rate = Duration::from_millis(500);
     thread::spawn(move || {
         let mut last_tick = Instant::now();
         loop {
             // poll for tick rate duration, if no events, sent tick event.
-            let timeout = tick_rate
+            let timeout = TICK_RATE
                 .checked_sub(last_tick.elapsed())
                 .unwrap_or_else(|| Duration::from_secs(0));
             if crossterm::event::poll(timeout).unwrap() {
@@ -73,7 +74,7 @@ pub fn show(
                     CEvent::Resize(_, _) => {}
                 }
             }
-            if last_tick.elapsed() >= tick_rate {
+            if last_tick.elapsed() >= TICK_RATE {
                 tx.send(Event::Tick).unwrap();
                 last_tick = Instant::now();
             }
