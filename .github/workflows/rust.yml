@@ -15,7 +15,7 @@ jobs:
           rustc --version
           cargo --version
       - name: Cache cargo
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.cargo/registry
@@ -38,7 +38,7 @@ jobs:
           rustc --version
           cargo --version
       - name: Cache cargo
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.cargo/registry
@@ -96,7 +96,7 @@ jobs:
         run: rustup target add ${{ matrix.config.triple }}
 
       - name: Cache cargo
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: |
             ~/.cargo/registry
