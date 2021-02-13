@@ -54,7 +54,7 @@ mqttui publish -h "test.mosquitto.org" "topic" "payload"
 ```
 
 ```plaintext
-MQTT TUI 0.10.0
+MQTT TUI 0.11.0
 EdJoPaTo <mqttui-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
@@ -86,6 +86,7 @@ USAGE:
 
 FLAGS:
         --help       Prints help information
+    -r, --retain     Publish the MQTT message retained
     -V, --version    Prints version information
     -v, --verbose    Show full MQTT communication
 
