@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use rumqttc::{self, Client, MqttOptions, QoS};
 use std::error::Error;
 use std::sync::Arc;
