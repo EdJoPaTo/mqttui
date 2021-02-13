@@ -13,7 +13,7 @@ crossterm = "0.19"
 json = "0.12"
 rand = "0.8"
 rumqttc = "0.5"
-tui-tree-widget = "0.3"
+tui-tree-widget = "0.4"
 
 [dependencies.clap]
 version = "2"

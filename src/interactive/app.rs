@@ -11,6 +11,18 @@ pub enum ElementInFocus {
     JsonPayload,
 }
 
+#[derive(Debug)]
+enum Direction {
+    Up,
+    Down,
+}
+
+#[derive(Debug)]
+enum CursorMove {
+    Absolute(usize),
+    Relative(Direction),
+}
+
 pub struct App<'a> {
     pub host: &'a str,
     pub port: u16,
@@ -42,7 +54,7 @@ impl<'a> App<'a> {
         }
     }
 
-    fn change_selected_topic(&mut self, down: bool) -> Result<(), Box<dyn Error>> {
+    fn change_selected_topic(&mut self, cursor_move: CursorMove) -> Result<bool, Box<dyn Error>> {
         let history = self
             .history
             .lock()
@@ -68,21 +80,25 @@ impl<'a> App<'a> {
         let current_index = current_identifier
             .and_then(|identifier| visible.iter().position(|o| o.identifier == identifier));
 
-        let new_index = if let Some(current_index) = current_index {
-            if down {
-                current_index.saturating_add(1) % visible_topics.len()
-            } else {
-                current_index.overflowing_sub(1).0
-            }
-        } else if down {
-            0
-        } else {
-            usize::MAX
+        let new_index = match cursor_move {
+            CursorMove::Absolute(index) => index,
+            CursorMove::Relative(direction) => current_index.map_or_else(
+                || match direction {
+                    Direction::Down => 0,
+                    Direction::Up => usize::MAX,
+                },
+                |current_index| match direction {
+                    Direction::Up => current_index.overflowing_sub(1).0,
+                    Direction::Down => current_index.saturating_add(1) % visible_topics.len(),
+                },
+            ),
         }
         .min(visible_topics.len() - 1);
 
-        self.selected_topic = visible_topics.get(new_index).map(|o| (*o).to_string());
-        Ok(())
+        let next_selected_topic = visible_topics.get(new_index).map(|o| (*o).to_string());
+        let different = self.selected_topic != next_selected_topic;
+        self.selected_topic = next_selected_topic;
+        Ok(different)
     }
 
     fn get_json_of_current_topic(&self) -> Result<Option<JsonValue>, Box<dyn Error>> {
@@ -101,7 +117,10 @@ impl<'a> App<'a> {
         Ok(json)
     }
 
-    fn change_selected_json_property(&mut self, down: bool) -> Result<(), Box<dyn Error>> {
+    fn change_selected_json_property(
+        &mut self,
+        direction: &Direction,
+    ) -> Result<(), Box<dyn Error>> {
         let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
         let tree_items = json_view::root_tree_items_from_json(&json);
 
@@ -111,10 +130,9 @@ impl<'a> App<'a> {
             .iter()
             .position(|o| o.identifier == current_identifier);
         let new_index = current_index.map_or(0, |current_index| {
-            if down {
-                current_index.saturating_add(1)
-            } else {
-                current_index.saturating_sub(1)
+            match direction {
+                Direction::Up => current_index.saturating_sub(1),
+                Direction::Down => current_index.saturating_add(1),
             }
             .min(visible.len() - 1)
         });
@@ -124,19 +142,27 @@ impl<'a> App<'a> {
     }
 
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
-        let increase = false;
+        let direction = Direction::Up;
         match self.focus {
-            ElementInFocus::TopicOverview => self.change_selected_topic(increase),
-            ElementInFocus::JsonPayload => self.change_selected_json_property(increase),
+            ElementInFocus::TopicOverview => {
+                self.change_selected_topic(CursorMove::Relative(direction))?;
+            }
+            ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
         }
+
+        Ok(())
     }
 
     pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
-        let increase = true;
+        let direction = Direction::Down;
         match self.focus {
-            ElementInFocus::TopicOverview => self.change_selected_topic(increase),
-            ElementInFocus::JsonPayload => self.change_selected_json_property(increase),
+            ElementInFocus::TopicOverview => {
+                self.change_selected_topic(CursorMove::Relative(direction))?;
+            }
+            ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
         }
+
+        Ok(())
     }
 
     pub fn on_right(&mut self) {
@@ -194,6 +220,25 @@ impl<'a> App<'a> {
         } else {
             ElementInFocus::TopicOverview
         };
+
+        Ok(())
+    }
+
+    pub fn on_click(&mut self, row: u16, _column: u16) -> Result<(), Box<dyn Error>> {
+        const VIEW_OFFSET_TOP: u16 = 6;
+
+        if self.focus == ElementInFocus::TopicOverview {
+            let overview_offset = self.topic_overview_state.get_offset();
+
+            if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
+                let index = overview_offset.saturating_add(row_in_tree as usize);
+                let changed = self.change_selected_topic(CursorMove::Absolute(index))?;
+
+                if !changed {
+                    self.on_toggle();
+                }
+            }
+        }
 
         Ok(())
     }

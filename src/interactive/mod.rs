@@ -2,7 +2,8 @@ use crate::interactive::app::App;
 use crate::mqtt_history::HistoryArc;
 use crossterm::{
     event::{
-        DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, MouseEventKind,
+        DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, MouseButton,
+        MouseEventKind,
     },
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -24,8 +25,14 @@ enum MouseScrollDirection {
     Down,
 }
 
+struct MousePosition {
+    column: u16,
+    row: u16,
+}
+
 enum Event {
     Key(KeyEvent),
+    MouseClick(MousePosition),
     MouseScroll(MouseScrollDirection),
     Tick,
 }
@@ -69,6 +76,12 @@ pub fn show(
                         MouseEventKind::ScrollDown => tx
                             .send(Event::MouseScroll(MouseScrollDirection::Down))
                             .unwrap(),
+                        MouseEventKind::Down(MouseButton::Left) => tx
+                            .send(Event::MouseClick(MousePosition {
+                                column: mouse.column,
+                                row: mouse.row,
+                            }))
+                            .unwrap(),
                         _ => {}
                     },
                     CEvent::Resize(_, _) => {}
@@ -98,6 +111,7 @@ pub fn show(
                 KeyCode::Tab | KeyCode::BackTab => app.on_tab()?,
                 _ => {}
             },
+            Event::MouseClick(position) => app.on_click(position.row, position.column)?,
             Event::MouseScroll(direction) => match direction {
                 MouseScrollDirection::Up => app.on_up()?,
                 MouseScrollDirection::Down => app.on_down()?,
