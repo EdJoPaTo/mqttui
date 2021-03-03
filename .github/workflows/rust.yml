@@ -5,61 +5,88 @@ on:
   pull_request:
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
+  clippy:
+    name: Clippy ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
     steps:
       - uses: actions/checkout@v2
-      - name: 'Log versions'
-        run: |
-          rustc --version
-          cargo --version
-      - name: Cache cargo
-        uses: actions/cache@v2
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+          toolchain: stable
+          override: true
+          profile: minimal
+          components: clippy
 
       - name: Run clippy
-        run: cargo clippy --verbose --all-targets --all-features -- -D warnings -D clippy::pedantic
-      - name: Check format
-        run: cargo fmt -- --check --verbose
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --verbose --all-targets --all-features -- -D clippy::all -D clippy::pedantic
 
-  test:
-    name: Test
+  rustfmt:
+    name: Rustfmt
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v2
-      - name: 'Log versions'
-        run: |
-          rustc --version
-          cargo --version
-      - name: Cache cargo
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build
-        run: cargo build --verbose --locked --all-targets
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+          components: rustfmt
+
+      - name: Check format
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check --verbose
+
+  test:
+    name: Test ${{ matrix.os }} ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.os }}
+    needs: clippy
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        toolchain: [stable, nightly]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          profile: minimal
+          override: true
 
       - name: Run tests
-        run: cargo test --verbose --all-targets
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --verbose --locked --all-features
 
   release:
-    name: Release ${{ matrix.config.triple }}
-    runs-on: ${{ matrix.config.os }}
+    name: Release ${{ matrix.triple }}
+    runs-on: ${{ matrix.os }}
+    needs: test
     strategy:
+      fail-fast: false
       matrix:
-        config:
+        include:
           - os: ubuntu-latest
             triple: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            triple: arm-unknown-linux-gnueabihf
           - os: ubuntu-latest
             triple: armv7-unknown-linux-gnueabihf
           - os: ubuntu-latest
@@ -71,69 +98,42 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Log versions
-        run: |
-          rustc --version
-          cargo --version
 
-      - name: install cross-compile armv7
-        if: matrix.config.triple == 'armv7-unknown-linux-gnueabihf'
-        run: |
-          sudo apt-get install -y g++-arm-linux-gnueabihf
-          mkdir -p ~/.cargo
-          echo '[target.${{ matrix.config.triple }}]' > ~/.cargo/config
-          echo 'linker = "arm-linux-gnueabihf-g++"' >> ~/.cargo/config
-
-      - name: install cross-compile arm64
-        if: matrix.config.triple == 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get install -y g++-aarch64-linux-gnu
-          mkdir -p ~/.cargo
-          echo '[target.${{ matrix.config.triple }}]' > ~/.cargo/config
-          echo 'linker = "aarch64-linux-gnu-g++"' >> ~/.cargo/config
-
-      - name: Add Target
-        run: rustup target add ${{ matrix.config.triple }}
-
-      - name: Cache cargo
-        uses: actions/cache@v2
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ matrix.config.triple }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          toolchain: stable
+          override: true
+          profile: minimal
+          target: ${{ matrix.triple }}
 
       - name: Build release
-        run: cargo build --release --verbose --locked --all-targets --target ${{ matrix.config.triple }}
-
-      - name: inspect target dir
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        run: ls -al target/*/release
-
-      - name: Upload Artifact (linux, mac)
-        if: runner.os == 'Linux' || runner.os == 'macOS'
-        uses: actions/upload-artifact@v2
+        uses: actions-rs/cargo@v1
         with:
-          name: mqttui-${{ matrix.config.triple }}
-          path: target/${{ matrix.config.triple }}/release/mqttui
-      - name: Upload Artifact (windows)
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v2
-        with:
-          name: mqttui-${{ matrix.config.triple }}
-          path: target/${{ matrix.config.triple }}/release/mqttui.exe
+          command: build
+          args: --release --verbose --locked --target ${{ matrix.triple }}
+          use-cross: ${{ runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-gnu' }}
 
-      - name: Pack release (linux, mac)
-        if: runner.os == 'Linux' || runner.os == 'macOS'
+      - name: Pack release (-nix)
+        if: runner.os != 'Windows'
         run: |
-          rm -f *.tar.gz
-          tar -czf mqttui-${{ matrix.config.triple }}.tar.gz -C target/${{ matrix.config.triple }}/release mqttui
+          cd target/${{ matrix.triple }}/release
+          tar -czvf ../../../mqttui-${{ matrix.triple }}.tar.gz mqttui
+          cd -
       - name: Pack release (windows)
         if: runner.os == 'Windows'
         run: |
-          del *.zip
-          Compress-Archive -CompressionLevel Optimal -Force -Path target/${{ matrix.config.triple }}/release/mqttui.exe -DestinationPath mqttui-${{ matrix.config.triple }}.zip
+          cd target/${{ matrix.triple }}/release
+          7z a ../../../mqttui-${{ matrix.triple }}.zip mqttui.exe
+          cd -
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.triple }}
+          path: |
+            *.zip
+            *.tar.gz
 
       - name: GH Release
         if: startsWith(github.ref, 'refs/tags/')
