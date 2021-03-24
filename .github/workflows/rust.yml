@@ -5,86 +5,13 @@ on:
   pull_request:
 
 jobs:
-  clippy:
-    name: Clippy ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macOS-latest
-          - windows-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-          components: clippy
-
-      - name: Run clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --verbose --locked --all-targets --all-features -- -D clippy::all -D clippy::pedantic
-
-  test:
-    name: Test ${{ matrix.os }} ${{ matrix.toolchain }}
-    runs-on: ${{ matrix.os }}
-    needs: clippy
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - macOS-latest
-          - windows-latest
-        toolchain:
-          - stable
-          - nightly
-          #- 1.41.1 # Debian 10 Buster
-          #- 1.47.0 # Alpine 3.13
-          #- 1.48.0 # Debian 11 Bullseye
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          profile: minimal
-          override: true
-
-      - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --verbose --locked --all-features
-
   release:
     name: Release ${{ matrix.triple }}
     runs-on: ${{ matrix.os }}
-    needs: test
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            triple: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            triple: arm-unknown-linux-gnueabihf
-          - os: ubuntu-latest
-            triple: armv7-unknown-linux-gnueabihf
-          - os: ubuntu-latest
-            triple: aarch64-unknown-linux-gnu
-          - os: macOS-latest
-            triple: x86_64-apple-darwin
-          - os: macOS-latest
-            triple: aarch64-apple-darwin
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
           - os: windows-latest
