@@ -95,7 +95,7 @@ impl<'a> App<'a> {
                 },
             ),
         }
-        .min(visible_topics.len() - 1);
+        .min(visible_topics.len().saturating_sub(1));
 
         let next_selected_topic = visible_topics.get(new_index).map(|o| (*o).to_string());
         let different = self.selected_topic != next_selected_topic;
