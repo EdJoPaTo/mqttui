@@ -1,5 +1,4 @@
 # MQTT TUI
-![Rust](https://github.com/EdJoPaTo/mqttui/workflows/Rust/badge.svg)
 
 > Subscribe to a MQTT Topic or publish something quickly from the terminal
 
