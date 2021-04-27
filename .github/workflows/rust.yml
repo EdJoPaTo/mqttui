@@ -1,4 +1,4 @@
-name: Rust
+name: Test and Build Rust
 
 on:
   push:
@@ -31,27 +31,6 @@ jobs:
         with:
           command: clippy
           args: --verbose --locked --all-targets --all-features -- -D clippy::all -D clippy::pedantic
-
-  rustfmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-          components: rustfmt
-
-      - name: Check format
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: -- --check --verbose
 
   test:
     name: Test ${{ matrix.os }} ${{ matrix.toolchain }}
