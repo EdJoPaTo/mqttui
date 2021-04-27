@@ -4,13 +4,13 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crossterm::{
-    event::{
-        DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, MouseButton,
-        MouseEventKind,
-    },
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+use crossterm::event::{
+    DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers,
+    MouseButton, MouseEventKind,
+};
+use crossterm::execute;
+use crossterm::terminal::{
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -103,6 +103,9 @@ pub fn show(
         match rx.recv()? {
             Event::Key(event) => match event.code {
                 KeyCode::Char('q') => app.should_quit = true,
+                KeyCode::Char('c') if event.modifiers.contains(KeyModifiers::CONTROL) => {
+                    app.should_quit = true;
+                }
                 KeyCode::Enter | KeyCode::Char(' ') => app.on_toggle(),
                 KeyCode::Left | KeyCode::Char('h') => app.on_left(),
                 KeyCode::Down | KeyCode::Char('j') => app.on_down()?,
