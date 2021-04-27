@@ -1,8 +1,8 @@
 #![forbid(unsafe_code)]
 
-use rumqttc::{self, Client, MqttOptions, QoS};
 use std::error::Error;
-use std::sync::Arc;
+
+use rumqttc::{self, Client, MqttOptions, QoS};
 
 mod cli;
 mod format;
@@ -51,11 +51,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         client.subscribe(topic, QoS::ExactlyOnce)?;
 
-        let (history, thread_handle) = mqtt_history::start(connection)?;
+        let history = mqtt_history::MqttHistory::new(connection)?;
 
-        interactive::show(host, port, topic, Arc::clone(&history))?;
+        interactive::show(host, port, topic, &history)?;
         client.disconnect()?;
-        thread_handle.join().expect("mqtt thread failed to finish");
+        history.join().expect("mqtt thread failed to finish");
     }
 
     Ok(())

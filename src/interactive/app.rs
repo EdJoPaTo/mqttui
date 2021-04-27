@@ -1,9 +1,11 @@
-use crate::mqtt_history::HistoryArc;
-use crate::{format, json_view, mqtt_history, topic, topic_view};
-use json::JsonValue;
 use std::collections::HashSet;
 use std::error::Error;
+
+use json::JsonValue;
 use tui_tree_widget::{flatten, TreeState};
+
+use crate::mqtt_history::MqttHistory;
+use crate::{format, json_view, topic, topic_view};
 
 #[derive(Debug, PartialEq)]
 pub enum ElementInFocus {
@@ -27,7 +29,7 @@ pub struct App<'a> {
     pub host: &'a str,
     pub port: u16,
     pub subscribe_topic: &'a str,
-    pub history: HistoryArc,
+    pub history: &'a MqttHistory,
 
     pub focus: ElementInFocus,
     pub json_view_state: TreeState,
@@ -38,7 +40,12 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(host: &'a str, port: u16, subscribe_topic: &'a str, history: HistoryArc) -> App<'a> {
+    pub fn new(
+        host: &'a str,
+        port: u16,
+        subscribe_topic: &'a str,
+        history: &'a MqttHistory,
+    ) -> App<'a> {
         App {
             host,
             port,
@@ -55,12 +62,7 @@ impl<'a> App<'a> {
     }
 
     fn change_selected_topic(&mut self, cursor_move: CursorMove) -> Result<bool, Box<dyn Error>> {
-        let history = self
-            .history
-            .lock()
-            .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
-
-        let topics = mqtt_history::history_to_tmlp(history.iter());
+        let topics = self.history.to_tmlp()?;
         let topics_with_parents =
             topic::get_all_with_parents(topics.iter().map(|o| o.topic.as_ref()));
         let visible_topics = topics_with_parents
@@ -102,19 +104,13 @@ impl<'a> App<'a> {
     }
 
     fn get_json_of_current_topic(&self) -> Result<Option<JsonValue>, Box<dyn Error>> {
-        let history = self
-            .history
-            .lock()
-            .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
-
-        let json = self
-            .selected_topic
-            .as_ref()
-            .and_then(|topic| history.get(topic))
-            .map(|o| o.last().expect("History always has at least one entry"))
-            .and_then(|value| format::payload_as_json(value.packet.payload.to_vec()));
-
-        Ok(json)
+        if let Some(topic) = &self.selected_topic {
+            let entry = self.history.get_last(topic)?.unwrap();
+            let json = format::payload_as_json(entry.packet.payload.to_vec());
+            Ok(json)
+        } else {
+            Ok(None)
+        }
     }
 
     fn change_selected_json_property(

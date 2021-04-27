@@ -15,7 +15,7 @@ use tui_tree_widget::{Tree, TreeState};
 use crate::format;
 use crate::interactive::app::{App, ElementInFocus};
 use crate::json_view::root_tree_items_from_json;
-use crate::mqtt_history::{self, HistoryEntry};
+use crate::mqtt_history::HistoryEntry;
 use crate::topic_view::{self, TopicTreeEntry};
 
 mod history;
@@ -59,12 +59,7 @@ fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> Result<(), Box<d
 where
     B: Backend,
 {
-    let history = &app
-        .history
-        .lock()
-        .map_err(|err| format!("failed to aquire lock of mqtt history: {}", err))?;
-
-    let topics = mqtt_history::history_to_tmlp(history.iter());
+    let topics = app.history.to_tmlp()?;
     let tree_items = topic_view::get_tmlp_as_tree(&topics);
 
     // Move opened_topics over to TreeState
@@ -85,25 +80,25 @@ where
     );
 
     #[allow(clippy::option_if_let_else)]
-    let overview_area = if let Some(topic_history) = app
-        .selected_topic
-        .as_ref()
-        .and_then(|selected_topic| history.get(selected_topic))
-    {
-        let chunks = Layout::default()
-            .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
-            .direction(Direction::Horizontal)
-            .split(area);
+    let overview_area = if let Some(selected_topic) = &app.selected_topic {
+        if let Some(topic_history) = app.history.get(selected_topic)? {
+            let chunks = Layout::default()
+                .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
+                .direction(Direction::Horizontal)
+                .split(area);
 
-        draw_details(
-            f,
-            chunks[1],
-            topic_history,
-            app.focus == ElementInFocus::JsonPayload,
-            &mut app.json_view_state,
-        );
+            draw_details(
+                f,
+                chunks[1],
+                &topic_history,
+                app.focus == ElementInFocus::JsonPayload,
+                &mut app.json_view_state,
+            );
 
-        chunks[0]
+            chunks[0]
+        } else {
+            area
+        }
     } else {
         area
     };

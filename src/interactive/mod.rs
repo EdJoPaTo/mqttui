@@ -1,5 +1,9 @@
-use crate::interactive::app::App;
-use crate::mqtt_history::HistoryArc;
+use std::error::Error;
+use std::io::stdout;
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
+
 use crossterm::{
     event::{
         DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, MouseButton,
@@ -8,14 +12,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{
-    error::Error,
-    io::stdout,
-    sync::mpsc,
-    thread,
-    time::{Duration, Instant},
-};
 use tui::{backend::CrosstermBackend, Terminal};
+
+use crate::interactive::app::App;
+use crate::mqtt_history::MqttHistory;
 
 mod app;
 mod ui;
@@ -43,7 +43,7 @@ pub fn show(
     host: &str,
     port: u16,
     subscribe_topic: &str,
-    history: HistoryArc,
+    history: &MqttHistory,
 ) -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
 
@@ -94,7 +94,7 @@ pub fn show(
         }
     });
 
-    let mut app = App::new(host, port, subscribe_topic, history);
+    let mut app = App::new(host, port, subscribe_topic, &history);
 
     terminal.clear()?;
 
