@@ -2,14 +2,14 @@ use std::cmp::min;
 use std::error::Error;
 
 use json::JsonValue;
-use tui::{
-    backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    text::Spans,
-    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
-    Frame,
-};
+use tui::backend::Backend;
+use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::style::Modifier;
+use tui::style::{Color, Style};
+use tui::text::Span;
+use tui::text::Spans;
+use tui::widgets::{Block, Borders, List, ListItem, Paragraph, Wrap};
+use tui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::format;
@@ -44,6 +44,15 @@ where
     let host = format!("MQTT Broker: {} (Port {})", app.host, app.port);
     let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
     let mut text = vec![Spans::from(host), Spans::from(subscribed)];
+
+    if let Some(err) = app.history.has_connection_err().unwrap() {
+        text.push(Spans::from(Span::styled(
+            format!("MQTT Connection Error: {}", err),
+            Style::default()
+                .fg(Color::Red)
+                .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK),
+        )))
+    }
 
     if let Some(topic) = &app.selected_topic {
         text.push(Spans::from(format!("Selected Topic: {}", topic)));
