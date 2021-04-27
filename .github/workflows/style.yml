@@ -1,4 +1,4 @@
-name: Rustfmt
+name: Rust Code Formatting
 
 on:
   push:
