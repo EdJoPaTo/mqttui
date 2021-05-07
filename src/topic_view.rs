@@ -54,7 +54,7 @@ where
     let mut keys = map.keys().cloned().collect::<Vec<_>>();
     keys.sort_unstable();
 
-    let roots = topic::get_all_roots(keys.to_owned());
+    let roots = topic::get_all_roots(keys.clone());
     let topics = topic::get_all_with_parents(keys);
 
     let mut result = Vec::new();
@@ -80,7 +80,7 @@ fn build_recursive(
     TopicTreeEntry {
         topic: topic.to_owned(),
         messages: info.map_or(0, |o| o.messages),
-        last_payload: info.map(|o| o.last_payload.to_vec()),
+        last_payload: info.map(|o| o.last_payload.clone()),
         entries_below,
     }
 }
@@ -109,7 +109,7 @@ pub fn tree_items_from_tmlp_tree(entries: &[TopicTreeEntry]) -> Vec<TreeItem> {
         let children = tree_items_from_tmlp_tree(&entry.entries_below);
 
         let meta = if let Some(payload) = &entry.last_payload {
-            format!("= {}", format::payload_as_utf8(payload.to_vec()))
+            format!("= {}", format::payload_as_utf8(payload.clone()))
         } else {
             format!(
                 "({} topics, {} messages)",

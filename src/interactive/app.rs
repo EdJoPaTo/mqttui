@@ -132,7 +132,7 @@ impl<'a> App<'a> {
             }
             .min(visible.len() - 1)
         });
-        let new_identifier = visible.get(new_index).unwrap().identifier.to_owned();
+        let new_identifier = visible.get(new_index).unwrap().identifier.clone();
         self.json_view_state.select(new_identifier);
         Ok(())
     }
@@ -165,7 +165,7 @@ impl<'a> App<'a> {
         match self.focus {
             ElementInFocus::TopicOverview => {
                 if let Some(topic) = &self.selected_topic {
-                    self.opened_topics.insert(topic.to_owned());
+                    self.opened_topics.insert(topic.clone());
                 }
             }
             ElementInFocus::JsonPayload => {
@@ -200,7 +200,7 @@ impl<'a> App<'a> {
                 if self.opened_topics.contains(topic) {
                     self.opened_topics.remove(topic);
                 } else {
-                    self.opened_topics.insert(topic.to_owned());
+                    self.opened_topics.insert(topic.clone());
                 }
             }
         }

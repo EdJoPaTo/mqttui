@@ -216,10 +216,10 @@ where
             PacketTime::Local(time) => time.format(format::TIMESTAMP_FORMAT).to_string(),
         };
         let qos = format::qos(entry.qos);
-        let value = entry.value.to_owned().unwrap_or_else(|err| err);
+        let value = entry.value.clone().unwrap_or_else(|err| err);
         rows_content.push(vec![time, qos, value]);
     }
-    let rows = rows_content.iter().map(|i| Row::new(i.to_owned()));
+    let rows = rows_content.iter().map(|cells| Row::new(cells.clone()));
 
     let t = Table::new(rows)
         .block(Block::default().borders(Borders::ALL).title(title))

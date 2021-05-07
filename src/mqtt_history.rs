@@ -91,7 +91,7 @@ impl MqttHistory {
             .history
             .lock()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))?;
-        let topic_entries = history.get(topic).map(|o| o.to_vec());
+        let topic_entries = history.get(topic).cloned();
 
         Ok(topic_entries)
     }
@@ -101,7 +101,7 @@ impl MqttHistory {
             .history
             .lock()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))?;
-        let entry = history.get(topic).map(|o| o.last().unwrap().to_owned());
+        let entry = history.get(topic).map(|o| o.last().unwrap().clone());
 
         Ok(entry)
     }
@@ -114,12 +114,12 @@ impl MqttHistory {
         let mut result = Vec::new();
         for (topic, history) in history.iter() {
             result.push(TopicMessagesLastPayload {
-                topic: topic.to_owned(),
+                topic: topic.clone(),
                 messages: history.len(),
                 last_payload: history.last().unwrap().packet.payload.to_vec(),
             });
         }
-        result.sort_by_key(|o| o.topic.to_owned());
+        result.sort_by_key(|o| o.topic.clone());
         Ok(result)
     }
 }
@@ -156,7 +156,7 @@ fn thread_logic(
                             let mut history = history.lock().unwrap();
 
                             if !history.contains_key(topic) {
-                                history.insert(topic.to_owned(), Vec::new());
+                                history.insert(topic.clone(), Vec::new());
                             }
 
                             let vec = history.get_mut(topic).unwrap();

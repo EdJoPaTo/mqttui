@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .expect("Topic could not be read from command line");
 
         let history =
-            mqtt_history::MqttHistory::new(client.to_owned(), connection, topic.to_owned())?;
+            mqtt_history::MqttHistory::new(client.clone(), connection, topic.to_string())?;
 
         interactive::show(host, port, topic, &history)?;
         client.disconnect()?;
