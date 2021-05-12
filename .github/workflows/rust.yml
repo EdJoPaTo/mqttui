@@ -27,7 +27,7 @@ jobs:
           components: clippy
 
       - name: Run clippy
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@v1.0.3
         with:
           command: clippy
           args: --verbose --locked --all-targets --all-features -- -D clippy::all -D clippy::pedantic
@@ -60,7 +60,7 @@ jobs:
           override: true
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@v1.0.3
         with:
           command: test
           args: --verbose --locked --all-features
@@ -109,7 +109,7 @@ jobs:
           target: ${{ matrix.triple }}
 
       - name: Build release
-        uses: actions-rs/cargo@v1
+        uses: actions-rs/cargo@v1.0.3
         env:
           # TODO: Remove this once it's the default
           SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk
