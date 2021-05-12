@@ -87,6 +87,8 @@ jobs:
             triple: aarch64-apple-darwin
           - os: windows-latest
             triple: x86_64-pc-windows-msvc
+          # - os: windows-latest
+          #   triple: aarch64-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v2
