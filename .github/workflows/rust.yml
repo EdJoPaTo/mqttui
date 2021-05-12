@@ -90,6 +90,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get the version from the tag
+        shell: bash
+        run: |
+          version=$(git describe --tags --match "v*.*.*" --always)
+          echo "version is: $version"
+          echo "GIT_TAG_VERSION=$version" >> $GITHUB_ENV
 
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -113,13 +122,13 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           cd target/${{ matrix.triple }}/release
-          tar -czvf ../../../mqttui-${{ matrix.triple }}.tar.gz mqttui
+          tar -czvf ../../../mqttui-${{ env.GIT_TAG_VERSION }}-${{ matrix.triple }}.tar.gz mqttui
           cd -
       - name: Pack release (windows)
         if: runner.os == 'Windows'
         run: |
           cd target/${{ matrix.triple }}/release
-          7z a ../../../mqttui-${{ matrix.triple }}.zip mqttui.exe
+          7z a ../../../mqttui-${{ env.GIT_TAG_VERSION }}-${{ matrix.triple }}.zip mqttui.exe
           cd -
 
       - name: Upload Artifact
