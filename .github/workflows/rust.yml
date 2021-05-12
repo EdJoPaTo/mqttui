@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.7
         with:
           toolchain: stable
           override: true
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.7
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
@@ -101,7 +101,7 @@ jobs:
           echo "GIT_TAG_VERSION=$version" >> $GITHUB_ENV
 
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.7
         with:
           toolchain: stable
           override: true
