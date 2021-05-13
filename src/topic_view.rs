@@ -154,11 +154,11 @@ const ALL_EXAMPLES: [&str; 10] = [
 #[test]
 fn filter_topics_by_opened_shows_only_top_level() {
     let opened = HashSet::new();
-    let actual: Vec<_> = ALL_EXAMPLES
+    let actual = ALL_EXAMPLES
         .iter()
         .cloned()
         .filter(|entry| is_topic_opened(&opened, entry))
-        .collect();
+        .collect::<Vec<_>>();
     assert_eq!(actual, ["a", "e"]);
 }
 
@@ -166,11 +166,11 @@ fn filter_topics_by_opened_shows_only_top_level() {
 fn filter_topics_by_opened_shows_some() {
     let mut opened = HashSet::new();
     opened.insert("a".to_string());
-    let actual: Vec<_> = ALL_EXAMPLES
+    let actual = ALL_EXAMPLES
         .iter()
         .cloned()
         .filter(|entry| is_topic_opened(&opened, entry))
-        .collect();
+        .collect::<Vec<_>>();
     assert_eq!(actual, ["a", "a/b", "a/d", "e"]);
 }
 
@@ -178,11 +178,11 @@ fn filter_topics_by_opened_shows_some() {
 fn filter_topics_by_opened_shows_only_when_all_parents_are_opened() {
     let mut opened = HashSet::new();
     opened.insert("a/b".to_string());
-    let actual: Vec<_> = ALL_EXAMPLES
+    let actual = ALL_EXAMPLES
         .iter()
         .cloned()
         .filter(|entry| is_topic_opened(&opened, entry))
-        .collect();
+        .collect::<Vec<_>>();
     assert_eq!(actual, ["a", "e"]);
 }
 
@@ -196,10 +196,10 @@ fn filter_topics_by_opened_shows_all() {
     opened.insert("e/f/g".to_string());
     opened.insert("e/f/g/h".to_string());
 
-    let actual: Vec<_> = ALL_EXAMPLES
+    let actual = ALL_EXAMPLES
         .iter()
         .cloned()
         .filter(|entry| is_topic_opened(&opened, entry))
-        .collect();
+        .collect::<Vec<_>>();
     assert_eq!(actual, ALL_EXAMPLES);
 }

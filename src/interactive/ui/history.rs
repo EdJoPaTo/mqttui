@@ -178,10 +178,10 @@ where
 {
     let mut title = format!("History ({}", topic_history.len());
 
-    let without_retain: Vec<_> = topic_history
+    let without_retain = topic_history
         .iter()
         .filter(|o| o.time != PacketTime::Retained)
-        .collect();
+        .collect::<Vec<_>>();
     let amount_without_retain = without_retain.len().saturating_sub(1);
     if amount_without_retain > 0 {
         title += ", every ~";
