@@ -43,7 +43,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --verbose --locked --all-targets --all-features -- -D clippy::all -D clippy::pedantic
+          args: --verbose --locked --all-targets --all-features -- -D clippy::all -D clippy::pedantic -W clippy::unknown-clippy-lints
 
       - name: Run tests
         uses: actions-rs/cargo@v1
