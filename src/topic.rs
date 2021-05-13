@@ -53,7 +53,7 @@ pub fn get_parent(topic: &str) -> Option<&str> {
 pub fn get_direct_children<'a>(topic: &str, all: &[&'a str]) -> Vec<&'a str> {
     all.iter()
         .filter(|o| is_direct_child(topic, o))
-        .cloned()
+        .copied()
         .collect()
 }
 
@@ -147,16 +147,16 @@ fn leaf_works() {
 
 #[test]
 fn is_below_works() {
-    assert_eq!(true, is_below("a", "a/b"));
-    assert_eq!(true, is_below("a", "a/b/c"));
-    assert_eq!(false, is_below("a", "b"));
-    assert_eq!(false, is_below("a", "b/c"));
-    assert_eq!(false, is_below("a", "ab/c"));
+    assert!(is_below("a", "a/b"));
+    assert!(is_below("a", "a/b/c"));
+    assert!(!is_below("a", "b"));
+    assert!(!is_below("a", "b/c"));
+    assert!(!is_below("a", "ab/c"));
 }
 
 #[test]
 fn is_direct_child_works() {
-    assert_eq!(true, is_direct_child("a", "a/b"));
-    assert_eq!(false, is_direct_child("a", "a/b/c"));
-    assert_eq!(false, is_direct_child("a", "b/c"));
+    assert!(is_direct_child("a", "a/b"));
+    assert!(!is_direct_child("a", "a/b/c"));
+    assert!(!is_direct_child("a", "b/c"));
 }

@@ -68,7 +68,6 @@ impl<'a> App<'a> {
         let visible_topics = topics_with_parents
             .iter()
             .filter(|topic| topic_view::is_topic_opened(&self.opened_topics, topic))
-            .cloned()
             .collect::<Vec<_>>();
 
         let tmlp_tree = topic_view::get_tmlp_as_tree(&topics);
@@ -97,7 +96,7 @@ impl<'a> App<'a> {
         }
         .min(visible_topics.len().saturating_sub(1));
 
-        let next_selected_topic = visible_topics.get(new_index).map(|o| (*o).to_string());
+        let next_selected_topic = visible_topics.get(new_index).map(|o| (*(*o)).to_string());
         let different = self.selected_topic != next_selected_topic;
         self.selected_topic = next_selected_topic;
         Ok(different)

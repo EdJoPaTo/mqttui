@@ -51,7 +51,7 @@ where
         map.insert(&entry.topic, entry);
     }
 
-    let mut keys = map.keys().cloned().collect::<Vec<_>>();
+    let mut keys = map.keys().copied().collect::<Vec<_>>();
     keys.sort_unstable();
 
     let roots = topic::get_all_roots(keys.clone());
@@ -133,7 +133,7 @@ pub fn tree_items_from_tmlp_tree(entries: &[TopicTreeEntry]) -> Vec<TreeItem> {
 pub fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
     topic::get_all_parents(topic)
         .iter()
-        .cloned()
+        .copied()
         .all(|t| opened.contains(t))
 }
 
@@ -156,7 +156,7 @@ fn filter_topics_by_opened_shows_only_top_level() {
     let opened = HashSet::new();
     let actual = ALL_EXAMPLES
         .iter()
-        .cloned()
+        .copied()
         .filter(|entry| is_topic_opened(&opened, entry))
         .collect::<Vec<_>>();
     assert_eq!(actual, ["a", "e"]);
@@ -168,7 +168,7 @@ fn filter_topics_by_opened_shows_some() {
     opened.insert("a".to_string());
     let actual = ALL_EXAMPLES
         .iter()
-        .cloned()
+        .copied()
         .filter(|entry| is_topic_opened(&opened, entry))
         .collect::<Vec<_>>();
     assert_eq!(actual, ["a", "a/b", "a/d", "e"]);
@@ -180,7 +180,7 @@ fn filter_topics_by_opened_shows_only_when_all_parents_are_opened() {
     opened.insert("a/b".to_string());
     let actual = ALL_EXAMPLES
         .iter()
-        .cloned()
+        .copied()
         .filter(|entry| is_topic_opened(&opened, entry))
         .collect::<Vec<_>>();
     assert_eq!(actual, ["a", "e"]);
@@ -198,7 +198,7 @@ fn filter_topics_by_opened_shows_all() {
 
     let actual = ALL_EXAMPLES
         .iter()
-        .cloned()
+        .copied()
         .filter(|entry| is_topic_opened(&opened, entry))
         .collect::<Vec<_>>();
     assert_eq!(actual, ALL_EXAMPLES);
