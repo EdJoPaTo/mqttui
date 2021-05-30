@@ -111,7 +111,7 @@ jobs:
           SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk
         with:
           command: build
-          args: --release --verbose --locked --target ${{ matrix.triple }}
+          args: --release --verbose --locked --all-features --target ${{ matrix.triple }}
           use-cross: ${{ runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-gnu' }}
 
       - name: Pack release (-nix)
