@@ -38,8 +38,8 @@ pub fn build() -> App<'static, 'static> {
         )
         .arg(
             Arg::with_name("Host")
-                .short("h")
-                .long("host")
+                .short("b")
+                .long("broker")
                 .value_name("HOST")
                 .global(true)
                 .takes_value(true)
