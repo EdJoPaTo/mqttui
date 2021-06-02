@@ -1,5 +1,6 @@
 use clap::{App, AppSettings, Arg, SubCommand};
 
+#[must_use]
 pub fn build() -> App<'static, 'static> {
     App::new("MQTT TUI")
         .version(env!("CARGO_PKG_VERSION"))
