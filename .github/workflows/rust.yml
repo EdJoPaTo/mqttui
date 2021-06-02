@@ -122,10 +122,12 @@ jobs:
         if: runner.os != 'Windows'
         run: >
           tar --gzip -cvf ${{ env.ARTIFACT_NAME }}.tar.gz
+          LICENSE
           -C target/${{ matrix.triple }}/release mqttui
       - name: Pack release (windows)
         if: runner.os == 'Windows'
         run: |
+          7z a ${{ env.ARTIFACT_NAME }}.zip LICENSE
           cd target/${{ matrix.triple }}/release
           7z a ../../../${{ env.ARTIFACT_NAME }}.zip mqttui.exe
           cd -
