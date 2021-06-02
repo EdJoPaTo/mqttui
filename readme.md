@@ -53,7 +53,7 @@ mqttui publish -h "test.mosquitto.org" "topic" "payload"
 ```
 
 ```plaintext
-MQTT TUI 0.11.0
+MQTT TUI 0.13.0
 EdJoPaTo <mqttui-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
@@ -61,12 +61,12 @@ USAGE:
     mqttui [OPTIONS] [TOPIC] [SUBCOMMAND]
 
 FLAGS:
-        --help       Prints help information
+    -h, --help       Prints help information
     -V, --version    Prints version information
 
 OPTIONS:
-    -h, --host <HOST>    Host on which the MQTT Broker is running [default: localhost]
-    -p, --port <INT>     Port on which the MQTT Broker is running [default: 1883]
+    -b, --broker <HOST>    Host on which the MQTT Broker is running [default: localhost]
+    -p, --port <INT>       Port on which the MQTT Broker is running [default: 1883]
 
 ARGS:
     <TOPIC>    Topic to watch [default: #]
@@ -84,14 +84,14 @@ USAGE:
     mqttui publish [FLAGS] [OPTIONS] <TOPIC> <PAYLOAD>
 
 FLAGS:
-        --help       Prints help information
+    -h, --help       Prints help information
     -r, --retain     Publish the MQTT message retained
     -V, --version    Prints version information
     -v, --verbose    Show full MQTT communication
 
 OPTIONS:
-    -h, --host <HOST>    Host on which the MQTT Broker is running [default: localhost]
-    -p, --port <INT>     Port on which the MQTT Broker is running [default: 1883]
+    -b, --broker <HOST>    Host on which the MQTT Broker is running [default: localhost]
+    -p, --port <INT>       Port on which the MQTT Broker is running [default: 1883]
 
 ARGS:
     <TOPIC>      Topic to publish to
@@ -100,7 +100,7 @@ ARGS:
 
 Tip: Create an alias for the host you are working on:
 ```bash
-alias mqttui-home='mqttui -h pi-home.local'
+alias mqttui-home='mqttui --broker pi-home.local'
 
 # Use the alias without having to specify the host every time
 mqttui-home "topic"
