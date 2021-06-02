@@ -1,8 +1,9 @@
 [package]
 name = "mqttui"
+description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
 version = "0.12.0"
 license = "GPL-3.0-or-later"
-description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
+repository = "https://github.com/EdJoPaTo/mqttui"
 authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
 edition = "2018"
 
