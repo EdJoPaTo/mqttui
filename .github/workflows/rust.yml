@@ -89,12 +89,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get the version from the tag
+      - name: Set Artifact Name
         shell: bash
         run: |
           version=$(git describe --tags --match "v*.*.*" --always)
           echo "version is: $version"
           echo "GIT_TAG_VERSION=$version" >> $GITHUB_ENV
+
+          name="mqttui-$version-${{ matrix.triple }}"
+          echo "artifact name is: $name"
+          echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
 
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -116,15 +120,14 @@ jobs:
 
       - name: Pack release (-nix)
         if: runner.os != 'Windows'
-        run: |
-          cd target/${{ matrix.triple }}/release
-          tar -czvf ../../../mqttui-${{ env.GIT_TAG_VERSION }}-${{ matrix.triple }}.tar.gz mqttui
-          cd -
+        run: >
+          tar --gzip -cvf ${{ env.ARTIFACT_NAME }}.tar.gz
+          -C target/${{ matrix.triple }}/release mqttui
       - name: Pack release (windows)
         if: runner.os == 'Windows'
         run: |
           cd target/${{ matrix.triple }}/release
-          7z a ../../../mqttui-${{ env.GIT_TAG_VERSION }}-${{ matrix.triple }}.zip mqttui.exe
+          7z a ../../../${{ env.ARTIFACT_NAME }}.zip mqttui.exe
           cd -
 
       - name: Upload Artifact
