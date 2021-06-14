@@ -20,7 +20,7 @@ clap = "2"
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
-crossterm = "0.19"
+crossterm = "0.20"
 json = "0.12"
 rand = "0.8"
 rumqttc = "0.7"
