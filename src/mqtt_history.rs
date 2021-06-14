@@ -58,7 +58,7 @@ impl MqttHistory {
                         &subscribe_topic,
                         &connection_err,
                         &history,
-                    )
+                    );
                 })?
         };
 

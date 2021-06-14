@@ -126,7 +126,7 @@ fn parent_works() {
 #[test]
 fn direct_children_works() {
     let actual = get_direct_children("a", &["a/b", "a/b/c", "a/d", "e"]);
-    assert_eq!(actual, ["a/b", "a/d"])
+    assert_eq!(actual, ["a/b", "a/d"]);
 }
 
 #[test]

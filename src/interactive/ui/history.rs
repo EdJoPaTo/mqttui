@@ -265,8 +265,8 @@ where
                     Span::raw(last_time.format("%H:%M:%S").to_string()),
                 ])
                 .bounds([
-                    parse_time_to_chart_x(&first_time),
-                    parse_time_to_chart_x(&last_time),
+                    parse_time_to_chart_x(first_time),
+                    parse_time_to_chart_x(last_time),
                 ]),
         )
         .y_axis(

@@ -72,7 +72,7 @@ fn formats_qos() {
 
 #[test]
 fn payload_pretty_json_ignores_plain() {
-    assert_eq!(None, payload_as_json(b"bob".to_vec()))
+    assert_eq!(None, payload_as_json(b"bob".to_vec()));
 }
 
 #[test]

@@ -51,7 +51,7 @@ where
             Style::default()
                 .fg(Color::Red)
                 .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK),
-        )))
+        )));
     }
 
     if let Some(topic) = &app.selected_topic {
@@ -135,7 +135,7 @@ fn draw_overview<B>(
 {
     let title = format!("Topics ({})", topic_amount);
 
-    let tree_items = topic_view::tree_items_from_tmlp_tree(&tree_items);
+    let tree_items = topic_view::tree_items_from_tmlp_tree(tree_items);
 
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(tree_items)

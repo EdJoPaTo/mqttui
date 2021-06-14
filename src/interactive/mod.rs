@@ -94,7 +94,7 @@ pub fn show(
         }
     });
 
-    let mut app = App::new(host, port, subscribe_topic, &history);
+    let mut app = App::new(host, port, subscribe_topic, history);
 
     terminal.clear()?;
 
