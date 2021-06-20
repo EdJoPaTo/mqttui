@@ -64,7 +64,7 @@ jobs:
           command: test
           args: --verbose --locked --all-features
 
-  release:
+  github-release:
     name: Release ${{ matrix.triple }}
     runs-on: ${{ matrix.os }}
     needs: test
@@ -115,7 +115,7 @@ jobs:
           target: ${{ matrix.triple }}
           toolchain: stable
 
-      - name: Build release
+      - name: Build
         uses: actions-rs/cargo@v1
         env:
           # TODO: Remove this once it's the default
@@ -125,16 +125,16 @@ jobs:
           args: --release --verbose --locked --all-features --target ${{ matrix.triple }}
           use-cross: ${{ runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-gnu' }}
 
-      - name: Pack release (-nix)
+      - name: Package (-nix)
         if: runner.os != 'Windows'
         run: >
           tar --gzip -cvf ${{ env.ARTIFACT_NAME }}.tar.gz
-          completions LICENSE
+          completions LICENSE README.md
           -C target/${{ matrix.triple }}/release mqttui
-      - name: Pack release (windows)
+      - name: Package (windows)
         if: runner.os == 'Windows'
         run: |
-          7z a ${{ env.ARTIFACT_NAME }}.zip completions LICENSE
+          7z a ${{ env.ARTIFACT_NAME }}.zip completions LICENSE README.md
           cd target/${{ matrix.triple }}/release
           7z a ../../../${{ env.ARTIFACT_NAME }}.zip mqttui.exe
           cd -
@@ -147,13 +147,31 @@ jobs:
             *.zip
             *.tar.gz
 
-      - name: GH Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
           files: |
             *.zip
             *.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  aur-publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: github-release
+    strategy:
+      fail-fast: false
+      matrix:
+        name:
+          - mqttui
+          - mqttui-bin
+    steps:
+      - name: Publish AUR package
+        uses: ATiltedTree/create-aur-release@v1
+        with:
+          package_name: ${{ matrix.name }}
+          commit_username: GitHub Actions
+          commit_email: mqttui-github-actions@edjopato.de
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
