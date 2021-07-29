@@ -10,4 +10,4 @@ updates:
       interval: "weekly"
       time: "03:37" # UTC
     commit-message:
-      prefix: "chore(cargo):"
+      prefix: "build(cargo):"
