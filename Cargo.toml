@@ -24,13 +24,13 @@ crossterm = "0.20"
 json = "0.12"
 rand = "0.8"
 rumqttc = "0.7"
-tui-tree-widget = "0.6"
+tui-tree-widget = "0.7"
 
 [dependencies.clap]
 version = "2"
 features = ["wrap_help"]
 
 [dependencies.tui]
-version = "0.15"
+version = "0.16"
 default-features = false
 features = ["crossterm"]
