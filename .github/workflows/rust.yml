@@ -8,53 +8,40 @@ jobs:
   test:
     name: Test ${{ matrix.os }} ${{ matrix.toolchain }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.toolchain == 'nightly' }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          # Check the 3 platforms and ensure there is not even a single warning
+          # Check stable on the main platforms and ensure there is not even a single warning
           - os: ubuntu-latest
             toolchain: stable
             clippyargs: -D clippy::pedantic -D warnings
-            experimental: false
           - os: macOS-latest
             toolchain: stable
             clippyargs: -D clippy::pedantic -D warnings
-            experimental: false
           - os: windows-latest
             toolchain: stable
             clippyargs: -D clippy::pedantic -D warnings
-            experimental: false
 
-          # Check beta/nightly (potentially buggy) and maybe get some glances on soon to be lints
+          # Check future versions and maybe get some glances on soon to be lints
           - os: ubuntu-latest
             toolchain: beta
             clippyargs: -W clippy::pedantic
-            experimental: true
           - os: ubuntu-latest
             toolchain: nightly
             clippyargs: -W clippy::pedantic
-            experimental: true
 
           # Check if it is still running on older Rust versions.
           # Sometimes they dont have lint bugfixes which results in false positives -> Dont error, just warn.
           # Also some specified lints are not yet existing in the older rust version -> allow unknown lints.
           # - os: ubuntu-latest
-          #   toolchain: 1.41.1 # Debian 10 Buster
-          #   clippyargs: -A unknown-lints -A clippy::unknown-clippy-lints
-          #   experimental: false
-          # - os: ubuntu-latest
           #   toolchain: 1.48.0 # Debian 11 Bullseye
           #   clippyargs: -A unknown-lints -A clippy::unknown-clippy-lints
-          #   experimental: false
           - os: ubuntu-latest
             toolchain: 1.52.0 # Alpine 3.14
             clippyargs: -A unknown-lints
-            experimental: false
     steps:
-      - uses: actions/checkout@v2
-
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -62,6 +49,8 @@ jobs:
           override: true
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
+
+      - uses: actions/checkout@v2
 
       - name: Run clippy
         uses: actions-rs/cargo@v1
@@ -103,6 +92,14 @@ jobs:
           # - os: windows-latest
           #   triple: aarch64-pc-windows-msvc
     steps:
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          override: true
+          profile: minimal
+          target: ${{ matrix.triple }}
+          toolchain: stable
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -117,14 +114,6 @@ jobs:
           name="mqttui-$version-${{ matrix.triple }}"
           echo "artifact name is: $name"
           echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
-
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          profile: minimal
-          target: ${{ matrix.triple }}
-          toolchain: stable
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -165,8 +154,6 @@ jobs:
           files: |
             *.zip
             *.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   aur-publish:
     name: AUR ${{ matrix.name }}
