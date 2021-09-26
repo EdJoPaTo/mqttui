@@ -26,7 +26,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         .expect("MQTT Server Port could not be read from command line.");
 
     let client_id = format!("mqttui-{:x}", rand::random::<u32>());
-    let mqttoptions = MqttOptions::new(client_id, host, port);
+    let mut mqttoptions = MqttOptions::new(client_id, host, port);
+
+    if let Some(password) = matches.value_of("Password") {
+        let username = matches
+            .value_of("Username")
+            .expect("password requires username");
+        mqttoptions.set_credentials(username, password);
+    }
+
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
     if let Some(matches) = matches.subcommand_matches("publish") {

@@ -61,15 +61,31 @@ USAGE:
     mqttui [OPTIONS] [TOPIC] [SUBCOMMAND]
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -h, --help
+            Prints help information
+
+    -V, --version
+            Prints version information
+
 
 OPTIONS:
-    -b, --broker <HOST>    Host on which the MQTT Broker is running [default: localhost]
-    -p, --port <INT>       Port on which the MQTT Broker is running [default: 1883]
+    -b, --broker <HOST>
+            Host on which the MQTT Broker is running [default: localhost]
+
+        --password <STRING>
+            Password to access the mqtt broker. Passing the password via command line is
+            insecure as the password can be read from the history!
+    -p, --port <INT>
+            Port on which the MQTT Broker is running [default: 1883]
+
+    -u, --username <STRING>
+            Username to access the mqtt broker. Anonymous access when not supplied.
+
 
 ARGS:
-    <TOPIC>    Topic to watch [default: #]
+    <TOPIC>
+            Topic to watch [default: #]
+
 
 SUBCOMMANDS:
     help       Prints this message or the help of the given subcommand(s)
@@ -84,18 +100,39 @@ USAGE:
     mqttui publish [FLAGS] [OPTIONS] <TOPIC> <PAYLOAD>
 
 FLAGS:
-    -h, --help       Prints help information
-    -r, --retain     Publish the MQTT message retained
-    -V, --version    Prints version information
-    -v, --verbose    Show full MQTT communication
+    -h, --help
+            Prints help information
+
+    -r, --retain
+            Publish the MQTT message retained
+
+    -V, --version
+            Prints version information
+
+    -v, --verbose
+            Show full MQTT communication
+
 
 OPTIONS:
-    -b, --broker <HOST>    Host on which the MQTT Broker is running [default: localhost]
-    -p, --port <INT>       Port on which the MQTT Broker is running [default: 1883]
+    -b, --broker <HOST>
+            Host on which the MQTT Broker is running [default: localhost]
+
+        --password <STRING>
+            Password to access the mqtt broker. Passing the password via command line is
+            insecure as the password can be read from the history!
+    -p, --port <INT>
+            Port on which the MQTT Broker is running [default: 1883]
+
+    -u, --username <STRING>
+            Username to access the mqtt broker. Anonymous access when not supplied.
+
 
 ARGS:
-    <TOPIC>      Topic to publish to
-    <PAYLOAD>    Payload to be published
+    <TOPIC>
+            Topic to publish to
+
+    <PAYLOAD>
+            Payload to be published
 ```
 
 Tip: Create an alias for the host you are working on:

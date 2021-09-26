@@ -58,6 +58,31 @@ pub fn build() -> App<'static, 'static> {
                 .default_value("1883"),
         )
         .arg(
+            Arg::with_name("Username")
+                .short("u")
+                .long("username")
+                .value_name("STRING")
+                .global(true)
+                .takes_value(true)
+                .requires("Password")
+                .help("Username to access the mqtt broker")
+                .long_help(
+                    "Username to access the mqtt broker. Anonymous access when not supplied.",
+                ),
+        )
+        .arg(
+            Arg::with_name("Password")
+                .long("password")
+                .value_name("STRING")
+                .global(true)
+                .takes_value(true)
+                .requires("Username")
+                .help("Password to access the mqtt broker")
+                .long_help(
+                    "Password to access the mqtt broker. Passing the password via command line is insecure as the password can be read from the history!",
+                ),
+        )
+        .arg(
             Arg::with_name("Topic")
                 .value_name("TOPIC")
                 .takes_value(true)
