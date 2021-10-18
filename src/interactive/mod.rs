@@ -88,7 +88,8 @@ pub fn show(
                 }
             }
             if last_tick.elapsed() >= TICK_RATE {
-                tx.send(Event::Tick).unwrap();
+                tx.send(Event::Tick)
+                    .expect("Update GUI Tick failed to send. The main thread probably died.");
                 last_tick = Instant::now();
             }
         }
