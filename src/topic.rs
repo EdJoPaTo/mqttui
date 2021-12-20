@@ -23,7 +23,7 @@ pub fn get_all_roots<'a, I>(all: I) -> Vec<&'a str>
 where
     I: IntoIterator<Item = &'a str>,
 {
-    let mut result = all.into_iter().map(|o| get_root(o)).collect::<Vec<_>>();
+    let mut result = all.into_iter().map(get_root).collect::<Vec<_>>();
     result.sort_unstable();
     result.dedup();
     result

@@ -20,7 +20,7 @@ use crate::topic_view::{self, TopicTreeEntry};
 
 mod history;
 
-fn focus_color(has_focus: bool) -> Color {
+const fn focus_color(has_focus: bool) -> Color {
     if has_focus {
         Color::LightGreen
     } else {

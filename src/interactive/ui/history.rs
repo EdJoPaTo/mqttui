@@ -46,10 +46,10 @@ impl DataPoint {
             .map_err(|err| format!("invalid UTF8: {}", err))
             .map(|string| stringify_jsonlike_string(&string, json_selector).map_or(string, |s| s));
 
-        DataPoint { time, qos, value }
+        Self { time, qos, value }
     }
 
-    fn optional_time(&self) -> Option<DateTime<Local>> {
+    const fn optional_time(&self) -> Option<DateTime<Local>> {
         if let PacketTime::Local(time) = self.time {
             Some(time)
         } else {
@@ -69,12 +69,12 @@ struct GraphDataPoint {
 }
 
 impl GraphDataPoint {
-    fn parse_from_datapoint(entry: &DataPoint) -> Option<GraphDataPoint> {
+    fn parse_from_datapoint(entry: &DataPoint) -> Option<Self> {
         // TODO: Impl into instead of randomly named function?
 
         let time = entry.optional_time()?;
         let y = entry.value.as_ref().ok()?.parse::<f64>().ok()?;
-        Some(GraphDataPoint { time, y })
+        Some(Self { time, y })
     }
 
     fn as_graph_point(&self) -> (f64, f64) {
@@ -100,7 +100,7 @@ impl GraphDataPoints {
         if data.len() < 2 {
             None
         } else {
-            Some(GraphDataPoints { data })
+            Some(Self { data })
         }
     }
 

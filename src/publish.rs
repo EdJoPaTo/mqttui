@@ -10,7 +10,7 @@ pub fn eventloop(mut client: Client, mut connection: Connection, verbose: bool) 
                     println!("outgoing {:?}", outgoing);
                 }
 
-                if let rumqttc::Outgoing::Disconnect = outgoing {
+                if outgoing == rumqttc::Outgoing::Disconnect {
                     break;
                 }
             }

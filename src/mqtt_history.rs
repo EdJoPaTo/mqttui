@@ -167,7 +167,7 @@ fn thread_logic(
                         }
                     }
                     rumqttc::Event::Outgoing(packet) => {
-                        if let rumqttc::Outgoing::Disconnect = packet {
+                        if packet == rumqttc::Outgoing::Disconnect {
                             break;
                         }
                     }

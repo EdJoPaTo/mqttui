@@ -177,7 +177,7 @@ impl<'a> App<'a> {
         match self.focus {
             ElementInFocus::TopicOverview => {
                 if let Some(topic) = &self.selected_topic {
-                    if let false = self.opened_topics.remove(topic) {
+                    if !self.opened_topics.remove(topic) {
                         self.selected_topic =
                             topic::get_parent(topic).map(std::borrow::ToOwned::to_owned);
                     }
