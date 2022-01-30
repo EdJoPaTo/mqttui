@@ -134,7 +134,7 @@ jobs:
         run: >
           tar -cv
           LICENSE README.md
-          completions/
+          -C target/ completions/ -C ../
           -C target/${{ matrix.triple }}/release/ mqttui
           | gzip --best > ${{ env.ARTIFACT_NAME }}.tar.gz
       - name: Package (Windows)
@@ -142,7 +142,7 @@ jobs:
         run: >
           7z a ${{ env.ARTIFACT_NAME }}.zip
           LICENSE README.md
-          ./completions/
+          ./target/completions/
           ./target/${{ matrix.triple }}/release/mqttui.exe
 
       - name: Upload artifact

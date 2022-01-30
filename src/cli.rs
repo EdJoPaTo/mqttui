@@ -1,45 +1,42 @@
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{app_from_crate, App, Arg};
 
 #[must_use]
-pub fn build() -> App<'static, 'static> {
-    App::new("MQTT TUI")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(env!("CARGO_PKG_DESCRIPTION"))
-        .global_setting(AppSettings::ColoredHelp)
+pub fn build() -> App<'static> {
+    app_from_crate!()
+        .name("MQTT TUI")
         .subcommand(
-            SubCommand::with_name("publish")
+            App::new("publish")
                 .about("Publish a value quickly")
                 .aliases(&["p", "pub"])
                 .arg(
-                    Arg::with_name("Topic")
+                    Arg::new("Topic")
                         .value_name("TOPIC")
                         .help("Topic to publish to")
                         .takes_value(true)
                         .required(true),
                 )
                 .arg(
-                    Arg::with_name("Payload")
+                    Arg::new("Payload")
                         .value_name("PAYLOAD")
                         .help("Payload to be published")
                         .required(true),
                 )
                 .arg(
-                    Arg::with_name("retain")
-                        .short("r")
+                    Arg::new("retain")
+                        .short('r')
                         .long("retain")
                         .help("Publish the MQTT message retained"),
                 )
                 .arg(
-                    Arg::with_name("verbose")
-                        .short("v")
+                    Arg::new("verbose")
+                        .short('v')
                         .long("verbose")
                         .help("Show full MQTT communication"),
                 ),
         )
         .arg(
-            Arg::with_name("Host")
-                .short("b")
+            Arg::new("Host")
+                .short('b')
                 .long("broker")
                 .value_name("HOST")
                 .global(true)
@@ -48,8 +45,8 @@ pub fn build() -> App<'static, 'static> {
                 .default_value("localhost"),
         )
         .arg(
-            Arg::with_name("Port")
-                .short("p")
+            Arg::new("Port")
+                .short('p')
                 .long("port")
                 .value_name("INT")
                 .global(true)
@@ -58,8 +55,8 @@ pub fn build() -> App<'static, 'static> {
                 .default_value("1883"),
         )
         .arg(
-            Arg::with_name("Username")
-                .short("u")
+            Arg::new("Username")
+                .short('u')
                 .long("username")
                 .value_name("STRING")
                 .global(true)
@@ -71,7 +68,7 @@ pub fn build() -> App<'static, 'static> {
                 ),
         )
         .arg(
-            Arg::with_name("Password")
+            Arg::new("Password")
                 .long("password")
                 .value_name("STRING")
                 .global(true)
@@ -83,10 +80,15 @@ pub fn build() -> App<'static, 'static> {
                 ),
         )
         .arg(
-            Arg::with_name("Topic")
+            Arg::new("Topic")
                 .value_name("TOPIC")
                 .takes_value(true)
                 .default_value("#")
                 .help("Topic to watch"),
         )
+}
+
+#[test]
+fn verify_app() {
+    build().debug_assert();
 }
