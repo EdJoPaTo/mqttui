@@ -89,13 +89,14 @@ struct GraphDataPoints {
 }
 
 impl GraphDataPoints {
-    fn parse_from_datapoints(entries: &[DataPoint]) -> Option<Self> {
-        let mut data = Vec::new();
-        for entry in entries {
-            if let Some(point) = GraphDataPoint::parse_from_datapoint(entry) {
-                data.push(point);
-            }
-        }
+    fn parse_from_datapoints<'a, I>(entries: I) -> Option<Self>
+    where
+        I: IntoIterator<Item = &'a DataPoint>,
+    {
+        let data = entries
+            .into_iter()
+            .filter_map(GraphDataPoint::parse_from_datapoint)
+            .collect::<Vec<_>>();
 
         if data.len() < 2 {
             None
@@ -146,18 +147,15 @@ impl GraphDataPoints {
     }
 }
 
-pub fn draw<B>(
-    f: &mut Frame<B>,
-    area: Rect,
-    topic_history: &[HistoryEntry],
-    json_selector: &[usize],
-) where
+pub fn draw<'h, B, H>(f: &mut Frame<B>, area: Rect, topic_history: H, json_selector: &[usize])
+where
     B: Backend,
+    H: IntoIterator<Item = &'h HistoryEntry>,
 {
-    let mut data = Vec::new();
-    for entry in topic_history {
-        data.push(DataPoint::parse_from_history_entry(entry, json_selector));
-    }
+    let data = topic_history
+        .into_iter()
+        .map(|entry| DataPoint::parse_from_history_entry(entry, json_selector))
+        .collect::<Vec<_>>();
 
     let table_area = GraphDataPoints::parse_from_datapoints(&data).map_or(area, |points| {
         let chunks = Layout::default()
@@ -209,17 +207,15 @@ where
     }
     title += ")";
 
-    let mut rows_content: Vec<Vec<String>> = Vec::new();
-    for entry in topic_history {
+    let rows = topic_history.iter().map(|entry| {
         let time = match entry.time {
             PacketTime::Retained => String::from(format::TIMESTAMP_RETAINED),
             PacketTime::Local(time) => time.format(format::TIMESTAMP_FORMAT).to_string(),
         };
         let qos = format::qos(entry.qos);
         let value = entry.value.clone().unwrap_or_else(|err| err);
-        rows_content.push(vec![time, qos, value]);
-    }
-    let rows = rows_content.iter().map(|cells| Row::new(cells.clone()));
+        Row::new(vec![time, qos, value])
+    });
 
     let t = Table::new(rows)
         .block(Block::default().borders(Borders::ALL).title(title))

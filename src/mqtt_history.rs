@@ -105,14 +105,14 @@ impl MqttHistory {
             .history
             .lock()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))?;
-        let mut result = Vec::new();
-        for (topic, history) in history.iter() {
-            result.push(TopicMessagesLastPayload {
+        let mut result = history
+            .iter()
+            .map(|(topic, history)| TopicMessagesLastPayload {
                 topic: topic.clone(),
                 messages: history.len(),
                 last_payload: history.last().unwrap().packet.payload.to_vec(),
-            });
-        }
+            })
+            .collect::<Vec<_>>();
         result.sort_by_key(|o| o.topic.clone());
         Ok(result)
     }

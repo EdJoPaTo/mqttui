@@ -19,25 +19,23 @@ impl TopicTreeEntry {
     }
 
     pub fn topics_below(&self) -> usize {
-        let mut counter = 0;
-        for below in &self.entries_below {
-            if below.messages > 0 {
-                counter += 1;
-            }
-
-            counter += below.topics_below();
-        }
-
-        counter
+        self.entries_below
+            .iter()
+            .map(|below| {
+                let has_messages = if below.messages > 0 { 1 } else { 0 };
+                let topics_below = below.topics_below();
+                has_messages + topics_below
+            })
+            .sum()
     }
 
     pub fn messages_below(&self) -> usize {
-        let mut counter = self.messages;
-        for below in &self.entries_below {
-            counter += below.messages_below();
-        }
-
-        counter
+        let below = self
+            .entries_below
+            .iter()
+            .map(Self::messages_below)
+            .sum::<usize>();
+        self.messages + below
     }
 }
 
@@ -53,15 +51,11 @@ where
     let mut keys = map.keys().copied().collect::<Vec<_>>();
     keys.sort_unstable();
 
-    let roots = topic::get_all_roots(keys.clone());
-    let topics = topic::get_all_with_parents(keys);
-
-    let mut result = Vec::new();
-    for root in roots {
-        result.push(build_recursive(&map, &topics, root));
-    }
-
-    result
+    let topics = topic::get_all_with_parents(keys.clone());
+    topic::get_all_roots(keys)
+        .iter()
+        .map(|root| build_recursive(&map, &topics, root))
+        .collect()
 }
 
 fn build_recursive(
@@ -69,10 +63,10 @@ fn build_recursive(
     all_topics: &[&str],
     topic: &str,
 ) -> TopicTreeEntry {
-    let mut entries_below: Vec<TopicTreeEntry> = Vec::new();
-    for child in topic::get_direct_children(topic, all_topics) {
-        entries_below.push(build_recursive(map, all_topics, child));
-    }
+    let entries_below = topic::get_direct_children(topic, all_topics)
+        .iter()
+        .map(|child| build_recursive(map, all_topics, child))
+        .collect();
 
     let info = map.get(topic);
 
@@ -101,33 +95,35 @@ pub fn get_identifier_of_topic(
     Some(identifier)
 }
 
-pub fn tree_items_from_tmlp_tree(entries: &[TopicTreeEntry]) -> Vec<TreeItem> {
-    let mut result = Vec::new();
+pub fn tree_items_from_tmlp_tree<'a, I>(entries: I) -> Vec<TreeItem<'a>>
+where
+    I: IntoIterator<Item = &'a TopicTreeEntry>,
+{
+    entries
+        .into_iter()
+        .map(|entry| {
+            let children = tree_items_from_tmlp_tree(&entry.entries_below);
 
-    for entry in entries {
-        let children = tree_items_from_tmlp_tree(&entry.entries_below);
+            let meta = entry.last_payload.as_ref().map_or_else(
+                || {
+                    format!(
+                        "({} topics, {} messages)",
+                        entry.topics_below(),
+                        entry.messages_below()
+                    )
+                },
+                |payload| format!("= {}", format::payload_as_utf8(payload.clone())),
+            );
 
-        let meta = entry.last_payload.as_ref().map_or_else(
-            || {
-                format!(
-                    "({} topics, {} messages)",
-                    entry.topics_below(),
-                    entry.messages_below()
-                )
-            },
-            |payload| format!("= {}", format::payload_as_utf8(payload.clone())),
-        );
+            let text = vec![Spans::from(vec![
+                Span::styled(entry.leaf(), Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" "),
+                Span::styled(meta, Style::default().fg(Color::DarkGray)),
+            ])];
 
-        let text = vec![Spans::from(vec![
-            Span::styled(entry.leaf(), Style::default().add_modifier(Modifier::BOLD)),
-            Span::raw(" "),
-            Span::styled(meta, Style::default().fg(Color::DarkGray)),
-        ])];
-
-        result.push(TreeItem::new(text, children));
-    }
-
-    result
+            TreeItem::new(text, children)
+        })
+        .collect()
 }
 
 pub fn is_topic_opened(opened: &HashSet<String>, topic: &str) -> bool {
