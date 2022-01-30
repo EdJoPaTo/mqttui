@@ -6,39 +6,32 @@ on:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }} ${{ matrix.toolchain }}
+    name: Test ${{ matrix.toolchain }} ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.toolchain == 'nightly' }}
     strategy:
       fail-fast: false
       matrix:
+        toolchain:
+          - stable
         os:
           - ubuntu-latest
           - macos-latest
           - windows-latest
-        toolchain:
-          - stable
         clippyargs:
           - -D clippy::pedantic -D warnings
         features:
           - --all-features
         include:
           # Check future versions and maybe get some glances on soon to be lints
-          - os: ubuntu-latest
-            toolchain: beta
+          - toolchain: beta
+            os: ubuntu-latest
+            features: --all-features
             clippyargs: -W clippy::pedantic -W clippy::nursery
+          - toolchain: nightly
+            os: ubuntu-latest
             features: --all-features
-          - os: ubuntu-latest
-            toolchain: nightly
             clippyargs: -W clippy::pedantic
-            features: --all-features
-
-          # Check the minimum supported Rust version (MSRV).
-          # Sometimes old rust versions don't yet have the lints (allow unknown) or don't have fixes in lints (false positives -> don't error, just warn).
-          - os: ubuntu-latest
-            toolchain: 1.52.0 # Alpine 3.14
-            clippyargs: -A unknown-lints
-            features: --all-features
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -49,6 +42,12 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
 
       - uses: actions/checkout@v2
+
+      - name: Fetch dependencies
+        uses: actions-rs/cargo@v1
+        with:
+          command: fetch
+          args: --verbose --locked
 
       - name: Check clippy
         uses: actions-rs/cargo@v1
@@ -76,25 +75,25 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            triple: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            triple: arm-unknown-linux-gnueabihf
-          - os: ubuntu-latest
-            triple: armv7-unknown-linux-gnueabihf
-          - os: ubuntu-latest
-            triple: aarch64-unknown-linux-gnu
+          - triple: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - triple: arm-unknown-linux-gnueabihf
+            os: ubuntu-latest
+          - triple: armv7-unknown-linux-gnueabihf
+            os: ubuntu-latest
+          - triple: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
 
-          - os: macos-latest
-            triple: x86_64-apple-darwin
-          - os: macos-latest
-            triple: aarch64-apple-darwin
+          - triple: x86_64-apple-darwin
+            os: macos-latest
+          - triple: aarch64-apple-darwin
+            os: macos-latest
 
-          - os: windows-latest
-            triple: x86_64-pc-windows-msvc
+          - triple: x86_64-pc-windows-msvc
+            os: windows-latest
           # https://github.com/briansmith/ring/issues/1167
-          # - os: windows-latest
-          #   triple: aarch64-pc-windows-msvc
+          # - triple: aarch64-pc-windows-msvc
+          #   os: windows-latest
     steps:
       - name: Setup Rust
         uses: actions-rs/toolchain@v1
@@ -119,11 +118,14 @@ jobs:
           echo "artifact: $name"
           echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
 
+      - name: Fetch dependencies
+        uses: actions-rs/cargo@v1
+        with:
+          command: fetch
+          args: --verbose --locked
+
       - name: Build
         uses: actions-rs/cargo@v1
-        env:
-          # TODO: Remove this once macos-11 is macos-latest
-          SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk
         with:
           command: build
           args: --release --verbose --locked --all-features --target ${{ matrix.triple }}
