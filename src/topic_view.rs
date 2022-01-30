@@ -108,15 +108,16 @@ pub fn tree_items_from_tmlp_tree(entries: &[TopicTreeEntry]) -> Vec<TreeItem> {
     for entry in entries {
         let children = tree_items_from_tmlp_tree(&entry.entries_below);
 
-        let meta = if let Some(payload) = &entry.last_payload {
-            format!("= {}", format::payload_as_utf8(payload.clone()))
-        } else {
-            format!(
-                "({} topics, {} messages)",
-                entry.topics_below(),
-                entry.messages_below()
-            )
-        };
+        let meta = entry.last_payload.as_ref().map_or_else(
+            || {
+                format!(
+                    "({} topics, {} messages)",
+                    entry.topics_below(),
+                    entry.messages_below()
+                )
+            },
+            |payload| format!("= {}", format::payload_as_utf8(payload.clone())),
+        );
 
         let text = vec![Spans::from(vec![
             Span::styled(entry.leaf(), Style::default().add_modifier(Modifier::BOLD)),

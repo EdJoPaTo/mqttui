@@ -75,13 +75,7 @@ impl MqttHistory {
 
     pub fn has_connection_err(&self) -> anyhow::Result<Option<String>> {
         match self.connection_err.read() {
-            Ok(bla) => {
-                if let Some(err) = &*bla {
-                    Ok(Some(format!("{}", err)))
-                } else {
-                    Ok(None)
-                }
-            }
+            Ok(err) => Ok(err.as_ref().map(|err| format!("{}", err))),
             Err(err) => Err(anyhow::anyhow!("mqtt history thread paniced {}", err)),
         }
     }
