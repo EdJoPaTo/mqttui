@@ -186,7 +186,7 @@ impl<'a> App<'a> {
             ElementInFocus::JsonPayload => {
                 let selected = self.json_view_state.selected();
                 if !self.json_view_state.close(&selected) {
-                    let (head, _) = tui_tree_widget::identifier::get_without_leaf(&selected);
+                    let (head, _) = tui_tree_widget::get_identifier_without_leaf(&selected);
                     self.json_view_state.select(head);
                 }
             }

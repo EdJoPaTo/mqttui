@@ -3,8 +3,7 @@ use crate::{format, topic};
 use std::collections::{HashMap, HashSet};
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
-use tui_tree_widget::identifier::TreeIdentifierVec;
-use tui_tree_widget::TreeItem;
+use tui_tree_widget::{TreeIdentifierVec, TreeItem};
 
 #[derive(Debug)]
 pub struct TopicTreeEntry {
