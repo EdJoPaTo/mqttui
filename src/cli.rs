@@ -7,7 +7,7 @@ pub fn build() -> App<'static> {
         .subcommand(
             App::new("publish")
                 .about("Publish a value quickly")
-                .aliases(&["p", "pub"])
+                .visible_aliases(&["p", "pub"])
                 .arg(
                     Arg::new("Topic")
                         .value_name("TOPIC")
