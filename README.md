@@ -6,15 +6,15 @@
 
 Taking a look into existing "lets just view MQTT right now" or "quickly publish something" projects they are always quite bulky and not that fast.
 
-Currently I stick with [thomasnordquist/MQTT-Explorer](https://github.com/thomasnordquist/MQTT-Explorer) as it has a great overview of whats going on, a small topic based history and a sorted main view.
+Before having `mqttui` I used [thomasnordquist/MQTT-Explorer](https://github.com/thomasnordquist/MQTT-Explorer) as it has a great overview of what's going on, a small topic based history and a sorted main view.
 But having it running its eating up a lot of resources.
 
-Quickly publish something from command line is also not that fun.
-The feature rich cli alternative [hivemq/mqtt-cli](https://github.com/hivemq/mqtt-cli) takes some time to do its job and is not as easy to use as it has a lot of flags to specify.
-Subscribing to many topics also isnt as useful to watch at as I hoped for.
+Publish something quickly from command line is also not that fun.
+The feature rich CLI alternative [hivemq/mqtt-cli](https://github.com/hivemq/mqtt-cli) takes some time to do its job and is not as easy to use as it has a lot of flags to specify.
+Subscribing to many topics also isn't as useful to watch at as I hoped for.
 
-Thats why I started building my own terminal based version to quickly watch or publish MQTT stuff.
-It wont be as feature rich as something like the hivemq approach but it aims at being easy to use and fast.
+That's why I started building my own terminal based version to quickly watch or publish MQTT stuff.
+It won't be as feature rich as something like the HiveMQ CLI approach, but it aims at being easy to use and fast.
 
 ## Install
 
@@ -170,7 +170,7 @@ export MQTTUI_BROKER=pi-home.local
 mqttui "topic
 ```
 
-# Interesting Alternatives
+## Interesting Alternatives
 
 - [thomasnordquist/MQTT-Explorer](https://github.com/thomasnordquist/MQTT-Explorer)
 - [hivemq/mqtt-cli](https://github.com/hivemq/mqtt-cli)
