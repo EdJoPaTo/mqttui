@@ -53,43 +53,55 @@ mqttui publish -h "test.mosquitto.org" "topic" "payload"
 ```
 
 ```plaintext
-MQTT TUI 0.13.0
+MQTT TUI 0.14.0
 EdJoPaTo <mqttui-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
 USAGE:
     mqttui [OPTIONS] [TOPIC] [SUBCOMMAND]
 
-FLAGS:
-    -h, --help
-            Prints help information
+ARGS:
+    <TOPIC>
+            Topic to watch
 
-    -V, --version
-            Prints version information
-
+            [env: MQTTUI_TOPIC=]
+            [default: #]
 
 OPTIONS:
     -b, --broker <HOST>
-            Host on which the MQTT Broker is running [default: localhost]
+            Host on which the MQTT Broker is running
+
+            [env: MQTTUI_BROKER=]
+            [default: localhost]
+
+    -h, --help
+            Print help information
+
+    -p, --port <INT>
+            Port on which the MQTT Broker is running
+
+            [env: MQTTUI_PORT=]
+            [default: 1883]
 
         --password <STRING>
             Password to access the mqtt broker. Passing the password via command line is
             insecure as the password can be read from the history!
-    -p, --port <INT>
-            Port on which the MQTT Broker is running [default: 1883]
+
+            [env: MQTTUI_PASSWORD=]
 
     -u, --username <STRING>
             Username to access the mqtt broker. Anonymous access when not supplied.
 
+            [env: MQTTUI_USERNAME=]
 
-ARGS:
-    <TOPIC>
-            Topic to watch [default: #]
-
+    -V, --version
+            Print version information
 
 SUBCOMMANDS:
-    help       Prints this message or the help of the given subcommand(s)
-    publish    Publish a value quickly
+    help
+            Print this message or the help of the given subcommand(s)
+    publish
+            Publish a value quickly [aliases: p, pub]
 ```
 
 ```plaintext
@@ -97,35 +109,7 @@ mqttui-publish
 Publish a value quickly
 
 USAGE:
-    mqttui publish [FLAGS] [OPTIONS] <TOPIC> <PAYLOAD>
-
-FLAGS:
-    -h, --help
-            Prints help information
-
-    -r, --retain
-            Publish the MQTT message retained
-
-    -V, --version
-            Prints version information
-
-    -v, --verbose
-            Show full MQTT communication
-
-
-OPTIONS:
-    -b, --broker <HOST>
-            Host on which the MQTT Broker is running [default: localhost]
-
-        --password <STRING>
-            Password to access the mqtt broker. Passing the password via command line is
-            insecure as the password can be read from the history!
-    -p, --port <INT>
-            Port on which the MQTT Broker is running [default: 1883]
-
-    -u, --username <STRING>
-            Username to access the mqtt broker. Anonymous access when not supplied.
-
+    mqttui publish [OPTIONS] <TOPIC> <PAYLOAD>
 
 ARGS:
     <TOPIC>
@@ -133,14 +117,57 @@ ARGS:
 
     <PAYLOAD>
             Payload to be published
+
+OPTIONS:
+    -b, --broker <HOST>
+            Host on which the MQTT Broker is running
+
+            [env: MQTTUI_BROKER=]
+            [default: localhost]
+
+    -h, --help
+            Print help information
+
+    -p, --port <INT>
+            Port on which the MQTT Broker is running
+
+            [env: MQTTUI_PORT=]
+            [default: 1883]
+
+        --password <STRING>
+            Password to access the mqtt broker. Passing the password via command line is
+            insecure as the password can be read from the history!
+
+            [env: MQTTUI_PASSWORD=]
+
+    -r, --retain
+            Publish the MQTT message retained
+
+            [env: MQTTUI_RETAIN=]
+
+    -u, --username <STRING>
+            Username to access the mqtt broker. Anonymous access when not supplied.
+
+            [env: MQTTUI_USERNAME=]
+
+    -v, --verbose
+            Show full MQTT communication
 ```
 
-Tip: Create an alias for the host you are working on:
+Tip: Create an alias for the broker you are working on:
 ```bash
 alias mqttui-home='mqttui --broker pi-home.local'
 
-# Use the alias without having to specify the host every time
+# Use the alias without having to specify the broker every time
 mqttui-home "topic"
+```
+
+You can also create an environment variable for this:
+```bash
+export MQTTUI_BROKER=pi-home.local
+
+# Use the command without specifying the broker every time
+mqttui "topic
 ```
 
 # Interesting Alternatives

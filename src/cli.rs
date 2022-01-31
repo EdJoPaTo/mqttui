@@ -25,6 +25,7 @@ pub fn build() -> App<'static> {
                     Arg::new("retain")
                         .short('r')
                         .long("retain")
+                        .env("MQTTUI_RETAIN")
                         .help("Publish the MQTT message retained"),
                 )
                 .arg(
@@ -38,6 +39,7 @@ pub fn build() -> App<'static> {
             Arg::new("Host")
                 .short('b')
                 .long("broker")
+                .env("MQTTUI_BROKER")
                 .value_name("HOST")
                 .global(true)
                 .takes_value(true)
@@ -48,6 +50,7 @@ pub fn build() -> App<'static> {
             Arg::new("Port")
                 .short('p')
                 .long("port")
+                .env("MQTTUI_PORT")
                 .value_name("INT")
                 .global(true)
                 .takes_value(true)
@@ -58,6 +61,7 @@ pub fn build() -> App<'static> {
             Arg::new("Username")
                 .short('u')
                 .long("username")
+                .env("MQTTUI_USERNAME")
                 .value_name("STRING")
                 .global(true)
                 .takes_value(true)
@@ -70,6 +74,7 @@ pub fn build() -> App<'static> {
         .arg(
             Arg::new("Password")
                 .long("password")
+                .env("MQTTUI_PASSWORD")
                 .value_name("STRING")
                 .global(true)
                 .takes_value(true)
@@ -82,6 +87,7 @@ pub fn build() -> App<'static> {
         .arg(
             Arg::new("Topic")
                 .value_name("TOPIC")
+                .env("MQTTUI_TOPIC")
                 .takes_value(true)
                 .default_value("#")
                 .help("Topic to watch"),

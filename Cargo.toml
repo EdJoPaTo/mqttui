@@ -20,7 +20,7 @@ clap_complete = "3"
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
-clap = { version = "3", features = ["cargo", "wrap_help"] }
+clap = { version = "3", features = ["cargo", "env", "wrap_help"] }
 crossterm = "0.22"
 json = "0.12"
 rand = "0.8"
