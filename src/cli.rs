@@ -1,4 +1,4 @@
-use clap::{app_from_crate, App, Arg};
+use clap::{app_from_crate, App, Arg, ValueHint};
 
 #[must_use]
 pub fn build() -> App<'static> {
@@ -10,16 +10,19 @@ pub fn build() -> App<'static> {
                 .visible_aliases(&["p", "pub"])
                 .arg(
                     Arg::new("Topic")
+                        .value_hint(ValueHint::Other)
                         .value_name("TOPIC")
-                        .help("Topic to publish to")
                         .takes_value(true)
-                        .required(true),
+                        .required(true)
+                        .help("Topic to publish to")
                 )
                 .arg(
                     Arg::new("Payload")
+                        .value_hint(ValueHint::Unknown)
                         .value_name("PAYLOAD")
-                        .help("Payload to be published")
-                        .required(true),
+                        .takes_value(true)
+                        .required(true)
+                        .help("Payload to be published"),
                 )
                 .arg(
                     Arg::new("retain")
@@ -40,6 +43,7 @@ pub fn build() -> App<'static> {
                 .short('b')
                 .long("broker")
                 .env("MQTTUI_BROKER")
+                .value_hint(ValueHint::Hostname)
                 .value_name("HOST")
                 .global(true)
                 .takes_value(true)
@@ -51,6 +55,7 @@ pub fn build() -> App<'static> {
                 .short('p')
                 .long("port")
                 .env("MQTTUI_PORT")
+                .value_hint(ValueHint::Other)
                 .value_name("INT")
                 .global(true)
                 .takes_value(true)
@@ -62,6 +67,7 @@ pub fn build() -> App<'static> {
                 .short('u')
                 .long("username")
                 .env("MQTTUI_USERNAME")
+                .value_hint(ValueHint::Username)
                 .value_name("STRING")
                 .global(true)
                 .takes_value(true)
@@ -75,6 +81,7 @@ pub fn build() -> App<'static> {
             Arg::new("Password")
                 .long("password")
                 .env("MQTTUI_PASSWORD")
+                .value_hint(ValueHint::Other)
                 .value_name("STRING")
                 .global(true)
                 .takes_value(true)
@@ -86,8 +93,9 @@ pub fn build() -> App<'static> {
         )
         .arg(
             Arg::new("Topic")
-                .value_name("TOPIC")
                 .env("MQTTUI_TOPIC")
+                .value_hint(ValueHint::Other)
+                .value_name("TOPIC")
                 .takes_value(true)
                 .default_value("#")
                 .help("Topic to watch"),
