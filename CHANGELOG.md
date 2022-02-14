@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `log` subcommand to watch topics and prints them to stdout.
+
 ### Changed
 
 - CLI: `ValueHint` improves autocompletion.

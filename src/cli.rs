@@ -1,9 +1,30 @@
 use clap::{app_from_crate, App, Arg, ValueHint};
 
+#[allow(clippy::too_many_lines)]
 #[must_use]
 pub fn build() -> App<'static> {
     app_from_crate!()
         .name("MQTT TUI")
+        .subcommand(
+            App::new("log")
+                .about("Log values from subscribed topics to stdout")
+                .arg(
+                    Arg::new("Topics")
+                        .env("MQTTUI_TOPIC")
+                        .value_hint(ValueHint::Other)
+                        .value_name("TOPIC")
+                        .multiple_values(true)
+                        .takes_value(true)
+                        .default_value("#")
+                        .help("Topics to watch"),
+                )
+                .arg(
+                    Arg::new("verbose")
+                        .short('v')
+                        .long("verbose")
+                        .help("Show full MQTT communication"),
+                ),
+        )
         .subcommand(
             App::new("publish")
                 .about("Publish a value quickly")

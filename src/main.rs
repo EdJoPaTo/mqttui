@@ -8,6 +8,7 @@ mod cli;
 mod format;
 mod interactive;
 mod json_view;
+mod log;
 mod mqtt_history;
 mod publish;
 mod topic;
@@ -32,20 +33,31 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
-    if let Some(matches) = matches.subcommand_matches("publish") {
-        let verbose = matches.is_present("verbose");
-        let retain = matches.is_present("retain");
-        let topic = matches.value_of("Topic").unwrap();
-        let payload = matches.value_of("Payload").unwrap();
-        client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
-        publish::eventloop(client, connection, verbose);
-    } else {
-        let topic = matches.value_of("Topic").unwrap();
-        let history =
-            mqtt_history::MqttHistory::new(client.clone(), connection, topic.to_string())?;
-        interactive::show(host, port, topic, &history)?;
-        client.disconnect()?;
-        history.join().expect("mqtt thread failed to finish");
+    match matches.subcommand() {
+        Some(("log", matches)) => {
+            let verbose = matches.is_present("verbose");
+            for topic in matches.values_of("Topics").unwrap() {
+                client.subscribe(topic, QoS::AtLeastOnce)?;
+            }
+            log::show(connection, verbose);
+        }
+        Some(("publish", matches)) => {
+            let verbose = matches.is_present("verbose");
+            let retain = matches.is_present("retain");
+            let topic = matches.value_of("Topic").unwrap();
+            let payload = matches.value_of("Payload").unwrap();
+            client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
+            publish::eventloop(client, connection, verbose);
+        }
+        Some((command, _)) => unreachable!("command is not available: {}", command),
+        None => {
+            let topic = matches.value_of("Topic").unwrap();
+            let history =
+                mqtt_history::MqttHistory::new(client.clone(), connection, topic.to_string())?;
+            interactive::show(host, port, topic, &history)?;
+            client.disconnect()?;
+            history.join().expect("mqtt thread failed to finish");
+        }
     }
 
     Ok(())
