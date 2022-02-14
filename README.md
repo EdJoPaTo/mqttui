@@ -100,8 +100,55 @@ OPTIONS:
 SUBCOMMANDS:
     help
             Print this message or the help of the given subcommand(s)
+    log
+            Log values from subscribed topics to stdout
     publish
             Publish a value quickly [aliases: p, pub]
+```
+
+```plaintext
+mqttui-log
+Log values from subscribed topics to stdout
+
+USAGE:
+    mqttui log [OPTIONS] [TOPIC]...
+
+ARGS:
+    <TOPIC>...
+            Topics to watch
+
+            [env: MQTTUI_TOPIC=]
+            [default: #]
+
+OPTIONS:
+    -b, --broker <HOST>
+            Host on which the MQTT Broker is running
+
+            [env: MQTTUI_BROKER=]
+            [default: localhost]
+
+    -h, --help
+            Print help information
+
+    -p, --port <INT>
+            Port on which the MQTT Broker is running
+
+            [env: MQTTUI_PORT=]
+            [default: 1883]
+
+        --password <STRING>
+            Password to access the mqtt broker. Passing the password via command line is
+            insecure as the password can be read from the history!
+
+            [env: MQTTUI_PASSWORD=]
+
+    -u, --username <STRING>
+            Username to access the mqtt broker. Anonymous access when not supplied.
+
+            [env: MQTTUI_USERNAME=]
+
+    -v, --verbose
+            Show full MQTT communication
 ```
 
 ```plaintext
