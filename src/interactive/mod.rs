@@ -88,8 +88,12 @@ pub fn show(
                 }
             }
             if last_tick.elapsed() >= TICK_RATE {
-                tx.send(Event::Tick)
-                    .expect("Update GUI Tick failed to send. The main thread probably died.");
+                if tx.send(Event::Tick).is_err() {
+                    // The receiver is gone → the main thread is finished.
+                    // Just end the loop here, reporting this error is not helpful in any form.
+                    // If the main loop exited successfully this is planned. If not we cant give a helpful error message here anyway.
+                    break;
+                }
                 last_tick = Instant::now();
             }
         }

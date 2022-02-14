@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CLI: `ValueHint` improves autocompletion.
 
+### Fixed
+
+- Interactive: Don't error on quit about the main thread being gone.
+
 ## [0.14.0] - 2022-01-31
 
 ### Added
@@ -27,9 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - CLI: visible publish subcommand aliases.
-- Performance improvements
+- Performance improvements.
 
 ### Fixed
 
-- Interactive: Show values on full width
-- Improve error messages
+- Interactive: Show values on full width.
+- Improve error messages.
