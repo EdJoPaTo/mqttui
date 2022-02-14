@@ -53,7 +53,7 @@ mqttui publish -h "test.mosquitto.org" "topic" "payload"
 ```
 
 ```plaintext
-MQTT TUI 0.14.0
+MQTT TUI 0.15.0
 EdJoPaTo <mqttui-rust@edjopato.de>
 Subscribe to a MQTT Topic or publish something quickly from the terminal
 
@@ -201,15 +201,8 @@ OPTIONS:
             Show full MQTT communication
 ```
 
-Tip: Create an alias for the broker you are working on:
-```bash
-alias mqttui-home='mqttui --broker pi-home.local'
+Tip: Create an environment variable for the broker / settings you normally need:
 
-# Use the alias without having to specify the broker every time
-mqttui-home "topic"
-```
-
-You can also create an environment variable for this:
 ```bash
 export MQTTUI_BROKER=pi-home.local
 
