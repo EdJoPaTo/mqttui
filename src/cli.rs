@@ -39,7 +39,7 @@ pub fn build() -> App<'static> {
                 ),
         )
         .arg(
-            Arg::new("Host")
+            Arg::new("Broker")
                 .short('b')
                 .long("broker")
                 .env("MQTTUI_BROKER")
@@ -57,6 +57,7 @@ pub fn build() -> App<'static> {
                 .env("MQTTUI_PORT")
                 .value_hint(ValueHint::Other)
                 .value_name("INT")
+                .validator(|s| s.parse::<u16>())
                 .global(true)
                 .takes_value(true)
                 .help("Port on which the MQTT Broker is running")

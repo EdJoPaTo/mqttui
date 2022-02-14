@@ -16,22 +16,17 @@ mod topic_view;
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = cli::build().get_matches();
 
-    let host = matches
-        .value_of("Host")
-        .expect("Host could not be read from command line");
-
+    let host = matches.value_of("Broker").unwrap();
     let port = matches
         .value_of("Port")
         .and_then(|s| s.parse::<u16>().ok())
-        .expect("MQTT Server Port could not be read from command line.");
+        .unwrap();
 
     let client_id = format!("mqttui-{:x}", rand::random::<u32>());
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
 
     if let Some(password) = matches.value_of("Password") {
-        let username = matches
-            .value_of("Username")
-            .expect("password requires username");
+        let username = matches.value_of("Username").unwrap();
         mqttoptions.set_credentials(username, password);
     }
 
@@ -40,26 +35,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(matches) = matches.subcommand_matches("publish") {
         let verbose = matches.is_present("verbose");
         let retain = matches.is_present("retain");
-
-        let topic = matches
-            .value_of("Topic")
-            .expect("Topic could not be read from command line");
-
-        let payload = matches
-            .value_of("Payload")
-            .expect("Topic could not be read from command line");
-
+        let topic = matches.value_of("Topic").unwrap();
+        let payload = matches.value_of("Payload").unwrap();
         client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
-
         publish::eventloop(client, connection, verbose);
     } else {
-        let topic = matches
-            .value_of("Topic")
-            .expect("Topic could not be read from command line");
-
+        let topic = matches.value_of("Topic").unwrap();
         let history =
             mqtt_history::MqttHistory::new(client.clone(), connection, topic.to_string())?;
-
         interactive::show(host, port, topic, &history)?;
         client.disconnect()?;
         history.join().expect("mqtt thread failed to finish");
