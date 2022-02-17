@@ -18,6 +18,7 @@ use crate::json_view::root_tree_items_from_json;
 use crate::mqtt_history::HistoryEntry;
 use crate::topic_view::{self, TopicTreeEntry};
 
+mod graph_data;
 mod history;
 
 const fn focus_color(has_focus: bool) -> Color {
