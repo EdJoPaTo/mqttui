@@ -1,12 +1,12 @@
-use clap::{app_from_crate, App, Arg, ValueHint};
+use clap::{command, Arg, Command, ValueHint};
 
 #[allow(clippy::too_many_lines)]
 #[must_use]
-pub fn build() -> App<'static> {
-    app_from_crate!()
+pub fn build() -> Command<'static> {
+    command!()
         .name("MQTT TUI")
         .subcommand(
-            App::new("log")
+            Command::new("log")
                 .about("Log values from subscribed topics to stdout")
                 .arg(
                     Arg::new("Topics")
@@ -26,7 +26,7 @@ pub fn build() -> App<'static> {
                 ),
         )
         .subcommand(
-            App::new("publish")
+            Command::new("publish")
                 .about("Publish a value quickly")
                 .visible_aliases(&["p", "pub"])
                 .arg(
@@ -125,6 +125,6 @@ pub fn build() -> App<'static> {
 }
 
 #[test]
-fn verify_app() {
+fn verify() {
     build().debug_assert();
 }
