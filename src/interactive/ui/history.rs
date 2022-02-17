@@ -70,11 +70,16 @@ struct GraphDataPoint {
 
 impl GraphDataPoint {
     fn parse_from_datapoint(entry: &DataPoint) -> Option<Self> {
-        // TODO: Impl into instead of randomly named function?
+        // TryFrom<&DataPoint> instead of randomly named function?
+        // Needs some error which is irrelevant here.
 
         let time = entry.optional_time()?;
         let y = entry.value.as_ref().ok()?.parse::<f64>().ok()?;
-        Some(Self { time, y })
+        if y.is_finite() {
+            Some(Self { time, y })
+        } else {
+            None
+        }
     }
 
     fn as_graph_point(&self) -> (f64, f64) {
