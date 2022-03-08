@@ -84,7 +84,7 @@ pub fn get_identifier_of_topic(
 ) -> Option<TreeIdentifierVec> {
     let mut identifier = Vec::new();
     let mut current = tree_items;
-    for part in topic::get_parts(topic) {
+    for part in topic.split('/') {
         let index = current
             .iter()
             .position(|o| topic::get_leaf(&o.topic) == part)?;

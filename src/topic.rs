@@ -57,10 +57,6 @@ pub fn get_direct_children<'a>(topic: &str, all: &[&'a str]) -> Vec<&'a str> {
         .collect()
 }
 
-pub fn get_parts(topic: &str) -> Vec<&str> {
-    topic.split('/').collect::<Vec<_>>()
-}
-
 pub fn get_leaf(topic: &str) -> &str {
     topic.rfind('/').map_or(topic, |i| &topic[i + 1..])
 }
@@ -127,14 +123,6 @@ fn parent_works() {
 fn direct_children_works() {
     let actual = get_direct_children("a", &["a/b", "a/b/c", "a/d", "e"]);
     assert_eq!(actual, ["a/b", "a/d"]);
-}
-
-#[test]
-fn parts_works() {
-    assert_eq!(get_parts("a"), ["a"]);
-    assert_eq!(get_parts("a/b"), ["a", "b"]);
-    assert_eq!(get_parts("a/b/c"), ["a", "b", "c"]);
-    assert_eq!(get_parts("a/b/c/d"), ["a", "b", "c", "d"]);
 }
 
 #[test]
