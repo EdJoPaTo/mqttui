@@ -41,7 +41,7 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Fetch dependencies
         uses: actions-rs/cargo@v1
@@ -103,7 +103,7 @@ jobs:
           target: ${{ matrix.triple }}
           toolchain: stable
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -181,3 +181,7 @@ jobs:
           commit_username: GitHub Actions
           commit_email: mqttui-github-actions@edjopato.de
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+
+# TODO: more releases. Inspiration:
+# https://github.com/starship/starship/blob/master/.github/workflows/deploy.yml
+# TODO: maybe deb packages for easy deploy on raspberry pi / vServer?
