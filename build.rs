@@ -10,12 +10,11 @@ fn main() {
     drop(std::fs::remove_dir_all(out_dir));
     std::fs::create_dir_all(out_dir).unwrap();
 
-    let mut app = build();
     let bin_name = env!("CARGO_PKG_NAME");
 
-    generate_to(shells::Bash, &mut app, bin_name, out_dir).unwrap();
-    generate_to(shells::Elvish, &mut app, bin_name, out_dir).unwrap();
-    generate_to(shells::Fish, &mut app, bin_name, out_dir).unwrap();
-    generate_to(shells::PowerShell, &mut app, bin_name, out_dir).unwrap();
-    generate_to(shells::Zsh, &mut app, bin_name, out_dir).unwrap();
+    generate_to(shells::Bash, &mut build(), bin_name, out_dir).unwrap();
+    generate_to(shells::Elvish, &mut build(), bin_name, out_dir).unwrap();
+    generate_to(shells::Fish, &mut build(), bin_name, out_dir).unwrap();
+    generate_to(shells::PowerShell, &mut build(), bin_name, out_dir).unwrap();
+    generate_to(shells::Zsh, &mut build(), bin_name, out_dir).unwrap();
 }
