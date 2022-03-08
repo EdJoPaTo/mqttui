@@ -4,7 +4,7 @@ use std::thread::{self, sleep, JoinHandle};
 use std::time::Duration;
 
 use chrono::{DateTime, Local};
-use rumqttc::{Client, Connection, ConnectionError, Publish, QoS};
+use rumqttc::{Client, Connection, ConnectionError, MqttOptions, Publish, QoS};
 
 pub struct TopicMessagesLastPayload {
     pub topic: String,
@@ -25,6 +25,7 @@ pub struct MqttHistory {
     connection_err: ConnectionErrorArc,
     handle: JoinHandle<()>,
     history: HistoryArc,
+    mqttoptions: MqttOptions,
 }
 
 impl MqttHistory {
@@ -33,6 +34,7 @@ impl MqttHistory {
         mut connection: Connection,
         subscribe_topic: String,
     ) -> anyhow::Result<Self> {
+        let mqttoptions = connection.eventloop.options.clone();
         // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
         for notification in connection.iter() {
             if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
@@ -66,11 +68,16 @@ impl MqttHistory {
             connection_err,
             handle,
             history,
+            mqttoptions,
         })
     }
 
     pub fn join(self) -> std::thread::Result<()> {
         self.handle.join()
+    }
+
+    pub const fn get_mqtt_options(&self) -> &MqttOptions {
+        &self.mqttoptions
     }
 
     pub fn has_connection_err(&self) -> anyhow::Result<Option<String>> {

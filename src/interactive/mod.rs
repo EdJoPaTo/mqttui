@@ -111,13 +111,14 @@ pub fn show(
                 KeyCode::Char('c') if event.modifiers.contains(KeyModifiers::CONTROL) => {
                     app.should_quit = true;
                 }
-                KeyCode::Enter | KeyCode::Char(' ') => app.on_toggle(),
+                KeyCode::Enter | KeyCode::Char(' ') => app.on_confirm()?,
                 KeyCode::Left | KeyCode::Char('h') => app.on_left(),
                 KeyCode::Down | KeyCode::Char('j') => app.on_down()?,
                 KeyCode::Up | KeyCode::Char('k') => app.on_up()?,
                 KeyCode::Right | KeyCode::Char('l') => app.on_right(),
                 KeyCode::Tab | KeyCode::BackTab => app.on_tab()?,
-                _ => {}
+                KeyCode::Backspace | KeyCode::Delete => app.on_delete(),
+                _ => app.on_other(),
             },
             Event::MouseClick(position) => app.on_click(position.row, position.column)?,
             Event::MouseScroll(direction) => match direction {

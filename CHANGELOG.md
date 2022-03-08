@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New `clean-retained` subcommand to clean retained topics.
+- Interactive: Press Delete or Backspace to clean retained topics from the selected topic tree.
 
 ### Changed
 

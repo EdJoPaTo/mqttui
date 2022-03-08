@@ -18,6 +18,7 @@ use crate::json_view::root_tree_items_from_json;
 use crate::mqtt_history::HistoryEntry;
 use crate::topic_view::{self, TopicTreeEntry};
 
+mod clear_retained;
 mod graph_data;
 mod history;
 
@@ -35,6 +36,9 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn E
         .split(f.size());
     draw_info_header(f, chunks[0], app);
     draw_main(f, chunks[1], app)?;
+    if let ElementInFocus::CleanRetainedPopup(topic) = &app.focus {
+        clear_retained::draw_popup(f, topic);
+    }
     Ok(())
 }
 

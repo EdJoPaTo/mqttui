@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::error::Error;
+use std::thread;
 
 use json::JsonValue;
 use tui_tree_widget::{flatten, TreeState};
@@ -11,6 +12,7 @@ use crate::{format, json_view, topic, topic_view};
 pub enum ElementInFocus {
     TopicOverview,
     JsonPayload,
+    CleanRetainedPopup(String),
 }
 
 #[derive(Debug)]
@@ -143,6 +145,7 @@ impl<'a> App<'a> {
                 self.change_selected_topic(CursorMove::Relative(direction))?;
             }
             ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
         Ok(())
@@ -155,6 +158,7 @@ impl<'a> App<'a> {
                 self.change_selected_topic(CursorMove::Relative(direction))?;
             }
             ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
         Ok(())
@@ -170,6 +174,7 @@ impl<'a> App<'a> {
             ElementInFocus::JsonPayload => {
                 self.json_view_state.open(self.json_view_state.selected());
             }
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
     }
 
@@ -190,19 +195,51 @@ impl<'a> App<'a> {
                     self.json_view_state.select(head);
                 }
             }
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
     }
 
-    pub fn on_toggle(&mut self) {
-        if ElementInFocus::TopicOverview == self.focus {
-            if let Some(topic) = &self.selected_topic {
-                if self.opened_topics.contains(topic) {
-                    self.opened_topics.remove(topic);
-                } else {
-                    self.opened_topics.insert(topic.clone());
+    pub fn on_confirm(&mut self) -> Result<(), Box<dyn Error>> {
+        match &self.focus {
+            ElementInFocus::TopicOverview => {
+                if let Some(topic) = &self.selected_topic {
+                    if self.opened_topics.contains(topic) {
+                        self.opened_topics.remove(topic);
+                    } else {
+                        self.opened_topics.insert(topic.clone());
+                    }
                 }
             }
+            ElementInFocus::JsonPayload => {}
+            ElementInFocus::CleanRetainedPopup(topic) => {
+                let base = self.history.get_mqtt_options();
+
+                let client_id = format!("mqttui-clean-{:x}", rand::random::<u32>());
+
+                let (host, port) = base.broker_address();
+                let mut options = rumqttc::MqttOptions::new(client_id, host, port);
+                if let Some((username, password)) = base.credentials() {
+                    options.set_credentials(username, password);
+                }
+
+                let (mut client, connection) = rumqttc::Client::new(options, 100);
+                client.subscribe(topic, rumqttc::QoS::AtLeastOnce)?;
+                client.subscribe(format!("{}/#", topic), rumqttc::QoS::AtLeastOnce)?;
+
+                thread::Builder::new()
+                    .name(format!("clean retained {}", topic))
+                    .spawn(move || {
+                        crate::clean_retained::clean_retained(
+                            client,
+                            connection,
+                            crate::clean_retained::Mode::Silent,
+                        );
+                    })?;
+
+                self.focus = ElementInFocus::TopicOverview;
+            }
         }
+        Ok(())
     }
 
     pub fn on_tab(&mut self) -> Result<(), Box<dyn Error>> {
@@ -210,12 +247,13 @@ impl<'a> App<'a> {
         self.focus = if is_json_on_topic {
             match self.focus {
                 ElementInFocus::TopicOverview => ElementInFocus::JsonPayload,
-                ElementInFocus::JsonPayload => ElementInFocus::TopicOverview,
+                ElementInFocus::JsonPayload | ElementInFocus::CleanRetainedPopup(_) => {
+                    ElementInFocus::TopicOverview
+                }
             }
         } else {
             ElementInFocus::TopicOverview
         };
-
         Ok(())
     }
 
@@ -230,11 +268,24 @@ impl<'a> App<'a> {
                 let changed = self.change_selected_topic(CursorMove::Absolute(index))?;
 
                 if !changed {
-                    self.on_toggle();
+                    self.on_confirm()?;
                 }
             }
         }
-
         Ok(())
+    }
+
+    pub fn on_delete(&mut self) {
+        if self.focus == ElementInFocus::TopicOverview {
+            if let Some(topic) = &self.selected_topic {
+                self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
+            }
+        }
+    }
+
+    pub fn on_other(&mut self) {
+        if let ElementInFocus::CleanRetainedPopup(_) = &self.focus {
+            self.focus = ElementInFocus::TopicOverview;
+        }
     }
 }

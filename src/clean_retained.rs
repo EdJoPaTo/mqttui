@@ -3,7 +3,14 @@ use rumqttc::{Client, Connection, QoS};
 
 use crate::format;
 
-pub fn clean_retained(mut client: Client, mut connection: Connection, dryrun: bool) {
+#[derive(Clone, Copy)]
+pub enum Mode {
+    Dry,
+    Normal,
+    Silent,
+}
+
+pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode) {
     let mut amount: usize = 0;
     for notification in connection.iter() {
         match notification.expect("connection error") {
@@ -22,9 +29,11 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, dryrun: bo
                     client.disconnect().unwrap();
                     continue;
                 }
-                println!("{}", format::published_packet(&publish, &Local::now()));
+                if !matches!(mode, Mode::Silent) {
+                    println!("{}", format::published_packet(&publish, &Local::now()));
+                }
                 amount += 1;
-                if !dryrun {
+                if !matches!(mode, Mode::Dry) {
                     client
                         .publish(publish.topic, QoS::ExactlyOnce, true, [])
                         .unwrap();
@@ -33,9 +42,9 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, dryrun: bo
             _ => {}
         }
     }
-    if dryrun {
-        println!("Dry run: would have cleaned {} topics", amount);
-    } else {
-        println!("Cleaned {} topics", amount);
+    match mode {
+        Mode::Silent => {}
+        Mode::Dry => println!("Dry run: would have cleaned {} topics", amount),
+        Mode::Normal => println!("Cleaned {} topics", amount),
     }
 }

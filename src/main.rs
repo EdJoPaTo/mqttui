@@ -43,9 +43,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     match matches.subcommand() {
         Some(("clean-retained", matches)) => {
             let topic = matches.value_of("Topic").unwrap();
-            let dryrun = matches.is_present("dry-run");
+            let mode = if matches.is_present("dry-run") {
+                clean_retained::Mode::Dry
+            } else {
+                clean_retained::Mode::Normal
+            };
             client.subscribe(topic, QoS::AtLeastOnce)?;
-            clean_retained::clean_retained(client, connection, dryrun);
+            clean_retained::clean_retained(client, connection, mode);
         }
         Some(("log", matches)) => {
             let verbose = matches.is_present("verbose");
