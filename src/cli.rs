@@ -106,6 +106,7 @@ pub fn build() -> Command<'static> {
                 .value_hint(ValueHint::Other)
                 .value_name("STRING")
                 .global(true)
+                .hide_env_values(true)
                 .takes_value(true)
                 .requires("Username")
                 .help("Password to access the mqtt broker")
