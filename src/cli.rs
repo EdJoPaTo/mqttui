@@ -8,6 +8,7 @@ pub fn build() -> Command<'static> {
         .subcommand(
             Command::new("log")
                 .about("Log values from subscribed topics to stdout")
+                .visible_aliases(&["l"])
                 .arg(
                     Arg::new("Topics")
                         .env("MQTTUI_TOPIC")

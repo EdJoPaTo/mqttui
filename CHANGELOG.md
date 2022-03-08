@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Interactive: Improve performance of the graphs.
+- Add alias for log subcommand: `mqttui l`.
 
 ### Fixed
 
