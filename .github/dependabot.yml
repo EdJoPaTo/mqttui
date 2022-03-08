@@ -7,7 +7,8 @@ updates:
     directory: "/"
     open-pull-requests-limit: 30
     schedule:
-      interval: "monthly"
-      time: "03:37" # UTC
+      interval: "weekly"
+      day: "saturday"
+      time: "02:42" # UTC
     commit-message:
       prefix: "build(cargo):"
