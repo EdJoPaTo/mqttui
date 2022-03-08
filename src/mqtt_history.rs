@@ -145,33 +145,25 @@ fn thread_logic(
                             client.subscribe(subscribe_topic, QoS::ExactlyOnce).unwrap();
                         }
                     }
-                    rumqttc::Event::Incoming(packet) => {
-                        if let rumqttc::Packet::Publish(publish) = packet {
-                            if publish.dup {
-                                continue;
-                            }
-
-                            let time = Local::now();
-                            let topic = &publish.topic;
-
-                            let mut history = history.lock().unwrap();
-
-                            if !history.contains_key(topic) {
-                                history.insert(topic.clone(), Vec::new());
-                            }
-
-                            let vec = history.get_mut(topic).unwrap();
-                            vec.push(HistoryEntry {
+                    rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish)) => {
+                        if publish.dup {
+                            continue;
+                        }
+                        let time = Local::now();
+                        history
+                            .lock()
+                            .unwrap()
+                            .entry(publish.topic.clone())
+                            .or_default()
+                            .push(HistoryEntry {
                                 packet: publish,
                                 time,
                             });
-                        }
                     }
-                    rumqttc::Event::Outgoing(packet) => {
-                        if packet == rumqttc::Outgoing::Disconnect {
-                            break;
-                        }
+                    rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
+                        break;
                     }
+                    _ => {}
                 }
             }
             Err(err) => {
