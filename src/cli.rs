@@ -6,6 +6,35 @@ pub fn build() -> Command<'static> {
     command!()
         .name("MQTT TUI")
         .subcommand(
+            Command::new("clean-retained")
+            .about("Clean retained messages from the broker")
+            .long_about("Clean retained messages from the broker. This works by subscribing to the topic and waiting for messages with the retained flag. Then a message with an empty payload is published retained which clears the topic on the broker. Ends on the first non retained message or when the timeout is reached.")
+            .visible_aliases(&["c", "clean"])
+            .arg(
+                Arg::new("Topic")
+                    .value_hint(ValueHint::Other)
+                    .value_name("TOPIC")
+                    .takes_value(true)
+                    .required(true)
+                    .help("Topic which gets cleaned")
+                    .long_help("Topic which gets cleaned. Supports filters like 'foo/bar/#'."),
+            )
+            .arg(
+                Arg::new("Timeout")
+                    .long("timeout")
+                    .value_hint(ValueHint::Other)
+                    .value_name("SECONDS")
+                    .validator(|s| s.parse::<u16>())
+                    .default_value("5")
+                    .help("When there is no message received for the given time the operation is considered done"),
+            )
+            .arg(
+                Arg::new("dry-run")
+                    .long("dry-run")
+                    .help("Dont clean topics, only log them"),
+            )
+        )
+        .subcommand(
             Command::new("log")
                 .about("Log values from subscribed topics to stdout")
                 .visible_aliases(&["l"])

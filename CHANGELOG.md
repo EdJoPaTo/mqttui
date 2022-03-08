@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `clean-retained` subcommand to clean retained topics.
+
 ### Changed
 
 - Interactive: Improve performance of the graphs.

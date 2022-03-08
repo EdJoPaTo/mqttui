@@ -1,9 +1,11 @@
 #![forbid(unsafe_code)]
 
 use std::error::Error;
+use std::time::Duration;
 
 use rumqttc::{self, Client, MqttOptions, QoS};
 
+mod clean_retained;
 mod cli;
 mod format;
 mod interactive;
@@ -31,9 +33,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         mqttoptions.set_credentials(username, password);
     }
 
+    if let Some(matches) = matches.subcommand_matches("clean-retained") {
+        let timeout = Duration::from_secs_f32(matches.value_of("Timeout").unwrap().parse()?);
+        mqttoptions.set_keep_alive(timeout);
+    }
+
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
     match matches.subcommand() {
+        Some(("clean-retained", matches)) => {
+            let topic = matches.value_of("Topic").unwrap();
+            let dryrun = matches.is_present("dry-run");
+            client.subscribe(topic, QoS::AtLeastOnce)?;
+            clean_retained::clean_retained(client, connection, dryrun);
+        }
         Some(("log", matches)) => {
             let verbose = matches.is_present("verbose");
             for topic in matches.values_of("Topics").unwrap() {
