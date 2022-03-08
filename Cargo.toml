@@ -24,6 +24,6 @@ clap = { version = "3", features = ["cargo", "env", "wrap_help"] }
 crossterm = "0.23"
 json = "0.12"
 rand = "0.8"
-rumqttc = "0.10"
+rumqttc = "0.11"
 tui = "0.17"
 tui-tree-widget = "0.8"
