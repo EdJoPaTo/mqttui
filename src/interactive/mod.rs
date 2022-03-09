@@ -12,12 +12,16 @@ use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
+use rumqttc::{Client, Connection};
 use tui::{backend::CrosstermBackend, Terminal};
 
 use crate::interactive::app::App;
-use crate::mqtt_history::MqttHistory;
+use crate::interactive::mqtt_thread::MqttThread;
 
 mod app;
+mod mqtt_history;
+mod mqtt_thread;
+mod topic_tree_entry;
 mod ui;
 
 enum MouseScrollDirection {
@@ -40,11 +44,15 @@ enum Event {
 const TICK_RATE: Duration = Duration::from_millis(500);
 
 pub fn show(
+    client: Client,
+    connection: Connection,
     host: &str,
     port: u16,
     subscribe_topic: &str,
-    history: &MqttHistory,
 ) -> Result<(), Box<dyn Error>> {
+    let mqtt_thread = MqttThread::new(client, connection, subscribe_topic.to_string())?;
+    let mut app = App::new(host, port, subscribe_topic, mqtt_thread);
+
     enable_raw_mode()?;
 
     let mut stdout = stdout();
@@ -63,7 +71,7 @@ pub fn show(
             // poll for tick rate duration, if no events, sent tick event.
             let timeout = TICK_RATE
                 .checked_sub(last_tick.elapsed())
-                .unwrap_or_else(|| Duration::from_secs(0));
+                .unwrap_or_default();
             if crossterm::event::poll(timeout).unwrap() {
                 match crossterm::event::read().unwrap() {
                     CEvent::Key(key) => {
@@ -98,8 +106,6 @@ pub fn show(
             }
         }
     });
-
-    let mut app = App::new(host, port, subscribe_topic, history);
 
     terminal.clear()?;
 

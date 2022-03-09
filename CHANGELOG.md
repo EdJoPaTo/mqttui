@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Interactive: Improve performance of the graphs.
+- Interactive: Reimplement the data structure to be both simpler and faster.
 - Add alias for log subcommand: `mqttui l`.
 
 ### Fixed

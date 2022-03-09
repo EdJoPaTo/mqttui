@@ -14,9 +14,9 @@ use tui_tree_widget::{Tree, TreeState};
 
 use crate::format;
 use crate::interactive::app::{App, ElementInFocus};
+use crate::interactive::mqtt_history::HistoryEntry;
+use crate::interactive::topic_tree_entry::TopicTreeEntry;
 use crate::json_view::root_tree_items_from_json;
-use crate::mqtt_history::HistoryEntry;
-use crate::topic_view::{self, TopicTreeEntry};
 
 mod clear_retained;
 mod graph_data;
@@ -50,7 +50,7 @@ where
     let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
     let mut text = vec![Spans::from(host), Spans::from(subscribed)];
 
-    if let Some(err) = app.history.has_connection_err().unwrap() {
+    if let Some(err) = app.mqtt_thread.has_connection_err().unwrap() {
         text.push(Spans::from(Span::styled(
             format!("MQTT Connection Error: {}", err),
             Style::default()
@@ -73,29 +73,27 @@ fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> Result<(), Box<d
 where
     B: Backend,
 {
-    let topics = app.history.to_tmlp()?;
-    let tree_items = topic_view::get_tmlp_as_tree(&topics);
+    let history = app.mqtt_thread.get_history()?;
+    let tree_items = history.to_tte();
 
     // Move opened_topics over to TreeState
     app.topic_overview_state.close_all();
     for topic in &app.opened_topics {
         app.topic_overview_state
-            .open(topic_view::get_identifier_of_topic(&tree_items, topic).unwrap_or_default());
+            .open(history.get_tree_identifier(topic).unwrap_or_default());
     }
 
     // Ensure selected topic is selected index
     app.topic_overview_state.select(
         app.selected_topic
             .as_ref()
-            .and_then(|selected_topic| {
-                topic_view::get_identifier_of_topic(&tree_items, selected_topic)
-            })
+            .and_then(|selected_topic| history.get_tree_identifier(selected_topic))
             .unwrap_or_default(),
     );
 
     #[allow(clippy::option_if_let_else)]
     let overview_area = if let Some(selected_topic) = &app.selected_topic {
-        if let Some(topic_history) = app.history.get(selected_topic)? {
+        if let Some(topic_history) = history.get(selected_topic) {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
                 .direction(Direction::Horizontal)
@@ -104,8 +102,8 @@ where
             draw_details(
                 f,
                 chunks[1],
-                &topic_history,
-                app.focus == ElementInFocus::JsonPayload,
+                topic_history,
+                matches!(app.focus, ElementInFocus::JsonPayload),
                 &mut app.json_view_state,
             );
 
@@ -120,9 +118,8 @@ where
     draw_overview(
         f,
         overview_area,
-        topics.len(),
         &tree_items,
-        app.focus == ElementInFocus::TopicOverview,
+        matches!(app.focus, ElementInFocus::TopicOverview),
         &mut app.topic_overview_state,
     );
     Ok(())
@@ -131,16 +128,19 @@ where
 fn draw_overview<B>(
     f: &mut Frame<B>,
     area: Rect,
-    topic_amount: usize,
     tree_items: &[TopicTreeEntry],
     has_focus: bool,
     state: &mut TreeState,
 ) where
     B: Backend,
 {
+    let topic_amount = tree_items.iter().map(|o| o.topics_below).sum::<usize>();
     let title = format!("Topics ({})", topic_amount);
 
-    let tree_items = topic_view::tree_items_from_tmlp_tree(tree_items);
+    let tree_items = tree_items
+        .iter()
+        .map(std::convert::Into::into)
+        .collect::<Vec<_>>();
 
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(tree_items)

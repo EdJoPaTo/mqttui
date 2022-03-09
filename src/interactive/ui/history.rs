@@ -9,11 +9,10 @@ use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, 
 use tui::{symbols, Frame};
 
 use crate::format;
+use crate::interactive::mqtt_history::HistoryEntry;
 use crate::interactive::ui::graph_data::GraphData;
 use crate::json_view;
-use crate::mqtt_history::HistoryEntry;
 
-#[derive(Debug, PartialEq)]
 pub enum PacketTime {
     Retained,
     Local(DateTime<Local>),
@@ -88,7 +87,7 @@ where
 
     let without_retain = topic_history
         .iter()
-        .filter(|o| o.time != PacketTime::Retained)
+        .filter(|o| !matches!(o.time, PacketTime::Retained))
         .collect::<Vec<_>>();
     let amount_without_retain = without_retain.len().saturating_sub(1);
     if amount_without_retain > 0 {

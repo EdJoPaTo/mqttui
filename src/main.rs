@@ -11,10 +11,8 @@ mod format;
 mod interactive;
 mod json_view;
 mod log;
-mod mqtt_history;
 mod publish;
 mod topic;
-mod topic_view;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = cli::build().get_matches();
@@ -69,11 +67,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some((command, _)) => unreachable!("command is not available: {}", command),
         None => {
             let topic = matches.value_of("Topic").unwrap();
-            let history =
-                mqtt_history::MqttHistory::new(client.clone(), connection, topic.to_string())?;
-            interactive::show(host, port, topic, &history)?;
+            interactive::show(client.clone(), connection, host, port, topic)?;
             client.disconnect()?;
-            history.join().expect("mqtt thread failed to finish");
         }
     }
 

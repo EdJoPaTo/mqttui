@@ -5,23 +5,21 @@ use std::thread;
 use json::JsonValue;
 use tui_tree_widget::{flatten, TreeState};
 
-use crate::mqtt_history::MqttHistory;
-use crate::{format, json_view, topic, topic_view};
+use crate::interactive::mqtt_thread::MqttThread;
+use crate::interactive::topic_tree_entry::get_visible;
+use crate::{format, json_view, topic};
 
-#[derive(Debug, PartialEq)]
 pub enum ElementInFocus {
     TopicOverview,
     JsonPayload,
     CleanRetainedPopup(String),
 }
 
-#[derive(Debug)]
 enum Direction {
     Up,
     Down,
 }
 
-#[derive(Debug)]
 enum CursorMove {
     Absolute(usize),
     Relative(Direction),
@@ -31,7 +29,7 @@ pub struct App<'a> {
     pub host: &'a str,
     pub port: u16,
     pub subscribe_topic: &'a str,
-    pub history: &'a MqttHistory,
+    pub mqtt_thread: MqttThread,
 
     pub focus: ElementInFocus,
     pub json_view_state: TreeState,
@@ -46,13 +44,13 @@ impl<'a> App<'a> {
         host: &'a str,
         port: u16,
         subscribe_topic: &'a str,
-        history: &'a MqttHistory,
+        mqtt_thread: MqttThread,
     ) -> App<'a> {
         App {
             host,
             port,
             subscribe_topic,
-            history,
+            mqtt_thread,
 
             focus: ElementInFocus::TopicOverview,
             json_view_state: TreeState::default(),
@@ -64,25 +62,13 @@ impl<'a> App<'a> {
     }
 
     fn change_selected_topic(&mut self, cursor_move: CursorMove) -> Result<bool, Box<dyn Error>> {
-        let topics = self.history.to_tmlp()?;
-        let topics_with_parents =
-            topic::get_all_with_parents(topics.iter().map(|o| o.topic.as_ref()));
-        let visible_topics = topics_with_parents
-            .iter()
-            .filter(|topic| topic_view::is_topic_opened(&self.opened_topics, topic))
-            .collect::<Vec<_>>();
+        let tmlp_tree = self.mqtt_thread.get_history()?.to_tte();
+        let visible = get_visible(&self.opened_topics, &tmlp_tree);
 
-        let tmlp_tree = topic_view::get_tmlp_as_tree(&topics);
-
-        let tree_items = topic_view::tree_items_from_tmlp_tree(&tmlp_tree);
-        let visible = flatten(&self.topic_overview_state.get_all_opened(), &tree_items);
-
-        let current_identifier = self.selected_topic.as_ref().and_then(|selected_topic| {
-            topic_view::get_identifier_of_topic(&tmlp_tree, selected_topic)
-        });
-        let current_index = current_identifier
-            .and_then(|identifier| visible.iter().position(|o| o.identifier == identifier));
-
+        let current_index = self
+            .selected_topic
+            .as_ref()
+            .and_then(|selected_topic| visible.iter().position(|o| &o.topic == selected_topic));
         let new_index = match cursor_move {
             CursorMove::Absolute(index) => index,
             CursorMove::Relative(direction) => current_index.map_or_else(
@@ -92,13 +78,13 @@ impl<'a> App<'a> {
                 },
                 |current_index| match direction {
                     Direction::Up => current_index.overflowing_sub(1).0,
-                    Direction::Down => current_index.saturating_add(1) % visible_topics.len(),
+                    Direction::Down => current_index.saturating_add(1) % visible.len(),
                 },
             ),
         }
-        .min(visible_topics.len().saturating_sub(1));
+        .min(visible.len().saturating_sub(1));
 
-        let next_selected_topic = visible_topics.get(new_index).map(|o| (*(*o)).to_string());
+        let next_selected_topic = visible.get(new_index).map(|o| o.topic.clone());
         let different = self.selected_topic != next_selected_topic;
         self.selected_topic = next_selected_topic;
         Ok(different)
@@ -106,8 +92,11 @@ impl<'a> App<'a> {
 
     fn get_json_of_current_topic(&self) -> Result<Option<JsonValue>, Box<dyn Error>> {
         if let Some(topic) = &self.selected_topic {
-            let entry = self.history.get_last(topic)?.unwrap();
-            let json = format::payload_as_json(entry.packet.payload.to_vec());
+            let json = self
+                .mqtt_thread
+                .get_history()?
+                .get_last(topic)
+                .and_then(|entry| format::payload_as_json(entry.packet.payload.to_vec()));
             Ok(json)
         } else {
             Ok(None)
@@ -212,7 +201,7 @@ impl<'a> App<'a> {
             }
             ElementInFocus::JsonPayload => {}
             ElementInFocus::CleanRetainedPopup(topic) => {
-                let base = self.history.get_mqtt_options();
+                let base = self.mqtt_thread.get_mqtt_options();
 
                 let client_id = format!("mqttui-clean-{:x}", rand::random::<u32>());
 
@@ -260,7 +249,7 @@ impl<'a> App<'a> {
     pub fn on_click(&mut self, row: u16, _column: u16) -> Result<(), Box<dyn Error>> {
         const VIEW_OFFSET_TOP: u16 = 6;
 
-        if self.focus == ElementInFocus::TopicOverview {
+        if matches!(self.focus, ElementInFocus::TopicOverview) {
             let overview_offset = self.topic_overview_state.get_offset();
 
             if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
@@ -276,7 +265,7 @@ impl<'a> App<'a> {
     }
 
     pub fn on_delete(&mut self) {
-        if self.focus == ElementInFocus::TopicOverview {
+        if matches!(self.focus, ElementInFocus::TopicOverview) {
             if let Some(topic) = &self.selected_topic {
                 self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
             }
@@ -284,7 +273,7 @@ impl<'a> App<'a> {
     }
 
     pub fn on_other(&mut self) {
-        if let ElementInFocus::CleanRetainedPopup(_) = &self.focus {
+        if matches!(self.focus, ElementInFocus::CleanRetainedPopup(_)) {
             self.focus = ElementInFocus::TopicOverview;
         }
     }
