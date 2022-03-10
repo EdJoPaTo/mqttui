@@ -7,21 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2022-03-10
+
 ### Added
 
-- New `clean-retained` subcommand to clean retained topics.
+- `clean-retained` subcommand to clean retained topics.
 - Interactive: Press Delete or Backspace to clean retained topics from the selected topic tree.
+- Alias for log subcommand: `mqttui l`.
 
 ### Changed
 
 - Interactive: Improve performance of the graphs.
-- Interactive: Reimplement the data structure to be both simpler and faster.
-- Add alias for log subcommand: `mqttui l`.
+- Interactive: Reimplement the mqtt history data structure to be both simpler and faster.
 
 ### Fixed
 
 - Interactive: Don't plot non-finite numbers.
-- Do not display password in --help.
+- Do not display mqtt password from env in --help.
 
 ## [0.15.0] - 2022-02-14
 
