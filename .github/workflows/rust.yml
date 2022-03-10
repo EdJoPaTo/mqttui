@@ -81,9 +81,10 @@ jobs:
           - triple: aarch64-unknown-linux-gnu
             os: ubuntu-20.04
             rpm: true
-          - triple: arm-unknown-linux-gnueabihf
-            os: ubuntu-20.04
           - triple: armv7-unknown-linux-gnueabihf
+            os: ubuntu-20.04
+            rpm: true
+          - triple: arm-unknown-linux-gnueabihf
             os: ubuntu-20.04
 
           - triple: x86_64-apple-darwin
@@ -164,14 +165,10 @@ jobs:
           ./target/${{ matrix.triple }}/release/mqttui.exe
       - name: Package deb
         if: runner.os == 'Linux'
-        run: |
-          cargo deb --verbose --no-build --no-strip --target ${{ matrix.triple }}
-          mv target/*/debian/*.deb .
+        run: cargo deb --verbose --no-build --no-strip --target ${{ matrix.triple }} --output ${{ env.ARTIFACT_NAME }}.deb
       - name: Package rpm
         if: matrix.rpm
-        run: |
-          cargo generate-rpm --auto-req no --target ${{ matrix.triple }}
-          mv target/*/generate-rpm/*.rpm .
+        run: cargo generate-rpm --auto-req no --target ${{ matrix.triple }} --output ${{ env.ARTIFACT_NAME }}.rpm
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -214,4 +211,3 @@ jobs:
 
 # TODO: more releases. Inspiration:
 # https://github.com/starship/starship/blob/master/.github/workflows/deploy.yml
-# TODO: maybe deb packages for easy deploy on raspberry pi / vServer?
