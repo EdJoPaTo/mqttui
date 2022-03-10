@@ -77,11 +77,13 @@ jobs:
         include:
           - triple: x86_64-unknown-linux-gnu
             os: ubuntu-20.04
+            rpm: true
+          - triple: aarch64-unknown-linux-gnu
+            os: ubuntu-20.04
+            rpm: true
           - triple: arm-unknown-linux-gnueabihf
             os: ubuntu-20.04
           - triple: armv7-unknown-linux-gnueabihf
-            os: ubuntu-20.04
-          - triple: aarch64-unknown-linux-gnu
             os: ubuntu-20.04
 
           - triple: x86_64-apple-darwin
@@ -102,6 +104,20 @@ jobs:
           profile: minimal
           target: ${{ matrix.triple }}
           toolchain: stable
+
+      - name: Setup deb tools
+        if: runner.os == 'Linux'
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-deb
+
+      - name: Setup rpm tools
+        if: matrix.rpm
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: cargo-generate-rpm
 
       - uses: actions/checkout@v3
         with:
@@ -131,7 +147,7 @@ jobs:
           args: --release --verbose --locked --all-features --target ${{ matrix.triple }}
           use-cross: ${{ runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-gnu' }}
 
-      - name: Package (*nix)
+      - name: Package tar.gz (*nix)
         if: runner.os != 'Windows'
         run: >
           tar -cv
@@ -139,29 +155,43 @@ jobs:
           -C target/ completions/ -C ../
           -C target/${{ matrix.triple }}/release/ mqttui
           | gzip --best > ${{ env.ARTIFACT_NAME }}.tar.gz
-      - name: Package (Windows)
+      - name: Package zip (Windows)
         if: runner.os == 'Windows'
         run: >
           7z a ${{ env.ARTIFACT_NAME }}.zip
           LICENSE README.md
           ./target/completions/
           ./target/${{ matrix.triple }}/release/mqttui.exe
+      - name: Package deb
+        if: runner.os == 'Linux'
+        run: |
+          cargo deb --verbose --no-build --no-strip --target ${{ matrix.triple }}
+          mv target/*/debian/*.deb .
+      - name: Package rpm
+        if: matrix.rpm
+        run: |
+          cargo generate-rpm --auto-req no --target ${{ matrix.triple }}
+          mv target/*/generate-rpm/*.rpm .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.triple }}
           path: |
-            *.zip
+            *.deb
+            *.rpm
             *.tar.gz
+            *.zip
 
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            *.zip
+            *.deb
+            *.rpm
             *.tar.gz
+            *.zip
 
   aur-publish:
     name: AUR ${{ matrix.name }}
