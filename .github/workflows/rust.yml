@@ -2,6 +2,8 @@ name: Test and Build Rust
 
 on:
   push:
+    branches-ignore:
+      - 'dependabot/**'
   pull_request:
 
 jobs:
@@ -112,7 +114,6 @@ jobs:
         with:
           command: install
           args: cargo-deb
-
       - name: Setup rpm tools
         if: matrix.rpm
         uses: actions-rs/cargo@v1
