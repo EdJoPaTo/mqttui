@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Only panic on MQTT startup errors. Continue on errors when the startup worked fine.
+
 ## [0.16.0] - 2022-03-10
 
 ### Added

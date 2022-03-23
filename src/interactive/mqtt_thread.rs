@@ -113,7 +113,7 @@ fn thread_logic(
             Err(err) => {
                 *connection_err = Some(err);
                 drop(connection_err);
-                sleep(Duration::from_millis(5000));
+                sleep(Duration::from_millis(25));
             }
         };
     }

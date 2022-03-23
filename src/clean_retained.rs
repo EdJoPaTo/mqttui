@@ -1,3 +1,6 @@
+use std::thread::sleep;
+use std::time::Duration;
+
 use chrono::Local;
 use rumqttc::{Client, Connection, QoS};
 
@@ -13,14 +16,21 @@ pub enum Mode {
 pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode) {
     let mut amount: usize = 0;
     for notification in connection.iter() {
-        match notification.expect("connection error") {
-            rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
+        if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
+            notification.expect("connection error")
+        {
+            break;
+        }
+    }
+    for notification in connection.iter() {
+        match notification {
+            Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect)) => {
                 break;
             }
-            rumqttc::Event::Outgoing(rumqttc::Outgoing::PingReq) => {
+            Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::PingReq)) => {
                 client.disconnect().unwrap();
             }
-            rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish)) => {
+            Ok(rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish))) => {
                 if publish.payload.is_empty() {
                     // Thats probably myself cleaning up
                     continue;
@@ -39,7 +49,11 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
                         .unwrap();
                 }
             }
-            _ => {}
+            Ok(_) => {}
+            Err(err) => {
+                eprintln!("Connection Error: {}", err);
+                sleep(Duration::from_millis(25));
+            }
         }
     }
     match mode {
