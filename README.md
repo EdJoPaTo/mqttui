@@ -118,6 +118,8 @@ mqttui "topic
 
 ### Prebuilt
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg)](https://repology.org/project/mqttui/versions)
+
 #### Arch Linux (AUR)
 
 `paru -S mqttui-bin` or `yay -S mqttui-bin`
