@@ -552,9 +552,9 @@ dependencies = [
 
 [[package]]
 name = "rumqttc"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29fa50cc13f4c9c4962d925c3f99f822fb19995cc527ec1d556ee7635dfa2e3d"
+checksum = "0903656fdeb2e1c2919e31b93ea096b78cb843ccd141b8bfd5e1f74f4423c940"
 dependencies = [
  "async-channel",
  "bytes",
@@ -565,7 +565,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-rustls",
- "webpki",
 ]
 
 [[package]]
