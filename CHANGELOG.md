@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Dont crash / endless loop on payloads bigger than 10 kB.
+
 ### Changed
 
 - Parse payload content (JSON/UTF8-String/other) only once. Before it was done on every display update.

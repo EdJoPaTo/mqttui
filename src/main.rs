@@ -26,6 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let client_id = format!("mqttui-{:x}", rand::random::<u32>());
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
+    mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
 
     if let Some(password) = matches.value_of("Password") {
         let username = matches.value_of("Username").unwrap();
