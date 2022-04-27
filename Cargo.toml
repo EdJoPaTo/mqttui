@@ -27,8 +27,8 @@ ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
 rumqttc = "0.12"
-tui = "0.17"
-tui-tree-widget = "0.8"
+tui = "0.18.0"
+tui-tree-widget = "0.9"
 
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
