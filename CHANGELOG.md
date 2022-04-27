@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Parse payload content (JSON/UTF8-String/other) only once. Before it was done on every display update.
+- Less data cloning while showing the graph improves performance.
 
 ## [0.16.1] - 2022-03-23
 

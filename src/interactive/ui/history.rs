@@ -1,4 +1,3 @@
-use rumqttc::QoS;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Layout, Rect};
 use tui::style::{Color, Modifier, Style};
@@ -6,60 +5,35 @@ use tui::text::Span;
 use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
 use tui::{symbols, Frame};
 
-use crate::format;
 use crate::interactive::ui::graph_data::GraphData;
-use crate::json_view;
 use crate::mqtt_packet::{HistoryEntry, Payload, Time};
+use crate::{format, json_view};
 
-pub struct DataPoint {
-    pub time: Time,
-    pub qos: QoS,
-    // TODO: Why result? Maybe &HistoryEntry can be used directly?
-    pub value: Result<String, String>,
-}
-
-impl DataPoint {
-    pub fn parse_from_history_entry(entry: &HistoryEntry, json_selector: &[usize]) -> Self {
-        let value = match &entry.payload {
-            Payload::NotUtf8(err) => Err(format!("invalid UTF8: {}", err)),
-            Payload::String(str) => Ok(str.to_string()),
-            Payload::Json(json) => Ok(json_view::get_selected_subvalue(json, json_selector)
-                .unwrap_or(json)
-                .dump()),
-        };
-        Self {
-            time: entry.time,
-            qos: entry.qos,
-            value,
-        }
-    }
-}
-
-pub fn draw<'h, B, H>(f: &mut Frame<B>, area: Rect, topic_history: H, json_selector: &[usize])
-where
+pub fn draw<B>(
+    f: &mut Frame<B>,
+    area: Rect,
+    topic_history: &[HistoryEntry],
+    json_selector: &[usize],
+) where
     B: Backend,
-    H: IntoIterator<Item = &'h HistoryEntry>,
 {
-    let data = topic_history
-        .into_iter()
-        .map(|entry| DataPoint::parse_from_history_entry(entry, json_selector))
-        .collect::<Vec<_>>();
-
-    let table_area = GraphData::parse_from_datapoints(&data).map_or(area, |data| {
+    let table_area = GraphData::parse(topic_history, json_selector).map_or(area, |data| {
         let chunks = Layout::default()
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
             .split(area);
-
         draw_graph(f, chunks[1], &data);
         chunks[0]
     });
-
-    draw_table(f, table_area, &data);
+    draw_table(f, table_area, topic_history, json_selector);
 }
 
 #[allow(clippy::cast_precision_loss)]
-fn draw_table<B>(f: &mut Frame<B>, area: Rect, topic_history: &[DataPoint])
-where
+fn draw_table<B>(
+    f: &mut Frame<B>,
+    area: Rect,
+    topic_history: &[HistoryEntry],
+    json_selector: &[usize],
+) where
     B: Backend,
 {
     let mut title = format!("History ({}", topic_history.len());
@@ -100,7 +74,13 @@ where
     let rows = topic_history.iter().map(|entry| {
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos);
-        let value = entry.value.clone().unwrap_or_else(|err| err);
+        let value = match &entry.payload {
+            Payload::NotUtf8(err) => format!("invalid UTF-8: {}", err),
+            Payload::String(str) => str.to_string(),
+            Payload::Json(json) => json_view::get_selected_subvalue(json, json_selector)
+                .unwrap_or(json)
+                .dump(),
+        };
         Row::new(vec![time, qos, value])
     });
 

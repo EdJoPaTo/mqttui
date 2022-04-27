@@ -1,6 +1,8 @@
 use chrono::{DateTime, Local};
+use json::JsonValue;
 
-use crate::interactive::ui::history::DataPoint;
+use crate::json_view;
+use crate::mqtt_packet::{HistoryEntry, Payload};
 
 #[allow(clippy::cast_precision_loss)]
 fn parse_time_to_chart_x(time: &DateTime<Local>) -> f64 {
@@ -12,9 +14,25 @@ struct Point {
 }
 
 impl Point {
-    fn parse_from_datapoint(entry: &DataPoint) -> Option<Self> {
+    fn parse(entry: &HistoryEntry, json_selector: &[usize]) -> Option<Self> {
         let time = entry.time.as_optional()?;
-        let y = entry.value.as_ref().ok()?.parse::<f64>().ok()?;
+        let y = match &entry.payload {
+            Payload::NotUtf8(_) => None,
+            Payload::String(str) => str.parse::<f64>().ok(),
+            Payload::Json(json) => {
+                let json = json_view::get_selected_subvalue(json, json_selector).unwrap_or(json);
+                match json {
+                    JsonValue::Number(num) => Some((*num).into()),
+                    JsonValue::Boolean(true) => Some(1.0),
+                    JsonValue::Boolean(false) => Some(0.0),
+                    #[allow(clippy::cast_precision_loss)]
+                    JsonValue::Array(arr) => Some(arr.len() as f64),
+                    JsonValue::Short(str) => str.parse::<f64>().ok(),
+                    JsonValue::String(str) => str.parse::<f64>().ok(),
+                    JsonValue::Null | JsonValue::Object(_) => None,
+                }
+            }
+        }?;
         if y.is_finite() {
             Some(Self { time, y })
         } else {
@@ -40,13 +58,10 @@ pub struct GraphData {
 }
 
 impl GraphData {
-    pub fn parse_from_datapoints<'a, I>(entries: I) -> Option<Self>
-    where
-        I: IntoIterator<Item = &'a DataPoint>,
-    {
+    pub fn parse(entries: &[HistoryEntry], json_selector: &[usize]) -> Option<Self> {
         let points = entries
-            .into_iter()
-            .filter_map(Point::parse_from_datapoint)
+            .iter()
+            .filter_map(|o| Point::parse(o, json_selector))
             .collect::<Vec<_>>();
 
         if points.len() < 2 {
