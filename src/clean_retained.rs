@@ -5,6 +5,7 @@ use chrono::Local;
 use rumqttc::{Client, Connection, QoS};
 
 use crate::format;
+use crate::mqtt_packet::HistoryEntry;
 
 #[derive(Clone, Copy)]
 pub enum Mode {
@@ -39,14 +40,16 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
                     client.disconnect().unwrap();
                     continue;
                 }
+                let topic = publish.topic.clone();
                 if !matches!(mode, Mode::Silent) {
-                    println!("{}", format::published_packet(&publish, &Local::now()));
+                    println!(
+                        "{}",
+                        format::log_line(HistoryEntry::new(publish, Local::now()))
+                    );
                 }
                 amount += 1;
                 if !matches!(mode, Mode::Dry) {
-                    client
-                        .publish(publish.topic, QoS::ExactlyOnce, true, [])
-                        .unwrap();
+                    client.publish(topic, QoS::ExactlyOnce, true, []).unwrap();
                 }
             }
             Ok(_) => {}

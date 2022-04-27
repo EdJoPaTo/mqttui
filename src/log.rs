@@ -5,6 +5,7 @@ use chrono::Local;
 use rumqttc::Connection;
 
 use crate::format;
+use crate::mqtt_packet::HistoryEntry;
 
 pub fn show(mut connection: Connection, verbose: bool) {
     for notification in connection.iter() {
@@ -28,7 +29,10 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 if publish.dup {
                     continue;
                 }
-                println!("{}", format::published_packet(&publish, &Local::now()));
+                println!(
+                    "{}",
+                    format::log_line(HistoryEntry::new(publish, Local::now()))
+                );
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {

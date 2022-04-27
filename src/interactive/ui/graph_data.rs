@@ -13,7 +13,7 @@ struct Point {
 
 impl Point {
     fn parse_from_datapoint(entry: &DataPoint) -> Option<Self> {
-        let time = entry.optional_time()?;
+        let time = entry.time.as_optional()?;
         let y = entry.value.as_ref().ok()?.parse::<f64>().ok()?;
         if y.is_finite() {
             Some(Self { time, y })

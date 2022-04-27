@@ -360,6 +360,7 @@ name = "mqttui"
 version = "0.16.1"
 dependencies = [
  "anyhow",
+ "bytes",
  "chrono",
  "clap",
  "clap_complete",

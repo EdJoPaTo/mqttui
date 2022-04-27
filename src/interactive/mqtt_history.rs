@@ -6,12 +6,7 @@ use rumqttc::Publish;
 use tui_tree_widget::TreeIdentifierVec;
 
 use crate::interactive::topic_tree_entry::TopicTreeEntry;
-
-#[derive(Clone)]
-pub struct HistoryEntry {
-    pub packet: Publish,
-    pub time: DateTime<Local>,
-}
+use crate::mqtt_packet::HistoryEntry;
 
 struct Topic {
     /// Topic `foo/bar` would have the leaf `bar`
@@ -74,7 +69,7 @@ impl MqttHistory {
             .unwrap()
             .value()
             .history
-            .push(HistoryEntry { packet, time });
+            .push(HistoryEntry::new(packet, time));
     }
 
     pub fn get(&self, topic: &str) -> Option<&Vec<HistoryEntry>> {
@@ -130,7 +125,8 @@ impl MqttHistory {
             TopicTreeEntry {
                 topic: topic.join("/"),
                 leaf: value.leaf.clone(),
-                last_payload: value.history.last().map(|o| o.packet.payload.to_vec()),
+                // TODO: without clone?
+                last_payload: value.history.last().map(|o| o.payload.clone()),
                 messages: value.history.len(),
                 topics_below,
                 messages_below,

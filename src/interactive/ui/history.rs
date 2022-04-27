@@ -1,5 +1,3 @@
-use chrono::{DateTime, Local};
-use json::JsonValue;
 use rumqttc::QoS;
 use tui::backend::Backend;
 use tui::layout::{Constraint, Layout, Rect};
@@ -9,49 +7,30 @@ use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, 
 use tui::{symbols, Frame};
 
 use crate::format;
-use crate::interactive::mqtt_history::HistoryEntry;
 use crate::interactive::ui::graph_data::GraphData;
 use crate::json_view;
-
-pub enum PacketTime {
-    Retained,
-    Local(DateTime<Local>),
-}
+use crate::mqtt_packet::{HistoryEntry, Payload, Time};
 
 pub struct DataPoint {
-    pub time: PacketTime,
+    pub time: Time,
     pub qos: QoS,
+    // TODO: Why result? Maybe &HistoryEntry can be used directly?
     pub value: Result<String, String>,
-}
-
-fn stringify_jsonlike_string(source: &str, selection: &[usize]) -> Result<String, String> {
-    let root = json::parse(source).map_err(|err| format!("invalid json: {}", err))?;
-    json_view::get_selected_subvalue(&root, selection)
-        .ok_or_else(|| String::from("selection is not possible in json"))
-        .map(JsonValue::dump)
 }
 
 impl DataPoint {
     pub fn parse_from_history_entry(entry: &HistoryEntry, json_selector: &[usize]) -> Self {
-        let time = if entry.packet.retain {
-            PacketTime::Retained
-        } else {
-            PacketTime::Local(entry.time)
+        let value = match &entry.payload {
+            Payload::NotUtf8(err) => Err(format!("invalid UTF8: {}", err)),
+            Payload::String(str) => Ok(str.to_string()),
+            Payload::Json(json) => Ok(json_view::get_selected_subvalue(json, json_selector)
+                .unwrap_or(json)
+                .dump()),
         };
-
-        let qos = entry.packet.qos;
-        let value = String::from_utf8(entry.packet.payload.to_vec())
-            .map_err(|err| format!("invalid UTF8: {}", err))
-            .map(|string| stringify_jsonlike_string(&string, json_selector).map_or(string, |s| s));
-
-        Self { time, qos, value }
-    }
-
-    pub const fn optional_time(&self) -> Option<DateTime<Local>> {
-        if let PacketTime::Local(time) = self.time {
-            Some(time)
-        } else {
-            None
+        Self {
+            time: entry.time,
+            qos: entry.qos,
+            value,
         }
     }
 }
@@ -87,7 +66,7 @@ where
 
     let without_retain = topic_history
         .iter()
-        .filter(|o| !matches!(o.time, PacketTime::Retained))
+        .filter(|o| !matches!(o.time, Time::Retained))
         .collect::<Vec<_>>();
     let amount_without_retain = without_retain.len().saturating_sub(1);
     if amount_without_retain > 0 {
@@ -96,13 +75,15 @@ where
         let first = without_retain
             .first()
             .expect("is not empty")
-            .optional_time()
+            .time
+            .as_optional()
             .expect("only not retained")
             .timestamp();
         let last = without_retain
             .last()
             .expect("is not empty")
-            .optional_time()
+            .time
+            .as_optional()
             .expect("only not retained")
             .timestamp();
 
@@ -117,10 +98,7 @@ where
     title += ")";
 
     let rows = topic_history.iter().map(|entry| {
-        let time = match entry.time {
-            PacketTime::Retained => String::from(format::TIMESTAMP_RETAINED),
-            PacketTime::Local(time) => time.format(format::TIMESTAMP_FORMAT).to_string(),
-        };
+        let time = entry.time.to_string();
         let qos = format::qos(entry.qos);
         let value = entry.value.clone().unwrap_or_else(|err| err);
         Row::new(vec![time, qos, value])

@@ -7,7 +7,7 @@ use tui_tree_widget::{flatten, TreeState};
 
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_tree_entry::get_visible;
-use crate::{format, json_view, topic};
+use crate::{json_view, topic};
 
 pub enum ElementInFocus {
     TopicOverview,
@@ -96,7 +96,7 @@ impl<'a> App<'a> {
                 .mqtt_thread
                 .get_history()?
                 .get_last(topic)
-                .and_then(|entry| format::payload_as_json(entry.packet.payload.to_vec()));
+                .and_then(|last| last.payload.as_optional_json().cloned());
             Ok(json)
         } else {
             Ok(None)

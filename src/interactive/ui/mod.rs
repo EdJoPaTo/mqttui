@@ -12,11 +12,10 @@ use tui::widgets::{Block, Borders, List, ListItem, Paragraph, Wrap};
 use tui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::format;
 use crate::interactive::app::{App, ElementInFocus};
-use crate::interactive::mqtt_history::HistoryEntry;
 use crate::interactive::topic_tree_entry::TopicTreeEntry;
 use crate::json_view::root_tree_items_from_json;
+use crate::mqtt_packet::{HistoryEntry, Payload};
 
 mod clear_retained;
 mod graph_data;
@@ -164,62 +163,53 @@ fn draw_details<B>(
     B: Backend,
 {
     let last = topic_history.last().unwrap();
-    let payload_length = last.packet.payload.len();
-    let payload_json = format::payload_as_json(last.packet.payload.to_vec());
+    let size = last.payload_size;
+    let history_area = match &last.payload {
+        Payload::Json(json) => {
+            let chunks = Layout::default()
+                .constraints([Constraint::Percentage(25), Constraint::Min(16)].as_ref())
+                .split(area);
 
-    #[allow(clippy::option_if_let_else)]
-    let history_area = if let Some(json) = payload_json {
-        let chunks = Layout::default()
-            .constraints(
-                [
-                    #[allow(clippy::cast_possible_truncation)]
-                    Constraint::Percentage(25),
-                    Constraint::Min(16),
-                ]
-                .as_ref(),
-            )
-            .split(area);
-
-        draw_payload_json(
-            f,
-            chunks[0],
-            payload_length,
-            &json,
-            json_payload_has_focus,
-            json_view_state,
-        );
-        chunks[1]
-    } else {
-        let payload = format::payload_as_utf8(last.packet.payload.to_vec());
-        let lines = payload.matches('\n').count().saturating_add(1);
-
-        let max_payload_height = area.height / 3;
-        let chunks = Layout::default()
-            .constraints(
-                [
-                    #[allow(clippy::cast_possible_truncation)]
-                    Constraint::Length(min(max_payload_height as usize, 2 + lines) as u16),
-                    Constraint::Min(16),
-                ]
-                .as_ref(),
-            )
-            .split(area);
-
-        draw_payload_string(f, chunks[0], payload_length, &payload);
-        chunks[1]
+            draw_payload_json(
+                f,
+                chunks[0],
+                size,
+                json,
+                json_payload_has_focus,
+                json_view_state,
+            );
+            chunks[1]
+        }
+        Payload::NotUtf8(err) => draw_payload_string(f, area, size, &err.to_string()),
+        Payload::String(str) => draw_payload_string(f, area, size, str),
     };
 
     history::draw(f, history_area, topic_history, &json_view_state.selected());
 }
 
-fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, bytes: usize, payload: &str)
+/// Returns remaining rect to be used for history
+fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, payload_bytes: usize, payload: &str) -> Rect
 where
     B: Backend,
 {
-    let title = format!("Payload (Bytes: {})", bytes);
+    let title = format!("Payload (Bytes: {})", payload_bytes);
     let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
+
+    let max_payload_height = area.height / 3;
+    let chunks = Layout::default()
+        .constraints(
+            [
+                #[allow(clippy::cast_possible_truncation)]
+                Constraint::Length(min(max_payload_height as usize, 2 + items.len()) as u16),
+                Constraint::Min(16),
+            ]
+            .as_ref(),
+        )
+        .split(area);
+
     let widget = List::new(items).block(Block::default().borders(Borders::ALL).title(title));
-    f.render_widget(widget, area);
+    f.render_widget(widget, chunks[0]);
+    chunks[1]
 }
 
 fn draw_payload_json<B>(

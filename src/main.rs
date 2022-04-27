@@ -11,6 +11,7 @@ mod format;
 mod interactive;
 mod json_view;
 mod log;
+mod mqtt_packet;
 mod publish;
 mod topic;
 

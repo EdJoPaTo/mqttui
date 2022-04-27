@@ -4,12 +4,14 @@ use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
 use tui_tree_widget::TreeItem;
 
-#[derive(Debug, Clone, PartialEq)]
+use crate::mqtt_packet::Payload;
+
+#[derive(Debug, PartialEq)]
 pub struct TopicTreeEntry {
     pub topic: String,
     pub leaf: String,
     pub messages: usize,
-    pub last_payload: Option<Vec<u8>>,
+    pub last_payload: Option<Payload>,
     pub topics_below: usize,
     pub messages_below: usize,
     pub entries_below: Vec<TopicTreeEntry>,
@@ -23,15 +25,15 @@ impl<'a> From<&'a TopicTreeEntry> for TreeItem<'a> {
             .map(std::convert::Into::into)
             .collect::<Vec<_>>();
 
-        let meta = entry.last_payload.as_ref().map_or_else(
-            || {
-                format!(
-                    "({} topics, {} messages)",
-                    entry.topics_below, entry.messages_below
-                )
-            },
-            |payload| format!("= {}", crate::format::payload_as_utf8(payload.clone())),
-        );
+        let meta = match &entry.last_payload {
+            Some(Payload::String(str)) => format!("= {}", str),
+            Some(Payload::Json(json)) => format!("= {}", json.dump()),
+            Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_string(),
+            None => format!(
+                "({} topics, {} messages)",
+                entry.topics_below, entry.messages_below
+            ),
+        };
 
         let text = vec![Spans::from(vec![
             Span::styled(&entry.leaf, Style::default().add_modifier(Modifier::BOLD)),
@@ -60,7 +62,7 @@ impl TopicTreeEntry {
                         topic: "foo/bar".into(),
                         leaf: "bar".into(),
                         messages: 1,
-                        last_payload: Some("D".into()),
+                        last_payload: Some(Payload::new(&"D".into())),
                         entries_below: vec![],
                         topics_below: 0,
                         messages_below: 0,
@@ -69,7 +71,7 @@ impl TopicTreeEntry {
                         topic: "foo/test".into(),
                         leaf: "test".into(),
                         messages: 1,
-                        last_payload: Some("B".into()),
+                        last_payload: Some(Payload::new(&"B".into())),
                         entries_below: vec![],
                         topics_below: 0,
                         messages_below: 0,
@@ -80,7 +82,7 @@ impl TopicTreeEntry {
                 topic: "test".into(),
                 leaf: "test".into(),
                 messages: 2,
-                last_payload: Some("C".into()),
+                last_payload: Some(Payload::new(&"C".into())),
                 topics_below: 0,
                 messages_below: 0,
                 entries_below: vec![],
