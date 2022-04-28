@@ -21,11 +21,12 @@ pub fn qos(qos: QoS) -> String {
 #[test]
 fn log_line_works() {
     let time = chrono::DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
-    let packet = rumqttc::Publish::new("foo", QoS::AtLeastOnce, "bar");
+    let mut packet = rumqttc::Publish::new("foo", QoS::AtLeastOnce, "bar");
+    packet.retain = true;
     let entry = HistoryEntry::new(packet, time.into());
     assert_eq!(
         log_line(entry),
-        "15:00:00.000 foo                                                QoS:AtLeastOnce Payload(  3): bar"
+        "RETAINED     foo                                                QoS:AtLeastOnce Payload(  3): bar"
     );
 }
 
