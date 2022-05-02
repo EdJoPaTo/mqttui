@@ -28,7 +28,7 @@ mqttui
 mqttui "topic"
 
 # Subscribe to topic with a specific host (default is localhost)
-mqttui -h "test.mosquitto.org" "hello/world"
+mqttui --broker "test.mosquitto.org" "hello/world"
 
 # More arguments and details
 mqttui --help
@@ -105,13 +105,13 @@ mqttui clean-arguments --help
 
 See the `--help` command for environment variables to be set.
 
-Personally I have set my default broker so I don't have to use `--broker <host> all the time`:
+Personally I have set my default broker so I don't have to use `--broker <host>` all the time:
 
 ```bash
 export MQTTUI_BROKER=pi-home.local
 
 # Use the command without specifying the broker every time
-mqttui "topic
+mqttui "topic"
 ```
 
 ## Install
