@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, MutexGuard, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::thread::{self, sleep};
 use std::time::Duration;
 
@@ -8,7 +8,7 @@ use rumqttc::{Client, Connection, ConnectionError, MqttOptions, QoS};
 use crate::interactive::mqtt_history::MqttHistory;
 
 type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
-type HistoryArc = Arc<Mutex<MqttHistory>>;
+type HistoryArc = Arc<RwLock<MqttHistory>>;
 
 pub struct MqttThread {
     connection_err: ConnectionErrorArc,
@@ -34,7 +34,7 @@ impl MqttThread {
         }
 
         let connection_err = Arc::new(RwLock::new(None));
-        let history = Arc::new(Mutex::new(MqttHistory::new()));
+        let history = Arc::new(RwLock::new(MqttHistory::new()));
 
         {
             let connection_err = Arc::clone(&connection_err);
@@ -70,9 +70,9 @@ impl MqttThread {
         }
     }
 
-    pub fn get_history(&self) -> anyhow::Result<MutexGuard<MqttHistory>> {
+    pub fn get_history(&self) -> anyhow::Result<RwLockReadGuard<MqttHistory>> {
         self.history
-            .lock()
+            .read()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))
     }
 }
@@ -102,7 +102,7 @@ fn thread_logic(
                             continue;
                         }
                         let time = Local::now();
-                        history.lock().unwrap().add(publish, time);
+                        history.write().unwrap().add(publish, time);
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
                         break;
