@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use tui::backend::Backend;
 use tui::layout::{Constraint, Layout, Rect};
 use tui::style::{Color, Modifier, Style};
@@ -64,9 +66,9 @@ fn draw_table<B>(
         let seconds_since_start = last - first;
         let message_every_n_seconds = seconds_since_start as f64 / amount_without_retain as f64;
         if message_every_n_seconds < 100.0 {
-            title += &format!("{:.1} seconds", message_every_n_seconds);
+            let _ = write!(title, "{:.1} seconds", message_every_n_seconds);
         } else {
-            title += &format!("{:.1} minutes", message_every_n_seconds / 60.0);
+            let _ = write!(title, "{:.1} minutes", message_every_n_seconds / 60.0);
         }
     }
     title += ")";

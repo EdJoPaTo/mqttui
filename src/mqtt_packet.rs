@@ -30,7 +30,7 @@ impl ToString for Time {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Payload {
     NotUtf8(FromUtf8Error),
     String(String),

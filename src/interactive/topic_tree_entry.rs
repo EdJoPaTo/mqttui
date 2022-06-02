@@ -6,7 +6,7 @@ use tui_tree_widget::TreeItem;
 
 use crate::mqtt_packet::Payload;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct TopicTreeEntry {
     pub topic: String,
     pub leaf: String,
@@ -14,7 +14,7 @@ pub struct TopicTreeEntry {
     pub last_payload: Option<Payload>,
     pub topics_below: usize,
     pub messages_below: usize,
-    pub entries_below: Vec<TopicTreeEntry>,
+    pub entries_below: Vec<Self>,
 }
 
 impl<'a> From<&'a TopicTreeEntry> for TreeItem<'a> {
