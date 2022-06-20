@@ -24,7 +24,7 @@ pub fn build() -> Command<'static> {
                     .long("timeout")
                     .value_hint(ValueHint::Other)
                     .value_name("SECONDS")
-                    .value_parser(value_parser!(u16))
+                    .value_parser(value_parser!(f32))
                     .default_value("5")
                     .help("When there is no message received for the given time the operation is considered done"),
             )
