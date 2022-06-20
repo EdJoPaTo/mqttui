@@ -1,4 +1,4 @@
-use clap::{command, Arg, Command, ValueHint};
+use clap::{command, value_parser, Arg, Command, ValueHint};
 
 #[allow(clippy::too_many_lines)]
 #[must_use]
@@ -24,7 +24,7 @@ pub fn build() -> Command<'static> {
                     .long("timeout")
                     .value_hint(ValueHint::Other)
                     .value_name("SECONDS")
-                    .validator(|s| s.parse::<u16>())
+                    .value_parser(value_parser!(u16))
                     .default_value("5")
                     .help("When there is no message received for the given time the operation is considered done"),
             )
@@ -108,7 +108,7 @@ pub fn build() -> Command<'static> {
                 .env("MQTTUI_PORT")
                 .value_hint(ValueHint::Other)
                 .value_name("INT")
-                .validator(|s| s.parse::<u16>())
+                .value_parser(value_parser!(u16))
                 .global(true)
                 .takes_value(true)
                 .help("Port on which the MQTT Broker is running")
