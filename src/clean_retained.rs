@@ -42,10 +42,8 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
                 }
                 let topic = publish.topic.clone();
                 if !matches!(mode, Mode::Silent) {
-                    println!(
-                        "{}",
-                        format::log_line(HistoryEntry::new(publish, Local::now()))
-                    );
+                    let entry = HistoryEntry::new(&publish, Local::now());
+                    println!("{}", format::log_line(&publish.topic, entry));
                 }
                 amount += 1;
                 if !matches!(mode, Mode::Dry) {

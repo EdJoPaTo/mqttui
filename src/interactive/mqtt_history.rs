@@ -62,7 +62,7 @@ impl MqttHistory {
         }
     }
 
-    pub fn add(&mut self, packet: Publish, time: DateTime<Local>) {
+    pub fn add(&mut self, packet: &Publish, time: DateTime<Local>) {
         let id = self.entry(&packet.topic);
         self.tree
             .get_mut(id)
@@ -145,19 +145,19 @@ impl MqttHistory {
     pub fn example() -> Self {
         let mut history = Self::new();
         history.add(
-            Publish::new("test", rumqttc::QoS::AtLeastOnce, "A"),
+            &Publish::new("test", rumqttc::QoS::AtLeastOnce, "A"),
             Local::now(),
         );
         history.add(
-            Publish::new("foo/test", rumqttc::QoS::AtLeastOnce, "B"),
+            &Publish::new("foo/test", rumqttc::QoS::AtLeastOnce, "B"),
             Local::now(),
         );
         history.add(
-            Publish::new("test", rumqttc::QoS::AtLeastOnce, "C"),
+            &Publish::new("test", rumqttc::QoS::AtLeastOnce, "C"),
             Local::now(),
         );
         history.add(
-            Publish::new("foo/bar", rumqttc::QoS::AtLeastOnce, "D"),
+            &Publish::new("foo/bar", rumqttc::QoS::AtLeastOnce, "D"),
             Local::now(),
         );
         history

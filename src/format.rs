@@ -2,7 +2,7 @@ use rumqttc::QoS;
 
 use crate::mqtt_packet::{HistoryEntry, Payload};
 
-pub fn log_line(entry: HistoryEntry) -> String {
+pub fn log_line(topic: &str, entry: HistoryEntry) -> String {
     let qos = qos(entry.qos);
     let time = entry.time.to_string();
     let size = entry.payload_size;
@@ -11,7 +11,7 @@ pub fn log_line(entry: HistoryEntry) -> String {
         Payload::String(str) => format!("Payload({:>3}): {}", size, str),
         Payload::Json(json) => format!("Payload({:>3}): {}", size, json.dump()),
     };
-    format!("{:12} {:50} QoS:{:11} {}", time, entry.topic, qos, payload)
+    format!("{:12} {:50} QoS:{:11} {}", time, topic, qos, payload)
 }
 
 pub fn qos(qos: QoS) -> String {
@@ -23,9 +23,9 @@ fn log_line_works() {
     let time = chrono::DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
     let mut packet = rumqttc::Publish::new("foo", QoS::AtLeastOnce, "bar");
     packet.retain = true;
-    let entry = HistoryEntry::new(packet, time.into());
+    let entry = HistoryEntry::new(&packet, time.into());
     assert_eq!(
-        log_line(entry),
+        log_line(&packet.topic, entry),
         "RETAINED     foo                                                QoS:AtLeastOnce Payload(  3): bar"
     );
 }

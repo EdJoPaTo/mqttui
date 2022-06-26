@@ -102,7 +102,7 @@ fn thread_logic(
                             continue;
                         }
                         let time = Local::now();
-                        history.write().unwrap().add(publish, time);
+                        history.write().unwrap().add(&publish, time);
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
                         break;

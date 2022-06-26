@@ -63,14 +63,12 @@ impl Payload {
 pub struct HistoryEntry {
     pub qos: QoS,
     pub time: Time,
-    // TODO: move topic out?
-    pub topic: String,
     pub payload_size: usize,
     pub payload: Payload,
 }
 
 impl HistoryEntry {
-    pub fn new(packet: Publish, time: DateTime<Local>) -> Self {
+    pub fn new(packet: &Publish, time: DateTime<Local>) -> Self {
         let time = if packet.retain {
             Time::Retained
         } else {
@@ -79,7 +77,6 @@ impl HistoryEntry {
         Self {
             qos: packet.qos,
             time,
-            topic: packet.topic,
             payload_size: packet.payload.len(),
             payload: Payload::new(&packet.payload),
         }

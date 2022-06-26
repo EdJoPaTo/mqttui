@@ -29,10 +29,8 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 if publish.dup {
                     continue;
                 }
-                println!(
-                    "{}",
-                    format::log_line(HistoryEntry::new(publish, Local::now()))
-                );
+                let entry = HistoryEntry::new(&publish, Local::now());
+                println!("{}", format::log_line(&publish.topic, entry));
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {
