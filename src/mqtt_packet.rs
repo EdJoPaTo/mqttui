@@ -33,7 +33,7 @@ impl ToString for Time {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Payload {
     NotUtf8(FromUtf8Error),
-    String(String),
+    String(Box<str>),
     Json(JsonValue),
 }
 
@@ -44,7 +44,7 @@ impl Payload {
                 if let Ok(json) = json::parse(&str) {
                     Self::Json(json)
                 } else {
-                    Self::String(str)
+                    Self::String(str.into())
                 }
             }
             Err(err) => Self::NotUtf8(err),
