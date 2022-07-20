@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let verbose = matches.contains_id("verbose");
             let retain = matches.contains_id("retain");
             let topic = matches.get_one::<String>("Topic").unwrap();
-            let payload = matches.get_one::<Vec<u8>>("Payload").unwrap().clone();
+            let payload = matches.get_one::<String>("Payload").unwrap().as_str();
             client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
             publish::eventloop(client, connection, verbose);
         }
