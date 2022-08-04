@@ -103,7 +103,7 @@ pub struct Opt {
     )]
     pub password: Option<String>,
 
-    /// Password to access the mqtt broker
+    /// Specify the client id to connect with
     #[clap(
         long,
         short = 'i',
@@ -112,9 +112,24 @@ pub struct Opt {
         global = true
     )]
     pub client_id: Option<String>,
-    /// Password to access the mqtt broker
-    #[clap(value_name = "TOPIC", env = "MQTTUI_PASSWORD", default_value = "#")]
+
+    /// Use TLS when connecting, defaults to false unless port 8883 is specified
+    #[clap(
+        long,
+        short,
+        value_name = "BOOL",
+        env = "MQTTUI_ENCRYPTION",
+        global = true
+    )]
+    pub encryption: Option<bool>,
+
+    /// The Topic to subscribe to when connecting to the broker
+    #[clap(value_name = "TOPIC", env = "MQTTUI_TOPIC", default_value = "#")]
     pub topic: String,
+
+    /// Allow connections to insecure or untrusted servers, skips the server verification, use with caution
+    #[clap(long, global = true)]
+    pub insecure: bool,
 }
 
 #[test]
