@@ -153,6 +153,35 @@ pub fn build() -> Command<'static> {
                 .default_value("#")
                 .help("Topic to watch"),
         )
+        .arg(
+            Arg::new("ClientId")
+                .env("MQTTUI_CLIENTID")
+                .value_hint(ValueHint::Other)
+                .long("client-id")
+                .short('i')
+                .value_name("STRING")
+                .takes_value(true)
+                .help("Specify the Client Id to connect with"),
+        )
+        .arg(
+            Arg::new("Encryption")
+                .env("MQTTUI_ENCRYPTION")
+                .long("encryption")
+                .value_hint(ValueHint::Other)
+                .short('e')
+                .value_name("BOOL")
+                .value_parser(clap::builder::BoolishValueParser::new())
+                .takes_value(true)
+                .help("Use TLS when connecting"),
+        )
+        .arg(
+            Arg::new("Insecure")
+                .value_name("BOOL")
+                .long("insecure")
+                .required(false)
+                .takes_value(false)
+                .help("Allow insecure TLS connections"),
+        )
 }
 
 #[test]

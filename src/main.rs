@@ -1,9 +1,9 @@
 #![forbid(unsafe_code)]
 
-use std::error::Error;
 use std::time::Duration;
+use std::{error::Error, sync::Arc};
 
-use rumqttc::{self, Client, MqttOptions, QoS};
+use rumqttc::{self, Client, ClientConfig, MqttOptions, QoS, TlsConfiguration, Transport};
 
 mod clean_retained;
 mod cli;
@@ -12,6 +12,7 @@ mod interactive;
 mod json_view;
 mod log;
 mod mqtt_packet;
+mod noverifier;
 mod publish;
 mod topic;
 
@@ -21,9 +22,38 @@ fn main() -> Result<(), Box<dyn Error>> {
     let host = matches.get_one::<String>("Broker").unwrap();
     let port = *matches.get_one::<u16>("Port").unwrap();
 
-    let client_id = format!("mqttui-{:x}", rand::random::<u32>());
+    let client_id = if let Some(client_id) = matches.get_one::<String>("ClientId") {
+        client_id.to_string()
+    } else {
+        format!("mqttui-{:x}", rand::random::<u32>())
+    };
+
+    let encryption = match (matches.get_one::<bool>("Encryption").cloned(), port) {
+        (Some(encryption), _) => encryption,
+        (None, 8883) => true,
+        _ => false,
+    };
+
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
     mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
+    if encryption {
+        let certs = rustls_native_certs::load_native_certs().unwrap();
+        let mut roots = rustls::RootCertStore::empty();
+        for cert in certs {
+            let _e = roots.add(&rustls::Certificate(cert.0));
+        }
+        let mut conf = ClientConfig::builder()
+            .with_safe_defaults()
+            .with_root_certificates(roots)
+            .with_no_client_auth();
+
+        if matches.contains_id("Insecure") {
+            let mut danger = conf.dangerous();
+            danger.set_certificate_verifier(Arc::new(noverifier::NoVerifier {}));
+        }
+
+        mqttoptions.set_transport(Transport::Tls(TlsConfiguration::Rustls(Arc::new(conf))));
+    }
 
     if let Some(password) = matches.get_one::<String>("Password") {
         let username = matches.get_one::<String>("Username").unwrap();
