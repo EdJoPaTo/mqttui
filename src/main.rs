@@ -1,7 +1,8 @@
 #![forbid(unsafe_code)]
 
+use std::error::Error;
+use std::sync::Arc;
 use std::time::Duration;
-use std::{error::Error, sync::Arc};
 
 use rumqttc::{self, Client, ClientConfig, MqttOptions, QoS, TlsConfiguration, Transport};
 

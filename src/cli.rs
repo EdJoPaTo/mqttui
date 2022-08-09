@@ -155,20 +155,20 @@ pub fn build() -> Command<'static> {
         )
         .arg(
             Arg::new("ClientId")
+                .short('i')
+                .long("client-id")
                 .env("MQTTUI_CLIENTID")
                 .value_hint(ValueHint::Other)
-                .long("client-id")
-                .short('i')
                 .value_name("STRING")
                 .takes_value(true)
                 .help("Specify the Client Id to connect with"),
         )
         .arg(
             Arg::new("Encryption")
-                .env("MQTTUI_ENCRYPTION")
-                .long("encryption")
-                .value_hint(ValueHint::Other)
                 .short('e')
+                .long("encryption")
+                .env("MQTTUI_ENCRYPTION")
+                .value_hint(ValueHint::Other)
                 .value_name("BOOL")
                 .value_parser(clap::builder::BoolishValueParser::new())
                 .takes_value(true)
@@ -176,8 +176,8 @@ pub fn build() -> Command<'static> {
         )
         .arg(
             Arg::new("Insecure")
-                .value_name("BOOL")
                 .long("insecure")
+                .value_name("BOOL")
                 .required(false)
                 .takes_value(false)
                 .help("Allow insecure TLS connections"),
