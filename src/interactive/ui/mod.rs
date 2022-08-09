@@ -114,6 +114,8 @@ where
         area
     };
 
+    app.overview_area_width = overview_area.width;
+
     draw_overview(
         f,
         overview_area,

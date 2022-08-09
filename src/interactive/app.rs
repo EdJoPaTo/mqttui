@@ -37,6 +37,9 @@ pub struct App {
     pub selected_topic: Option<String>,
     pub should_quit: bool,
     pub topic_overview_state: TreeState,
+
+    last_index_clicked: Option<usize>,
+    pub overview_area_width: u16,
 }
 
 impl App {
@@ -52,6 +55,9 @@ impl App {
             selected_topic: None,
             should_quit: false,
             topic_overview_state: TreeState::default(),
+            last_index_clicked: None,
+
+            overview_area_width: 0,
         }
     }
 
@@ -99,8 +105,8 @@ impl App {
 
     fn change_selected_json_property(
         &mut self,
-        direction: &Direction,
-    ) -> Result<(), Box<dyn Error>> {
+        cursor_move: CursorMove,
+    ) -> Result<bool, Box<dyn Error>> {
         let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
         let tree_items = json_view::root_tree_items_from_json(&json);
 
@@ -109,16 +115,23 @@ impl App {
         let current_index = visible
             .iter()
             .position(|o| o.identifier == current_identifier);
-        let new_index = current_index.map_or(0, |current_index| {
-            match direction {
-                Direction::Up => current_index.saturating_sub(1),
-                Direction::Down => current_index.saturating_add(1),
-            }
-            .min(visible.len() - 1)
-        });
+
+        let new_index = match cursor_move {
+            CursorMove::Relative(direction) => current_index.map_or(0, |current_index| {
+                match direction {
+                    Direction::Up => current_index.saturating_sub(1),
+                    Direction::Down => current_index.saturating_add(1),
+                }
+                .min(visible.len() - 1)
+            }),
+            CursorMove::Absolute(index) => index.min(visible.len() - 1),
+        };
+        let changed = Some(new_index) != self.last_index_clicked;
+        self.last_index_clicked = Some(new_index);
+
         let new_identifier = visible.get(new_index).unwrap().identifier.clone();
         self.json_view_state.select(new_identifier);
-        Ok(())
+        Ok(changed)
     }
 
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
@@ -127,7 +140,9 @@ impl App {
             ElementInFocus::TopicOverview => {
                 self.change_selected_topic(CursorMove::Relative(direction))?;
             }
-            ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
+            ElementInFocus::JsonPayload => {
+                self.change_selected_json_property(CursorMove::Relative(direction))?;
+            }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
@@ -140,7 +155,9 @@ impl App {
             ElementInFocus::TopicOverview => {
                 self.change_selected_topic(CursorMove::Relative(direction))?;
             }
-            ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
+            ElementInFocus::JsonPayload => {
+                self.change_selected_json_property(CursorMove::Relative(direction))?;
+            }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
@@ -193,7 +210,9 @@ impl App {
                     }
                 }
             }
-            ElementInFocus::JsonPayload => {}
+            ElementInFocus::JsonPayload => {
+                self.json_view_state.toggle();
+            }
             ElementInFocus::CleanRetainedPopup(topic) => {
                 let base = self.mqtt_thread.get_mqtt_options();
 
@@ -240,21 +259,52 @@ impl App {
         Ok(())
     }
 
-    pub fn on_click(&mut self, row: u16, _column: u16) -> Result<(), Box<dyn Error>> {
+    pub fn on_click(&mut self, row: u16, column: u16) -> Result<(), Box<dyn Error>> {
         const VIEW_OFFSET_TOP: u16 = 6;
 
-        if matches!(self.focus, ElementInFocus::TopicOverview) {
-            let overview_offset = self.topic_overview_state.get_offset();
-
-            if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
-                let index = overview_offset.saturating_add(row_in_tree as usize);
-                let changed = self.change_selected_topic(CursorMove::Absolute(index))?;
-
-                if !changed {
-                    self.on_confirm()?;
+        // allow for switching columns with click, as long as not clicking on the overview bar
+        if row > VIEW_OFFSET_TOP {
+            // the area width is set in draw logic
+            if column > self.overview_area_width {
+                // This might be redundant, since the area width is calculated after this in ui logic...
+                let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
+                if is_json_on_topic {
+                    if let ElementInFocus::TopicOverview = self.focus {
+                        self.focus = ElementInFocus::JsonPayload;
+                    }
+                }
+            } else {
+                if let ElementInFocus::JsonPayload = self.focus {
+                    self.focus = ElementInFocus::TopicOverview;
                 }
             }
         }
+
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                let overview_offset = self.topic_overview_state.get_offset();
+                if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
+                    let index = overview_offset.saturating_add(row_in_tree as usize);
+                    let changed = self.change_selected_topic(CursorMove::Absolute(index))?;
+                    if !changed {
+                        self.on_confirm()?;
+                    }
+                }
+            }
+            ElementInFocus::JsonPayload => {
+                let jsonpayload_offset = self.json_view_state.get_offset();
+                if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
+                    let index = jsonpayload_offset.saturating_add(row_in_tree as usize);
+                    let changed =
+                        self.change_selected_json_property(CursorMove::Absolute(index))?;
+                    if !changed {
+                        self.on_confirm()?;
+                    }
+                }
+            }
+            _ => {}
+        };
+
         Ok(())
     }
 
