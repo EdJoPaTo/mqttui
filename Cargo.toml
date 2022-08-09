@@ -27,10 +27,10 @@ crossterm = "0.23"
 ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
-rumqttc = {version = "0.13", features =["use-rustls"]}
-rustls = {version = "0.20.6", features = ["dangerous_configuration"] }
-rustls-native-certs = "0.6.2"
-tui = "0.18.0"
+rumqttc = { version = "0.13", features = ["use-rustls"] }
+rustls = { version = "0.20", features = ["dangerous_configuration"] }
+rustls-native-certs = "0.6"
+tui = "0.18"
 tui-tree-widget = "0.9"
 
 # https://crates.io/crates/cargo-deb

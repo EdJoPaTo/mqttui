@@ -22,13 +22,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let host = matches.get_one::<String>("Broker").unwrap();
     let port = *matches.get_one::<u16>("Port").unwrap();
 
-    let client_id = if let Some(client_id) = matches.get_one::<String>("ClientId") {
-        client_id.to_string()
-    } else {
-        format!("mqttui-{:x}", rand::random::<u32>())
-    };
+    let client_id = matches
+        .get_one::<String>("ClientId")
+        .cloned()
+        .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
 
-    let encryption = match (matches.get_one::<bool>("Encryption").cloned(), port) {
+    let encryption = matches.get_one::<bool>("Encryption").copied();
+    let encryption = match (encryption, port) {
         (Some(encryption), _) => encryption,
         (None, 8883) => true,
         _ => false,
