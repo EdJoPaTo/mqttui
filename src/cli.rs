@@ -45,7 +45,7 @@ pub enum SubCommands {
     #[clap(visible_alias = "pub")]
     Publish {
         /// Topic to publish to,
-        #[clap(required = true, name = "TOPIC")]
+        #[clap(required = true)]
         topic: String,
 
         /// Payload to be published
