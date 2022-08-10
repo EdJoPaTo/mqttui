@@ -134,5 +134,6 @@ pub struct Opt {
 
 #[test]
 fn verify() {
-    Opt::parse();
+    use clap::CommandFactory;
+    Opt::command().debug_assert();
 }
