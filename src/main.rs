@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let certs = rustls_native_certs::load_native_certs().unwrap();
         let mut roots = rustls::RootCertStore::empty();
         for cert in certs {
-            let _e = roots.add(&rustls::Certificate(cert.0));
+            let _ = roots.add(&rustls::Certificate(cert.0));
         }
         let mut conf = ClientConfig::builder()
             .with_safe_defaults()
