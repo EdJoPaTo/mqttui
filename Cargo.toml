@@ -22,7 +22,7 @@ clap_complete = "3"
 anyhow = "1"
 bytes = "1"
 chrono = "0.4"
-clap = { version = "3", features = ["cargo", "env", "wrap_help", "deprecated", "derive"] }
+clap = { version = "3", features = ["derive", "env", "wrap_help", "deprecated"] }
 crossterm = "0.23"
 ego-tree = "0.6"
 json = "0.12"
