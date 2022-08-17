@@ -15,7 +15,7 @@ codegen-units = 1
 lto = true
 
 [build-dependencies]
-clap = { version = "3", features = ["cargo", "env", "derive"] }
+clap = { version = "3", features = ["derive", "env"] }
 clap_complete = "3"
 
 [dependencies]
