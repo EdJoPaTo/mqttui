@@ -53,6 +53,7 @@ pub enum SubCommands {
 }
 
 #[derive(Parser, Debug)]
+#[clap(about, author, version)
 pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<SubCommands>,
