@@ -105,7 +105,8 @@ pub struct Cli {
         global = true
     )]
     pub client_id: Option<String>,
-    /// Password to access the mqtt broker
+
+    /// Topic to watch
     #[clap(value_name = "TOPIC", env = "MQTTUI_PASSWORD", default_value = "#")]
     pub topic: String,
 }
