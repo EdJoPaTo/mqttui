@@ -83,7 +83,9 @@ pub struct Cli {
     #[clap(long, short, name = "STRING", env = "MQTTUI_USERNAME", global = true)]
     pub username: Option<String>,
 
-    /// Password to access the mqtt broker
+    /// Password to access the mqtt broker.
+    ///
+    /// Passing the password via command line is insecure as the password can be read from the history!
     #[clap(
         long,
         short = 'x',
