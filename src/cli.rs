@@ -88,7 +88,6 @@ pub struct Cli {
     /// Passing the password via command line is insecure as the password can be read from the history!
     #[clap(
         long,
-        short = 'x',
         value_name = "STRING",
         env = "MQTTUI_PASSWORD",
         global = true
