@@ -58,7 +58,7 @@ pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<SubCommands>,
 
-    ///Host on which the MQTT Broker is running
+    /// Host on which the MQTT Broker is running
     #[clap(
         long,
         short,
