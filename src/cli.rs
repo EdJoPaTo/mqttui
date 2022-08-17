@@ -79,7 +79,9 @@ pub struct Cli {
     )]
     pub port: u16,
 
-    /// Username to access the mqtt broker
+    /// Username to access the mqtt broker.
+    ///
+    /// Anonymous access when not supplied.
     #[clap(long, short, name = "STRING", env = "MQTTUI_USERNAME", global = true)]
     pub username: Option<String>,
 
