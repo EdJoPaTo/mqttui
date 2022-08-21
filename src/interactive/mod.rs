@@ -92,7 +92,10 @@ pub fn show(
                             .unwrap(),
                         _ => {}
                     },
-                    CEvent::Resize(_, _) => {}
+                    CEvent::FocusGained
+                    | CEvent::FocusLost
+                    | CEvent::Paste(_)
+                    | CEvent::Resize(_, _) => {}
                 }
             }
             if last_tick.elapsed() >= TICK_RATE {
