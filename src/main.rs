@@ -26,25 +26,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (mut client, connection) = {
         let url = &matches.broker;
 
-        let (transport, host, default_port) = match url.scheme() {
+        let (transport, host, port) = match url.scheme() {
             "mqtt" => (
                 Transport::Tcp,
                 url.host_str().expect("Broker requires a Host").to_string(),
-                1883,
+                url.port().unwrap_or(1883),
             ),
             #[cfg(feature = "tls")]
             "mqtts" => (
                 Transport::Tls(mqtt_encryption::create_tls_configuration(matches.insecure)),
                 url.host_str().expect("Broker requires a Host").to_string(),
-                8883,
+                url.port().unwrap_or(8883),
             ),
+            // On WebSockets the port is ignored. See https://github.com/bytebeamio/rumqtt/issues/270
             #[cfg(feature = "tls")]
-            "ws" => (Transport::Ws, url.to_string(), 80),
+            "ws" => (Transport::Ws, url.to_string(), 666),
             #[cfg(feature = "tls")]
             "wss" => (
                 Transport::Wss(mqtt_encryption::create_tls_configuration(matches.insecure)),
                 url.to_string(),
-                443,
+                666,
             ),
             _ => panic!("URL scheme is not supported: {}", url.scheme()),
         };
@@ -55,7 +56,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             || format!("mqttui-{:x}", rand::random::<u32>()),
             |o| o.to_string(),
         );
-        let port = url.port().unwrap_or(default_port);
 
         let mut mqttoptions = MqttOptions::new(client_id, host, port);
         mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
