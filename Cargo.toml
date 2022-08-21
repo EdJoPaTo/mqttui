@@ -23,13 +23,13 @@ anyhow = "1"
 bytes = "1"
 chrono = "0.4"
 clap = { version = "3", features = ["cargo", "env", "wrap_help", "deprecated"] }
-crossterm = "0.23"
+crossterm = "0.25"
 ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
 rumqttc = "0.13"
-tui = "0.18.0"
-tui-tree-widget = "0.9"
+tui = "0.19"
+tui-tree-widget = "0.10"
 
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
