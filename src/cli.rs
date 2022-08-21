@@ -72,76 +72,26 @@ pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<SubCommands>,
 
-    /// Host on which the MQTT Broker is running
+    /// URL which represents how to connect to the MQTT broker.
+    ///
+    /// Examples: `mqtt://localhost/`, `mqtts://localhost/`, `mqtts://user:password@localhost/`
+    ///
+    /// Passing the broker password via command line is insecure as the password can be read from the history!
+    /// In that case you should pass the broker URL via environment variable.
     #[clap(
         short,
         long,
         env = "MQTTUI_BROKER",
-        value_hint = ValueHint::Hostname,
-        value_name = "HOST",
+        value_hint = ValueHint::Url,
+        value_name = "URL",
         global = true,
-        default_value = "localhost",
-    )]
-    pub broker: String,
-
-    /// Port on which the MQTT Broker is running
-    #[clap(
-        short,
-        long,
-        env = "MQTTUI_PORT",
-        value_hint = ValueHint::Other,
-        value_name = "INT",
-        global = true,
-        default_value_t = 1883,
-    )]
-    pub port: u16,
-
-    /// Username to access the mqtt broker.
-    ///
-    /// Anonymous access when not supplied.
-    #[clap(
-        short,
-        long,
-        env = "MQTTUI_USERNAME",
-        value_hint = ValueHint::Username,
-        value_name = "STRING",
-        requires = "password",
-        global = true,
-    )]
-    pub username: Option<String>,
-
-    /// Password to access the mqtt broker.
-    ///
-    /// Passing the password via command line is insecure as the password can be read from the history!
-    /// You should pass it via environment variable.
-    #[clap(
-        long,
-        env = "MQTTUI_PASSWORD",
-        value_hint = ValueHint::Other,
-        value_name = "STRING",
         hide_env_values = true,
-        requires = "username",
-        global = true,
+        default_value = "mqtt://localhost/",
     )]
-    pub password: Option<String>,
-
-    /// Specify the client id to connect with
-    #[clap(
-        short = 'i',
-        long,
-        env = "MQTTUI_CLIENTID",
-        value_hint = ValueHint::Other,
-        value_name = "STRING",
-        global = true,
-    )]
-    pub client_id: Option<String>,
-
-    /// Use TLS when connecting
-    #[clap(short, long, env = "MQTTUI_ENCRYPTION", global = true)]
-    pub encryption: bool,
+    pub broker: url::Url,
 
     /// Allow insecure TLS connections
-    #[clap(long, requires = "encryption", global = true)]
+    #[clap(long, global = true)]
     pub insecure: bool,
 
     /// Topic to watch

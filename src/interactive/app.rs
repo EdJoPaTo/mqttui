@@ -4,6 +4,7 @@ use std::thread;
 
 use json::JsonValue;
 use tui_tree_widget::{flatten, TreeState};
+use url::Url;
 
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_tree_entry::get_visible;
@@ -25,10 +26,9 @@ enum CursorMove {
     Relative(Direction),
 }
 
-pub struct App<'a> {
-    pub host: &'a str,
-    pub port: u16,
-    pub subscribe_topic: &'a str,
+pub struct App {
+    pub display_broker: Url,
+    pub subscribe_topic: String,
     pub mqtt_thread: MqttThread,
 
     pub focus: ElementInFocus,
@@ -39,16 +39,10 @@ pub struct App<'a> {
     pub topic_overview_state: TreeState,
 }
 
-impl<'a> App<'a> {
-    pub fn new(
-        host: &'a str,
-        port: u16,
-        subscribe_topic: &'a str,
-        mqtt_thread: MqttThread,
-    ) -> App<'a> {
-        App {
-            host,
-            port,
+impl App {
+    pub fn new(display_broker: Url, subscribe_topic: String, mqtt_thread: MqttThread) -> Self {
+        Self {
+            display_broker,
             subscribe_topic,
             mqtt_thread,
 

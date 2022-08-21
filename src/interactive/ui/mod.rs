@@ -45,7 +45,7 @@ fn draw_info_header<B>(f: &mut Frame<B>, area: Rect, app: &App)
 where
     B: Backend,
 {
-    let host = format!("MQTT Broker: {} (Port {})", app.host, app.port);
+    let host = format!("MQTT Broker: {}", app.display_broker);
     let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
     let mut text = vec![Spans::from(host), Spans::from(subscribed)];
 

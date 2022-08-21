@@ -2,7 +2,9 @@
 
 use clap::Parser;
 use cli::SubCommands;
-use std::{error::Error, time::Duration};
+use std::collections::HashMap;
+use std::error::Error;
+use std::time::Duration;
 
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
 
@@ -20,31 +22,57 @@ mod topic;
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = cli::Cli::parse();
 
-    let host = matches.broker.clone();
-    let port = matches.port;
-    let client_id = matches
-        .client_id
-        .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
+    let (mut client, connection) = {
+        let url = &matches.broker;
 
-    let mut mqttoptions = MqttOptions::new(client_id, host, port);
-    mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
+        let (transport, host, default_port) = match url.scheme() {
+            "mqtt" => (
+                Transport::Tcp,
+                url.host_str().expect("Broker requires a Host").to_string(),
+                1883,
+            ),
+            "mqtts" => (
+                Transport::Tls(mqtt_encryption::create_tls_configuration(matches.insecure)),
+                url.host_str().expect("Broker requires a Host").to_string(),
+                8883,
+            ),
+            "ws" => (Transport::Ws, url.to_string(), 80),
+            "wss" => (
+                Transport::Wss(mqtt_encryption::create_tls_configuration(matches.insecure)),
+                url.to_string(),
+                443,
+            ),
+            _ => panic!("URL scheme is not supported: {}", url.scheme()),
+        };
 
-    if matches.encryption || port == 8883 {
-        mqttoptions.set_transport(Transport::Tls(mqtt_encryption::create_tls_configuration(
-            matches.insecure,
-        )));
-    }
+        let mut queries = url.query_pairs().collect::<HashMap<_, _>>();
 
-    if let Some(password) = matches.password {
-        let username = matches.username.unwrap();
-        mqttoptions.set_credentials(username, password);
-    }
+        let client_id = queries.remove("client_id").map_or_else(
+            || format!("mqttui-{:x}", rand::random::<u32>()),
+            |o| o.to_string(),
+        );
+        let port = url.port().unwrap_or(default_port);
 
-    if let Some(SubCommands::CleanRetained { timeout, .. }) = matches.subcommands {
-        mqttoptions.set_keep_alive(Duration::from_secs_f32(timeout));
-    }
+        let mut mqttoptions = MqttOptions::new(client_id, host, port);
+        mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
+        mqttoptions.set_transport(transport);
 
-    let (mut client, connection) = Client::new(mqttoptions, 10);
+        if let Some(password) = url.password() {
+            mqttoptions.set_credentials(url.username(), password);
+        }
+
+        if let Some(SubCommands::CleanRetained { timeout, .. }) = matches.subcommands {
+            mqttoptions.set_keep_alive(Duration::from_secs_f32(timeout));
+        }
+
+        assert!(
+            queries.is_empty(),
+            "Broker URL has superfluous query arguments: {:?}",
+            queries
+        );
+
+        Client::new(mqttoptions, 10)
+    };
 
     match matches.subcommands {
         Some(SubCommands::CleanRetained { topic, dry_run, .. }) => {
@@ -72,13 +100,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             publish::eventloop(client, connection, verbose);
         }
         None => {
-            interactive::show(
-                client.clone(),
-                connection,
-                &matches.broker,
-                port,
-                &matches.topic,
-            )?;
+            let mut display_broker = matches.broker.clone();
+            display_broker.set_password(None).unwrap();
+            display_broker.set_query(None);
+
+            interactive::show(client.clone(), connection, display_broker, matches.topic)?;
             client.disconnect()?;
         }
     }

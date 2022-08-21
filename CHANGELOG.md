@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support TLS encryption
+- Support websockets
 
 ### Changed
 
+- Combine all MQTT broker options into --broker / MQTTUI_BROKER
 - Performance: Do not store topic on each history entry
 - Performance: Store `String` as `Box<str>`
 - Performance: Use RwLock over Mutex

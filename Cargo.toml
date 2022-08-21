@@ -17,6 +17,7 @@ lto = true
 [build-dependencies]
 clap = { version = "3", features = ["deprecated", "derive", "env"] }
 clap_complete = "3"
+url = "2"
 
 [dependencies]
 anyhow = "1"
@@ -27,11 +28,12 @@ crossterm = "0.25"
 ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
-rumqttc = { version = "0.14", features = ["use-rustls"] }
+rumqttc = { version = "0.14", features = ["use-rustls", "websocket"] }
 rustls = { version = "0.20", features = ["dangerous_configuration"] }
 rustls-native-certs = "0.6"
 tui = "0.19"
 tui-tree-widget = "0.10"
+url = "2"
 
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
