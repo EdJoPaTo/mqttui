@@ -1,10 +1,9 @@
 #![forbid(unsafe_code)]
 
 use std::error::Error;
-use std::sync::Arc;
 use std::time::Duration;
 
-use rumqttc::{self, Client, ClientConfig, MqttOptions, QoS, TlsConfiguration, Transport};
+use rumqttc::{self, Client, MqttOptions, QoS, Transport};
 
 mod clean_retained;
 mod cli;
@@ -12,8 +11,8 @@ mod format;
 mod interactive;
 mod json_view;
 mod log;
+mod mqtt_encryption;
 mod mqtt_packet;
-mod noverifier;
 mod publish;
 mod topic;
 
@@ -38,22 +37,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
     mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
     if encryption {
-        let certs = rustls_native_certs::load_native_certs().unwrap();
-        let mut roots = rustls::RootCertStore::empty();
-        for cert in certs {
-            let _ = roots.add(&rustls::Certificate(cert.0));
-        }
-        let mut conf = ClientConfig::builder()
-            .with_safe_defaults()
-            .with_root_certificates(roots)
-            .with_no_client_auth();
-
-        if matches.contains_id("Insecure") {
-            let mut danger = conf.dangerous();
-            danger.set_certificate_verifier(Arc::new(noverifier::NoVerifier {}));
-        }
-
-        mqttoptions.set_transport(Transport::Tls(TlsConfiguration::Rustls(Arc::new(conf))));
+        let insecure = matches.contains_id("Insecure");
+        mqttoptions.set_transport(Transport::Tls(mqtt_encryption::create_tls_configuration(
+            insecure,
+        )));
     }
 
     if let Some(password) = matches.get_one::<String>("Password") {
