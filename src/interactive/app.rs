@@ -273,10 +273,8 @@ impl App {
                         self.focus = ElementInFocus::JsonPayload;
                     }
                 }
-            } else {
-                if let ElementInFocus::JsonPayload = self.focus {
-                    self.focus = ElementInFocus::TopicOverview;
-                }
+            } else if let ElementInFocus::JsonPayload = self.focus {
+                self.focus = ElementInFocus::TopicOverview;
             }
         }
 
@@ -302,7 +300,7 @@ impl App {
                     }
                 }
             }
-            _ => {}
+            ElementInFocus::CleanRetainedPopup(_) => {}
         };
 
         Ok(())
