@@ -1,6 +1,6 @@
-use clap::{self, Parser, ValueHint};
+use clap::{Parser, ValueHint};
 
-#[derive(Parser, Debug)]
+#[derive(Debug, Parser)]
 pub enum SubCommands {
     /// Clean retained messages from the broker.
     ///
@@ -66,7 +66,7 @@ pub enum SubCommands {
     },
 }
 
-#[derive(Parser, Debug)]
+#[derive(Debug, Parser)]
 #[clap(about, author, version)]
 pub struct Cli {
     #[clap(subcommand)]
