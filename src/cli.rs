@@ -20,7 +20,7 @@ pub enum SubCommands {
             long,
             value_hint = ValueHint::Other,
             value_name = "SECONDS",
-            default_value = "5",
+            default_value_t = 5.0,
         )]
         timeout: f32,
 
@@ -67,7 +67,7 @@ pub enum SubCommands {
 }
 
 #[derive(Debug, Parser)]
-#[clap(about, author, version)]
+#[clap(about, author, version, name = "MQTT TUI")]
 pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<SubCommands>,
@@ -84,7 +84,7 @@ pub struct Cli {
     )]
     pub broker: String,
 
-    /// Host on which the MQTT Broker is running
+    /// Port on which the MQTT Broker is running
     #[clap(
         short,
         long,
@@ -92,7 +92,7 @@ pub struct Cli {
         value_hint = ValueHint::Other,
         value_name = "INT",
         global = true,
-        default_value = "1883",
+        default_value_t = 1883,
     )]
     pub port: u16,
 
