@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let port = matches.port;
     let client_id = matches
         .client_id
-        .unwrap_or_else(|_| format!("mqttui-{:x}", rand::random::<u32>()));
+        .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
 
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
     mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
