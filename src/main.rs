@@ -26,15 +26,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .client_id
         .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
 
-    let encryption = match (matches.encryption, port) {
-        (Some(encryption), _) => encryption,
-        (None, 8883) => true,
-        _ => false,
-    };
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
     mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
 
-    if encryption {
+    if matches.encryption || port == 8883 {
         mqttoptions.set_transport(Transport::Tls(mqtt_encryption::create_tls_configuration(
             matches.insecure,
         )));
