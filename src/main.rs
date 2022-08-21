@@ -14,6 +14,7 @@ mod format;
 mod interactive;
 mod json_view;
 mod log;
+#[cfg(feature = "tls")]
 mod mqtt_encryption;
 mod mqtt_packet;
 mod publish;
@@ -31,12 +32,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                 url.host_str().expect("Broker requires a Host").to_string(),
                 1883,
             ),
+            #[cfg(feature = "tls")]
             "mqtts" => (
                 Transport::Tls(mqtt_encryption::create_tls_configuration(matches.insecure)),
                 url.host_str().expect("Broker requires a Host").to_string(),
                 8883,
             ),
+            #[cfg(feature = "tls")]
             "ws" => (Transport::Ws, url.to_string(), 80),
+            #[cfg(feature = "tls")]
             "wss" => (
                 Transport::Wss(mqtt_encryption::create_tls_configuration(matches.insecure)),
                 url.to_string(),

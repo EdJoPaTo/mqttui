@@ -9,6 +9,10 @@ edition = "2021"
 rust-version = "1.57.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["tls"]
+tls = ["rumqttc/use-rustls", "rumqttc/websocket", "rustls", "rustls-native-certs"]
+
 [profile.release]
 # See https://doc.rust-lang.org/rustc/codegen-options/index.html
 codegen-units = 1
@@ -28,9 +32,9 @@ crossterm = "0.25"
 ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
-rumqttc = { version = "0.14", features = ["use-rustls", "websocket"] }
-rustls = { version = "0.20", features = ["dangerous_configuration"] }
-rustls-native-certs = "0.6"
+rumqttc = { version = "0.14", default-features = false }
+rustls = { version = "0.20", features = ["dangerous_configuration"], optional = true }
+rustls-native-certs = {version = "0.6", optional = true}
 tui = "0.19"
 tui-tree-widget = "0.10"
 url = "2"
