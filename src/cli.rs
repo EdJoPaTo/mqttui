@@ -113,6 +113,7 @@ pub struct Cli {
     /// Password to access the mqtt broker.
     ///
     /// Passing the password via command line is insecure as the password can be read from the history!
+    /// You should pass it via environment variable.
     #[clap(
         long,
         env = "MQTTUI_PASSWORD",
