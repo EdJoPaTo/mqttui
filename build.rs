@@ -1,3 +1,4 @@
+use clap::CommandFactory;
 use clap_complete::{generate_to, shells};
 
 include!("src/cli.rs");
@@ -12,9 +13,9 @@ fn main() {
 
     let bin_name = env!("CARGO_PKG_NAME");
 
-    generate_to(shells::Bash, &mut build(), bin_name, out_dir).unwrap();
-    generate_to(shells::Elvish, &mut build(), bin_name, out_dir).unwrap();
-    generate_to(shells::Fish, &mut build(), bin_name, out_dir).unwrap();
-    generate_to(shells::PowerShell, &mut build(), bin_name, out_dir).unwrap();
-    generate_to(shells::Zsh, &mut build(), bin_name, out_dir).unwrap();
+    generate_to(shells::Bash, &mut Cli::command(), bin_name, out_dir).unwrap();
+    generate_to(shells::Elvish, &mut Cli::command(), bin_name, out_dir).unwrap();
+    generate_to(shells::Fish, &mut Cli::command(), bin_name, out_dir).unwrap();
+    generate_to(shells::PowerShell, &mut Cli::command(), bin_name, out_dir).unwrap();
+    generate_to(shells::Zsh, &mut Cli::command(), bin_name, out_dir).unwrap();
 }

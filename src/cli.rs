@@ -1,190 +1,159 @@
-use clap::{command, value_parser, Arg, Command, ValueHint};
+use clap::{Parser, ValueHint};
 
-#[allow(clippy::too_many_lines)]
-#[must_use]
-pub fn build() -> Command<'static> {
-    command!()
-        .name("MQTT TUI")
-        .subcommand(
-            Command::new("clean-retained")
-            .about("Clean retained messages from the broker")
-            .long_about("Clean retained messages from the broker. This works by subscribing to the topic and waiting for messages with the retained flag. Then a message with an empty payload is published retained which clears the topic on the broker. Ends on the first non retained message or when the timeout is reached.")
-            .visible_aliases(&["c", "clean"])
-            .arg(
-                Arg::new("Topic")
-                    .value_hint(ValueHint::Other)
-                    .value_name("TOPIC")
-                    .takes_value(true)
-                    .required(true)
-                    .help("Topic which gets cleaned")
-                    .long_help("Topic which gets cleaned. Supports filters like 'foo/bar/#'."),
-            )
-            .arg(
-                Arg::new("Timeout")
-                    .long("timeout")
-                    .value_hint(ValueHint::Other)
-                    .value_name("SECONDS")
-                    .value_parser(value_parser!(f32))
-                    .default_value("5")
-                    .help("When there is no message received for the given time the operation is considered done"),
-            )
-            .arg(
-                Arg::new("dry-run")
-                    .long("dry-run")
-                    .help("Dont clean topics, only log them"),
-            )
-        )
-        .subcommand(
-            Command::new("log")
-                .about("Log values from subscribed topics to stdout")
-                .visible_aliases(&["l"])
-                .arg(
-                    Arg::new("Topics")
-                        .env("MQTTUI_TOPIC")
-                        .value_hint(ValueHint::Other)
-                        .value_name("TOPIC")
-                        .multiple_values(true)
-                        .takes_value(true)
-                        .default_value("#")
-                        .help("Topics to watch"),
-                )
-                .arg(
-                    Arg::new("verbose")
-                        .short('v')
-                        .long("verbose")
-                        .help("Show full MQTT communication"),
-                ),
-        )
-        .subcommand(
-            Command::new("publish")
-                .about("Publish a value quickly")
-                .visible_aliases(&["p", "pub"])
-                .arg(
-                    Arg::new("Topic")
-                        .value_hint(ValueHint::Other)
-                        .value_name("TOPIC")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Topic to publish to")
-                )
-                .arg(
-                    Arg::new("Payload")
-                        .value_hint(ValueHint::Unknown)
-                        .value_name("PAYLOAD")
-                        .takes_value(true)
-                        .required(true)
-                        .help("Payload to be published"),
-                )
-                .arg(
-                    Arg::new("retain")
-                        .short('r')
-                        .long("retain")
-                        .env("MQTTUI_RETAIN")
-                        .help("Publish the MQTT message retained"),
-                )
-                .arg(
-                    Arg::new("verbose")
-                        .short('v')
-                        .long("verbose")
-                        .help("Show full MQTT communication"),
-                ),
-        )
-        .arg(
-            Arg::new("Broker")
-                .short('b')
-                .long("broker")
-                .env("MQTTUI_BROKER")
-                .value_hint(ValueHint::Hostname)
-                .value_name("HOST")
-                .global(true)
-                .takes_value(true)
-                .help("Host on which the MQTT Broker is running")
-                .default_value("localhost"),
-        )
-        .arg(
-            Arg::new("Port")
-                .short('p')
-                .long("port")
-                .env("MQTTUI_PORT")
-                .value_hint(ValueHint::Other)
-                .value_name("INT")
-                .value_parser(value_parser!(u16))
-                .global(true)
-                .takes_value(true)
-                .help("Port on which the MQTT Broker is running")
-                .default_value("1883"),
-        )
-        .arg(
-            Arg::new("Username")
-                .short('u')
-                .long("username")
-                .env("MQTTUI_USERNAME")
-                .value_hint(ValueHint::Username)
-                .value_name("STRING")
-                .global(true)
-                .takes_value(true)
-                .requires("Password")
-                .help("Username to access the mqtt broker")
-                .long_help(
-                    "Username to access the mqtt broker. Anonymous access when not supplied.",
-                ),
-        )
-        .arg(
-            Arg::new("Password")
-                .long("password")
-                .env("MQTTUI_PASSWORD")
-                .value_hint(ValueHint::Other)
-                .value_name("STRING")
-                .global(true)
-                .hide_env_values(true)
-                .takes_value(true)
-                .requires("Username")
-                .help("Password to access the mqtt broker")
-                .long_help(
-                    "Password to access the mqtt broker. Passing the password via command line is insecure as the password can be read from the history!",
-                ),
-        )
-        .arg(
-            Arg::new("Topic")
-                .env("MQTTUI_TOPIC")
-                .value_hint(ValueHint::Other)
-                .value_name("TOPIC")
-                .takes_value(true)
-                .default_value("#")
-                .help("Topic to watch"),
-        )
-        .arg(
-            Arg::new("ClientId")
-                .short('i')
-                .long("client-id")
-                .env("MQTTUI_CLIENTID")
-                .value_hint(ValueHint::Other)
-                .value_name("STRING")
-                .takes_value(true)
-                .help("Specify the Client Id to connect with"),
-        )
-        .arg(
-            Arg::new("Encryption")
-                .short('e')
-                .long("encryption")
-                .env("MQTTUI_ENCRYPTION")
-                .value_hint(ValueHint::Other)
-                .value_name("BOOL")
-                .value_parser(clap::builder::BoolishValueParser::new())
-                .takes_value(true)
-                .help("Use TLS when connecting"),
-        )
-        .arg(
-            Arg::new("Insecure")
-                .long("insecure")
-                .value_name("BOOL")
-                .required(false)
-                .takes_value(false)
-                .help("Allow insecure TLS connections"),
-        )
+#[derive(Debug, Parser)]
+pub enum SubCommands {
+    /// Clean retained messages from the broker.
+    ///
+    /// This works by subscribing to the topic and waiting for messages with the retained flag.
+    /// Then a message with an empty payload is published retained which clears the topic on the broker.
+    /// Ends on the first non retained message or when the timeout is reached.
+    #[clap(visible_alias = "c", visible_alias = "clean")]
+    CleanRetained {
+        /// Topic which gets cleaned.
+        ///
+        /// Supports filters like 'foo/bar/#'.
+        #[clap(value_hint = ValueHint::Other)]
+        topic: String,
+
+        /// When there is no message received for the given time the operation is considered done
+        #[clap(
+            long,
+            value_hint = ValueHint::Other,
+            value_name = "SECONDS",
+            default_value_t = 5.0,
+        )]
+        timeout: f32,
+
+        /// Dont clean topics, only log them
+        #[clap(long)]
+        dry_run: bool,
+    },
+
+    /// Log values from subscribed topics to stdout
+    #[clap(visible_alias = "l")]
+    Log {
+        /// Topics to watch
+        #[clap(
+            env = "MQTTUI_TOPIC",
+            value_hint = ValueHint::Other,
+            default_value = "#",
+        )]
+        topic: Vec<String>,
+
+        /// Show full MQTT communication
+        #[clap(short, long)]
+        verbose: bool,
+    },
+
+    /// Publish a value quickly
+    #[clap(visible_alias = "p", visible_alias = "pub")]
+    Publish {
+        /// Topic to publish to
+        #[clap(value_hint = ValueHint::Other)]
+        topic: String,
+
+        /// Payload to be published
+        #[clap(value_hint = ValueHint::Unknown)]
+        payload: String,
+
+        /// Publish the MQTT message retained
+        #[clap(short, long, env = "MQTTUI_RETAIN")]
+        retain: bool,
+
+        /// Show full MQTT communication
+        #[clap(short, long)]
+        verbose: bool,
+    },
+}
+
+#[derive(Debug, Parser)]
+#[clap(about, author, version, name = "MQTT TUI")]
+pub struct Cli {
+    #[clap(subcommand)]
+    pub subcommands: Option<SubCommands>,
+
+    /// Host on which the MQTT Broker is running
+    #[clap(
+        short,
+        long,
+        env = "MQTTUI_BROKER",
+        value_hint = ValueHint::Hostname,
+        value_name = "HOST",
+        global = true,
+        default_value = "localhost",
+    )]
+    pub broker: String,
+
+    /// Port on which the MQTT Broker is running
+    #[clap(
+        short,
+        long,
+        env = "MQTTUI_PORT",
+        value_hint = ValueHint::Other,
+        value_name = "INT",
+        global = true,
+        default_value_t = 1883,
+    )]
+    pub port: u16,
+
+    /// Username to access the mqtt broker.
+    ///
+    /// Anonymous access when not supplied.
+    #[clap(
+        short,
+        long,
+        env = "MQTTUI_USERNAME",
+        value_hint = ValueHint::Username,
+        value_name = "STRING",
+        requires = "password",
+        global = true,
+    )]
+    pub username: Option<String>,
+
+    /// Password to access the mqtt broker.
+    ///
+    /// Passing the password via command line is insecure as the password can be read from the history!
+    #[clap(
+        long,
+        env = "MQTTUI_PASSWORD",
+        value_hint = ValueHint::Other,
+        value_name = "STRING",
+        hide_env_values = true,
+        requires = "username",
+        global = true,
+    )]
+    pub password: Option<String>,
+
+    /// Specify the client id to connect with
+    #[clap(
+        short = 'i',
+        long,
+        env = "MQTTUI_CLIENTID",
+        value_hint = ValueHint::Other,
+        value_name = "STRING",
+        global = true,
+    )]
+    pub client_id: Option<String>,
+
+    /// Use TLS when connecting
+    #[clap(short, long, env = "MQTTUI_ENCRYPTION", global = true)]
+    pub encryption: Option<bool>,
+
+    /// Allow insecure TLS connections
+    #[clap(long, requires = "encryption", global = true)]
+    pub insecure: bool,
+
+    /// Topic to watch
+    #[clap(
+        env = "MQTTUI_TOPIC",
+        value_hint = ValueHint::Other,
+        default_value = "#",
+    )]
+    pub topic: String,
 }
 
 #[test]
 fn verify() {
-    build().debug_assert();
+    use clap::CommandFactory;
+    Cli::command().debug_assert();
 }

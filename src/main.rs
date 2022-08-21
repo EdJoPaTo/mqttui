@@ -1,7 +1,8 @@
 #![forbid(unsafe_code)]
 
-use std::error::Error;
-use std::time::Duration;
+use clap::Parser;
+use cli::SubCommands;
+use std::{error::Error, time::Duration};
 
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
 
@@ -17,48 +18,42 @@ mod publish;
 mod topic;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = cli::build().get_matches();
+    let matches = cli::Cli::parse();
 
-    let host = matches.get_one::<String>("Broker").unwrap();
-    let port = *matches.get_one::<u16>("Port").unwrap();
-
+    let host = matches.broker.clone();
+    let port = matches.port;
     let client_id = matches
-        .get_one::<String>("ClientId")
-        .cloned()
+        .client_id
         .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
 
-    let encryption = matches.get_one::<bool>("Encryption").copied();
-    let encryption = match (encryption, port) {
+    let encryption = match (matches.encryption, port) {
         (Some(encryption), _) => encryption,
         (None, 8883) => true,
         _ => false,
     };
-
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
     mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
+
     if encryption {
-        let insecure = matches.contains_id("Insecure");
         mqttoptions.set_transport(Transport::Tls(mqtt_encryption::create_tls_configuration(
-            insecure,
+            matches.insecure,
         )));
     }
 
-    if let Some(password) = matches.get_one::<String>("Password") {
-        let username = matches.get_one::<String>("Username").unwrap();
+    if let Some(password) = matches.password {
+        let username = matches.username.unwrap();
         mqttoptions.set_credentials(username, password);
     }
 
-    if let Some(matches) = matches.subcommand_matches("clean-retained") {
-        let timeout = Duration::from_secs_f32(*matches.get_one("Timeout").unwrap());
-        mqttoptions.set_keep_alive(timeout);
+    if let Some(SubCommands::CleanRetained { timeout, .. }) = matches.subcommands {
+        mqttoptions.set_keep_alive(Duration::from_secs_f32(timeout));
     }
 
     let (mut client, connection) = Client::new(mqttoptions, 10);
 
-    match matches.subcommand() {
-        Some(("clean-retained", matches)) => {
-            let topic = matches.get_one::<String>("Topic").unwrap();
-            let mode = if matches.contains_id("dry-run") {
+    match matches.subcommands {
+        Some(SubCommands::CleanRetained { topic, dry_run, .. }) => {
+            let mode = if dry_run {
                 clean_retained::Mode::Dry
             } else {
                 clean_retained::Mode::Normal
@@ -66,25 +61,29 @@ fn main() -> Result<(), Box<dyn Error>> {
             client.subscribe(topic, QoS::AtLeastOnce)?;
             clean_retained::clean_retained(client, connection, mode);
         }
-        Some(("log", matches)) => {
-            let verbose = matches.contains_id("verbose");
-            for topic in matches.get_many::<String>("Topics").unwrap() {
+        Some(SubCommands::Log { topic, verbose }) => {
+            for topic in topic {
                 client.subscribe(topic, QoS::AtLeastOnce)?;
             }
             log::show(connection, verbose);
         }
-        Some(("publish", matches)) => {
-            let verbose = matches.contains_id("verbose");
-            let retain = matches.contains_id("retain");
-            let topic = matches.get_one::<String>("Topic").unwrap();
-            let payload = matches.get_one::<String>("Payload").unwrap().as_str();
+        Some(SubCommands::Publish {
+            topic,
+            payload,
+            retain,
+            verbose,
+        }) => {
             client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
             publish::eventloop(client, connection, verbose);
         }
-        Some((command, _)) => unreachable!("command is not available: {}", command),
         None => {
-            let topic = matches.get_one::<String>("Topic").unwrap();
-            interactive::show(client.clone(), connection, host, port, topic)?;
+            interactive::show(
+                client.clone(),
+                connection,
+                &matches.broker,
+                port,
+                &matches.topic,
+            )?;
             client.disconnect()?;
         }
     }
