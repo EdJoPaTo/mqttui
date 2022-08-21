@@ -135,6 +135,14 @@ pub struct Cli {
     )]
     pub client_id: Option<String>,
 
+    /// Use TLS when connecting
+    #[clap(short, long, env = "MQTTUI_ENCRYPTION", global = true)]
+    pub encryption: bool,
+
+    /// Allow insecure TLS connections
+    #[clap(long, requires = "encryption", global = true)]
+    pub insecure: bool,
+
     /// Topic to watch
     #[clap(
         env = "MQTTUI_TOPIC",

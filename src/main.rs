@@ -4,7 +4,7 @@ use clap::Parser;
 use cli::SubCommands;
 use std::{error::Error, time::Duration};
 
-use rumqttc::{self, Client, MqttOptions, QoS};
+use rumqttc::{self, Client, MqttOptions, QoS, Transport};
 
 mod clean_retained;
 mod cli;
@@ -12,6 +12,7 @@ mod format;
 mod interactive;
 mod json_view;
 mod log;
+mod mqtt_encryption;
 mod mqtt_packet;
 mod publish;
 mod topic;
@@ -27,6 +28,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut mqttoptions = MqttOptions::new(client_id, host, port);
     mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
+
+    if matches.encryption || port == 8883 {
+        mqttoptions.set_transport(Transport::Tls(mqtt_encryption::create_tls_configuration(
+            matches.insecure,
+        )));
+    }
 
     if let Some(password) = matches.password {
         let username = matches.username.unwrap();

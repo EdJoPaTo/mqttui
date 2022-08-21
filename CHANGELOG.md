@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support TLS encryption
+
 ### Changed
 
 - Performance: Do not store topic on each history entry
