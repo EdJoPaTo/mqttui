@@ -72,7 +72,7 @@ pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<SubCommands>,
 
-    /// URL which represents how to connect to the MQTT broker.
+    /// URL which represents how to connect to the MQTT broker eq 'mqtts://user:password@localhost:8883'
     ///
     /// Examples: `mqtt://localhost/`, `mqtts://localhost/`, `mqtts://user:password@localhost/`
     ///
@@ -89,6 +89,58 @@ pub struct Cli {
         default_value = "mqtt://localhost/",
     )]
     pub broker: url::Url,
+
+    /// Username to connect with
+    ///
+    /// The username to use when connecting to the broker, it can be provided as part of the url if that is preferred
+    #[clap(
+        short,
+        long,
+        env = "MQTTUI_USER",
+        value_hint = ValueHint::Username,
+        global = true,
+        hide_env_values = true,
+    )]
+    pub username: Option<String>,
+
+    /// Password to use when connecting to the broker
+    ///
+    /// Passing the broker password via command line is insecure as the password can be read from the history!
+    /// In that case you should pass the password via environment variable.
+    #[clap(
+        long,
+        env = "MQTTUI_PASSWORD",
+        value_hint = ValueHint::Other,
+        global = true,
+        hide_env_values = true,
+    )]
+    pub password: Option<String>,
+
+    /// Specify the Client ID to be used for this connection
+    ///
+    /// Overrides the default randomized client-id for this connection to the broker
+    #[clap(
+        long,
+        short = 'i',
+        env = "MQTTUI_CLIENT_ID",
+        value_hint = ValueHint::Other,
+        global = true,
+        hide_env_values = true,
+    )]
+    pub client_id: Option<String>,
+
+    /// Port to connect to
+    ///
+    /// The port to use to connect to the broker
+    #[clap(
+        short,
+        long,
+        env = "MQTTUI_PORT",
+        value_hint = ValueHint::Other,
+        global = true,
+        hide_env_values = true,
+    )]
+    pub port: Option<u16>,
 
     /// Allow insecure TLS connections
     #[clap(long, global = true)]

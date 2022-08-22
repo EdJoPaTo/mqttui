@@ -26,18 +26,45 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (mut client, connection) = {
         let url = &matches.broker;
 
+        macro_rules! only_one_of {
+            ($expr1:expr, $expr2:expr, $error:literal) => {
+                match ($expr1, $expr2) {
+                    (None, None) => None,
+                    (Some(val), None) => Some(val),
+                    (None, Some(val)) => Some(val),
+                    (Some(_), Some(_)) => {
+                        let error = $error;
+                        panic!("{error} is defined in both url and by cli flags, choose one!");
+                    }
+                }
+            };
+        }
+
         let (transport, host, port) = match url.scheme() {
-            "mqtt" => (
-                Transport::Tcp,
-                url.host_str().expect("Broker requires a Host").to_string(),
-                url.port().unwrap_or(1883),
-            ),
+            "mqtt" => {
+                let transport = Transport::Tcp;
+                let host = url.host_str().expect("Broker requires a Host").to_string();
+                let port = only_one_of!(
+                    url.port(),
+                    matches.port,
+                    "Port is defined in both url and by cli flags, choose one!"
+                )
+                .unwrap_or(1883);
+                (transport, host, port)
+            }
             #[cfg(feature = "tls")]
-            "mqtts" => (
-                Transport::Tls(mqtt_encryption::create_tls_configuration(matches.insecure)),
-                url.host_str().expect("Broker requires a Host").to_string(),
-                url.port().unwrap_or(8883),
-            ),
+            "mqtts" => {
+                let transport =
+                    Transport::Tls(mqtt_encryption::create_tls_configuration(matches.insecure));
+                let host = url.host_str().expect("Broker requires a Host").to_string();
+                let port = only_one_of!(
+                    url.port(),
+                    matches.port,
+                    "Port is defined in both url and by cli flags, choose one!"
+                )
+                .unwrap_or(8883);
+                (transport, host, port)
+            }
             // On WebSockets the port is ignored. See https://github.com/bytebeamio/rumqtt/issues/270
             #[cfg(feature = "tls")]
             "ws" => (Transport::Ws, url.to_string(), 666),
@@ -50,19 +77,29 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => panic!("URL scheme is not supported: {}", url.scheme()),
         };
 
-        let mut queries = url.query_pairs().collect::<HashMap<_, _>>();
+        let mut queries: HashMap<String, String> = url
+            .query_pairs()
+            .map(|(key, value)| (key.to_string(), value.to_string()))
+            .collect();
 
-        let client_id = queries.remove("client_id").map_or_else(
-            || format!("mqttui-{:x}", rand::random::<u32>()),
-            |o| o.to_string(),
-        );
+        let client_id = only_one_of!(queries.remove("client_id"), matches.client_id, "Client ID");
+        let client_id = client_id.unwrap_or(format!("mqttui-{:x}", rand::random::<u32>()));
 
         let mut mqttoptions = MqttOptions::new(client_id, host, port);
         mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
         mqttoptions.set_transport(transport);
 
-        if let Some(password) = url.password() {
-            mqttoptions.set_credentials(url.username(), password);
+        // We want the option to supply username both by url, and by flags, thus we override the url username in the case of an empty username
+        let url_username = if url.username() == "" {
+            None
+        } else {
+            Some(url.username())
+        };
+        let password = only_one_of!(url.password(), matches.password.as_deref(), "Password");
+        if let Some(password) = password {
+            let username =
+                only_one_of!(url_username, matches.username.as_deref(), "Username").unwrap_or("");
+            mqttoptions.set_credentials(username, password);
         }
 
         if let Some(SubCommands::CleanRetained { timeout, .. }) = matches.subcommands {
