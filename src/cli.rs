@@ -74,10 +74,16 @@ pub struct Cli {
 
     /// URL which represents how to connect to the MQTT broker.
     ///
-    /// Examples: `mqtt://localhost/`, `mqtts://localhost/`, `mqtts://user:password@localhost/`
-    ///
     /// Passing the broker password via command line is insecure as the password can be read from the history!
     /// In that case you should pass the broker URL via environment variable.
+    ///
+    /// You can specify the client_id via URL query: `mqtt://localhost/?client_id=my-client-id`
+    ///
+    /// Examples:
+    /// `mqtt://localhost/`
+    /// `mqtts://localhost/`
+    /// `mqtts://user:password@localhost:8883/`
+    /// `ws://localhost:9001/`
     #[clap(
         short,
         long,
