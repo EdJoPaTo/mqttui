@@ -77,13 +77,26 @@ pub struct Cli {
     /// Passing the broker password via command line is insecure as the password can be read from the history!
     /// In that case you should pass the broker URL via environment variable.
     ///
-    /// You can specify the client_id via URL query: `mqtt://localhost/?client_id=my-client-id`
+    /// The URL structure allows for many settings to be set at the same time.
+    /// When something is unspecified its default is assumed.
+    /// `schema://username:password@hostname:port/path?query`
+    ///
+    /// Supported Schema:
+    /// `mqtt`
+    /// `mqtts`
+    /// `ws`
+    /// `wss`
+    ///
+    /// Supported query arguments:
+    /// `client_id=my-client-id`
+    /// (Full example: `mqtt://localhost/?client_id=my-client-id`)
     ///
     /// Examples:
     /// `mqtt://localhost/`
     /// `mqtts://localhost/`
     /// `mqtts://user:password@localhost:8883/`
-    /// `ws://localhost:9001/`
+    /// `ws://localhost/`
+    /// `wss://user:password@host:9001/mqtt`
     #[clap(
         short,
         long,
