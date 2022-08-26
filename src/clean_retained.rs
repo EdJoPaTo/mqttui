@@ -1,11 +1,10 @@
 use std::thread::sleep;
 use std::time::Duration;
 
-use chrono::Local;
 use rumqttc::{Client, Connection, QoS};
 
 use crate::format;
-use crate::mqtt::HistoryEntry;
+use crate::mqtt::Payload;
 
 #[derive(Clone, Copy)]
 pub enum Mode {
@@ -42,8 +41,10 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
                 }
                 let topic = publish.topic.clone();
                 if !matches!(mode, Mode::Silent) {
-                    let entry = HistoryEntry::new(&publish, Local::now());
-                    println!("{}", format::log_line(&publish.topic, entry));
+                    let qos = format::qos(publish.qos);
+                    let size = publish.payload.len();
+                    let payload = format::payload(&Payload::new(&publish.payload), size);
+                    println!("QoS:{:11} {:50} {}", qos, publish.topic, payload);
                 }
                 amount += 1;
                 if !matches!(mode, Mode::Dry) {

@@ -75,7 +75,7 @@ fn draw_table<B>(
 
     let rows = topic_history.iter().map(|entry| {
         let time = entry.time.to_string();
-        let qos = format::qos(entry.qos);
+        let qos = format::qos(entry.qos).to_string();
         let value = match &entry.payload {
             Payload::NotUtf8(err) => format!("invalid UTF-8: {}", err),
             Payload::String(str) => str.to_string(),

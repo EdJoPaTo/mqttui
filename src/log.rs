@@ -5,7 +5,7 @@ use chrono::Local;
 use rumqttc::Connection;
 
 use crate::format;
-use crate::mqtt::HistoryEntry;
+use crate::mqtt::{Payload, Time};
 
 pub fn show(mut connection: Connection, verbose: bool) {
     for notification in connection.iter() {
@@ -29,8 +29,18 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 if publish.dup {
                     continue;
                 }
-                let entry = HistoryEntry::new(&publish, Local::now());
-                println!("{}", format::log_line(&publish.topic, entry));
+                let time = if publish.retain {
+                    Time::Retained
+                } else {
+                    Time::Local(Local::now())
+                };
+                println!(
+                    "{:12} QoS:{:11} {:50} {}",
+                    time.to_string(),
+                    format::qos(publish.qos),
+                    publish.topic,
+                    format::payload(&Payload::new(&publish.payload), publish.payload.len())
+                );
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance: Do not store topic on each history entry
 - Performance: Store `String` as `Box<str>`
 - Performance: Use RwLock over Mutex
+- Performance: Simplify non-interactive output logic
 
 ## [0.16.2] - 2022-05-01
 

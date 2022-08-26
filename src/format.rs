@@ -1,33 +1,27 @@
 use rumqttc::QoS;
 
-use crate::mqtt::{HistoryEntry, Payload};
+use crate::mqtt::Payload;
 
-pub fn log_line(topic: &str, entry: HistoryEntry) -> String {
-    let qos = qos(entry.qos);
-    let time = entry.time.to_string();
-    let size = entry.payload_size;
-    let payload = match entry.payload {
+pub fn payload(payload: &Payload, size: usize) -> String {
+    match payload {
         Payload::NotUtf8(err) => format!("Payload({:>3}) is not valid UTF-8: {}", size, err),
         Payload::String(str) => format!("Payload({:>3}): {}", size, str),
         Payload::Json(json) => format!("Payload({:>3}): {}", size, json.dump()),
-    };
-    format!("{:12} {:50} QoS:{:11} {}", time, topic, qos, payload)
+    }
 }
 
-pub fn qos(qos: QoS) -> String {
-    format!("{:?}", qos)
+pub const fn qos(qos: QoS) -> &'static str {
+    match qos {
+        QoS::AtLeastOnce => "AtLeastOnce",
+        QoS::AtMostOnce => "AtMostOnce",
+        QoS::ExactlyOnce => "ExactlyOnce",
+    }
 }
 
 #[test]
-fn log_line_works() {
-    let time = chrono::DateTime::parse_from_rfc3339("2020-10-17T15:00:00+02:00").unwrap();
-    let mut packet = rumqttc::Publish::new("foo", QoS::AtLeastOnce, "bar");
-    packet.retain = true;
-    let entry = HistoryEntry::new(&packet, time.into());
-    assert_eq!(
-        log_line(&packet.topic, entry),
-        "RETAINED     foo                                                QoS:AtLeastOnce Payload(  3): bar"
-    );
+fn payload_works() {
+    let p = Payload::String("bar".into());
+    assert_eq!(payload(&p, 3), "Payload(  3): bar");
 }
 
 #[test]
