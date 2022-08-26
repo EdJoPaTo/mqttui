@@ -111,6 +111,9 @@ pub struct Cli {
 
     /// Password to access the mqtt broker.
     ///
+    /// Consider using a connection with TLS to the broker.
+    /// Otherwise the password will be transported in plaintext.
+    ///
     /// Passing the password via command line is insecure as the password can be read from the history!
     /// You should pass it via environment variable.
     #[clap(
