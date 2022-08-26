@@ -2,7 +2,6 @@
 
 use clap::Parser;
 use cli::SubCommands;
-use std::collections::HashMap;
 use std::error::Error;
 use std::time::Duration;
 
@@ -21,56 +20,41 @@ fn main() -> Result<(), Box<dyn Error>> {
     let matches = cli::Cli::parse();
 
     let (mut client, connection) = {
-        let url = &matches.broker;
-
-        let (transport, host, port) = match url.scheme() {
-            "mqtt" => (
-                Transport::Tcp,
-                url.host_str().expect("Broker requires a Host").to_string(),
-                url.port().unwrap_or(1883),
-            ),
+        let (transport, host, port) = match &matches.broker {
+            cli::Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
             #[cfg(feature = "tls")]
-            "mqtts" => (
+            cli::Broker::Ssl { host, port } => (
                 Transport::Tls(mqtt::encryption::create_tls_configuration(matches.insecure)),
-                url.host_str().expect("Broker requires a Host").to_string(),
-                url.port().unwrap_or(8883),
+                host.clone(),
+                *port,
             ),
             // On WebSockets the port is ignored. See https://github.com/bytebeamio/rumqtt/issues/270
             #[cfg(feature = "tls")]
-            "ws" => (Transport::Ws, url.to_string(), 666),
+            cli::Broker::WebSocket(url) => (Transport::Ws, url.to_string(), 666),
             #[cfg(feature = "tls")]
-            "wss" => (
+            cli::Broker::WebSocketSsl(url) => (
                 Transport::Wss(mqtt::encryption::create_tls_configuration(matches.insecure)),
                 url.to_string(),
                 666,
             ),
-            _ => panic!("URL scheme is not supported: {}", url.scheme()),
         };
 
-        let mut queries = url.query_pairs().collect::<HashMap<_, _>>();
-
-        let client_id = queries.remove("client_id").map_or_else(
-            || format!("mqttui-{:x}", rand::random::<u32>()),
-            |o| o.to_string(),
-        );
+        let client_id = matches
+            .client_id
+            .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
 
         let mut mqttoptions = MqttOptions::new(client_id, host, port);
         mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
         mqttoptions.set_transport(transport);
 
-        if let Some(password) = url.password() {
-            mqttoptions.set_credentials(url.username(), password);
+        if let Some(password) = matches.password {
+            let username = matches.username.unwrap();
+            mqttoptions.set_credentials(username, password);
         }
 
         if let Some(SubCommands::CleanRetained { timeout, .. }) = matches.subcommands {
             mqttoptions.set_keep_alive(Duration::from_secs_f32(timeout));
         }
-
-        assert!(
-            queries.is_empty(),
-            "Broker URL has superfluous query arguments: {:?}",
-            queries
-        );
 
         Client::new(mqttoptions, 10)
     };
@@ -101,11 +85,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             publish::eventloop(client, connection, verbose);
         }
         None => {
-            let mut display_broker = matches.broker.clone();
-            display_broker.set_password(None).unwrap();
-            display_broker.set_query(None);
-
-            interactive::show(client.clone(), connection, display_broker, matches.topic)?;
+            let broker = matches.broker;
+            interactive::show(client.clone(), connection, broker, matches.topic)?;
             client.disconnect()?;
         }
     }

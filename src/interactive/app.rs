@@ -4,8 +4,8 @@ use std::thread;
 
 use json::JsonValue;
 use tui_tree_widget::{flatten, TreeState};
-use url::Url;
 
+use crate::cli::Broker;
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_tree_entry::get_visible;
 use crate::json_view;
@@ -28,7 +28,7 @@ enum CursorMove {
 }
 
 pub struct App {
-    pub display_broker: Url,
+    pub broker: Broker,
     pub subscribe_topic: String,
     pub mqtt_thread: MqttThread,
 
@@ -41,9 +41,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(display_broker: Url, subscribe_topic: String, mqtt_thread: MqttThread) -> Self {
+    pub fn new(broker: Broker, subscribe_topic: String, mqtt_thread: MqttThread) -> Self {
         Self {
-            display_broker,
+            broker,
             subscribe_topic,
             mqtt_thread,
 

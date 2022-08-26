@@ -45,9 +45,9 @@ fn draw_info_header<B>(f: &mut Frame<B>, area: Rect, app: &App)
 where
     B: Backend,
 {
-    let host = format!("MQTT Broker: {}", app.display_broker);
+    let broker = format!("MQTT Broker: {:?}", app.broker);
     let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
-    let mut text = vec![Spans::from(host), Spans::from(subscribed)];
+    let mut text = vec![Spans::from(broker), Spans::from(subscribed)];
 
     if let Some(err) = app.mqtt_thread.has_connection_err().unwrap() {
         text.push(Spans::from(Span::styled(

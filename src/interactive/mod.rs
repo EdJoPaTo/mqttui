@@ -14,8 +14,8 @@ use crossterm::terminal::{
 };
 use rumqttc::{Client, Connection};
 use tui::{backend::CrosstermBackend, Terminal};
-use url::Url;
 
+use crate::cli::Broker;
 use crate::interactive::app::App;
 use crate::interactive::mqtt_thread::MqttThread;
 
@@ -47,11 +47,11 @@ const TICK_RATE: Duration = Duration::from_millis(500);
 pub fn show(
     client: Client,
     connection: Connection,
-    display_broker: Url,
+    broker: Broker,
     subscribe_topic: String,
 ) -> Result<(), Box<dyn Error>> {
     let mqtt_thread = MqttThread::new(client, connection, subscribe_topic.to_string())?;
-    let mut app = App::new(display_broker, subscribe_topic, mqtt_thread);
+    let mut app = App::new(broker, subscribe_topic, mqtt_thread);
 
     enable_raw_mode()?;
 

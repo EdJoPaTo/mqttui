@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support TLS encryption
-- Support websockets
+- Support TLS encryption (via `--broker mqtts://`)
+- Support websockets (via `--broker ws://` or `--broker wss://`)
 
 ### Changed
 
-- Combine all MQTT broker options into --broker / MQTTUI_BROKER
+- Combine MQTT `--broker host` and `--port port` into single `--broker mqtt://host:port`
+- Require URL scheme prefix for `--broker` (like `mqtt://`)
 - Performance: Do not store topic on each history entry
 - Performance: Store `String` as `Box<str>`
 - Performance: Use RwLock over Mutex

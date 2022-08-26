@@ -1,4 +1,5 @@
 use clap::{Parser, ValueHint};
+use url::Url;
 
 #[derive(Debug, Parser)]
 pub enum SubCommands {
@@ -74,29 +75,15 @@ pub struct Cli {
 
     /// URL which represents how to connect to the MQTT broker.
     ///
-    /// Passing the broker password via command line is insecure as the password can be read from the history!
-    /// In that case you should pass the broker URL via environment variable.
-    ///
-    /// The URL structure allows for many settings to be set at the same time.
-    /// When something is unspecified its default is assumed.
-    /// `schema://username:password@hostname:port/path?query`
-    ///
-    /// Supported Schema:
-    /// `mqtt`
-    /// `mqtts`
-    /// `ws`
-    /// `wss`
-    ///
-    /// Supported query arguments:
-    /// `client_id=my-client-id`
-    /// (Full example: `mqtt://localhost/?client_id=my-client-id`)
-    ///
     /// Examples:
-    /// `mqtt://localhost/`
-    /// `mqtts://localhost/`
-    /// `mqtts://user:password@localhost:8883/`
-    /// `ws://localhost/`
-    /// `wss://user:password@host:9001/mqtt`
+    /// `mqtt://localhost`
+    /// `mqtt://localhost:1883`
+    /// `mqtts://localhost`
+    /// `mqtts://localhost:8883`
+    /// `ws://localhost/path`
+    /// `ws://localhost:9001/path`
+    /// `wss://localhost/path`
+    /// `wss://localhost:9001/path`
     #[clap(
         short,
         long,
@@ -104,13 +91,53 @@ pub struct Cli {
         value_hint = ValueHint::Url,
         value_name = "URL",
         global = true,
-        hide_env_values = true,
-        default_value = "mqtt://localhost/",
+        default_value = "mqtt://localhost",
     )]
-    pub broker: url::Url,
+    pub broker: Broker,
+
+    /// Username to access the mqtt broker.
+    ///
+    /// Anonymous access when not supplied.
+    #[clap(
+        short,
+        long,
+        env = "MQTTUI_USERNAME",
+        value_hint = ValueHint::Username,
+        value_name = "STRING",
+        requires = "password",
+        global = true,
+    )]
+    pub username: Option<String>,
+
+    /// Password to access the mqtt broker.
+    ///
+    /// Passing the password via command line is insecure as the password can be read from the history!
+    /// You should pass it via environment variable.
+    #[clap(
+        long,
+        env = "MQTTUI_PASSWORD",
+        value_hint = ValueHint::Other,
+        value_name = "STRING",
+        hide_env_values = true,
+        requires = "username",
+        global = true,
+    )]
+    pub password: Option<String>,
+
+    /// Specify the client id to connect with
+    #[clap(
+        short = 'i',
+        long,
+        env = "MQTTUI_CLIENTID",
+        value_hint = ValueHint::Other,
+        value_name = "STRING",
+        global = true,
+    )]
+    pub client_id: Option<String>,
 
     /// Allow insecure TLS connections
     #[clap(long, global = true)]
+    #[cfg(feature = "tls")]
     pub insecure: bool,
 
     /// Topic to watch
@@ -120,6 +147,65 @@ pub struct Cli {
         default_value = "#",
     )]
     pub topic: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum Broker {
+    Tcp {
+        host: String,
+        port: u16,
+    },
+    #[cfg(feature = "tls")]
+    Ssl {
+        host: String,
+        port: u16,
+    },
+    #[cfg(feature = "tls")]
+    WebSocket(Url),
+    #[cfg(feature = "tls")]
+    WebSocketSsl(Url),
+}
+
+impl std::str::FromStr for Broker {
+    type Err = anyhow::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let url = Url::parse(s)?;
+        if !url.has_host() {
+            anyhow::bail!("Broker requires a Host");
+        }
+
+        if matches!(url.scheme(), "mqtt" | "mqtts") {
+            anyhow::ensure!(
+                url.path().is_empty() || url.path() == "/",
+                "TCP connections only use host (and port) but no path"
+            );
+        }
+
+        if !matches!(url.scheme(), "ws" | "wss") {
+            anyhow::ensure!(url.query().is_none(), "URL query is not used");
+            anyhow::ensure!(url.username().is_empty(), "Use --username instead");
+            anyhow::ensure!(url.password().is_none(), "Use --password instead");
+        }
+
+        let broker = match url.scheme() {
+            "mqtt" => Self::Tcp {
+                host: url.host_str().unwrap().to_string(),
+                port: url.port().unwrap_or(1883),
+            },
+            #[cfg(feature = "tls")]
+            "mqtts" => Self::Ssl {
+                host: url.host_str().unwrap().to_string(),
+                port: url.port().unwrap_or(8883),
+            },
+            #[cfg(feature = "tls")]
+            "ws" => Self::WebSocket(url),
+            #[cfg(feature = "tls")]
+            "wss" => Self::WebSocketSsl(url),
+            _ => anyhow::bail!("Broker URL scheme is not supported"),
+        };
+
+        Ok(broker)
+    }
 }
 
 #[test]
