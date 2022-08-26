@@ -5,7 +5,7 @@ use chrono::Local;
 use rumqttc::{Client, Connection, QoS};
 
 use crate::format;
-use crate::mqtt_packet::HistoryEntry;
+use crate::mqtt::HistoryEntry;
 
 #[derive(Clone, Copy)]
 pub enum Mode {

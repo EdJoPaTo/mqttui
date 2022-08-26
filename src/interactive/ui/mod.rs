@@ -15,7 +15,7 @@ use tui_tree_widget::{Tree, TreeState};
 use crate::interactive::app::{App, ElementInFocus};
 use crate::interactive::topic_tree_entry::TopicTreeEntry;
 use crate::json_view::root_tree_items_from_json;
-use crate::mqtt_packet::{HistoryEntry, Payload};
+use crate::mqtt::{HistoryEntry, Payload};
 
 mod clear_retained;
 mod graph_data;

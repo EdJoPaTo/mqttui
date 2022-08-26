@@ -1,6 +1,6 @@
 use rumqttc::QoS;
 
-use crate::mqtt_packet::{HistoryEntry, Payload};
+use crate::mqtt::{HistoryEntry, Payload};
 
 pub fn log_line(topic: &str, entry: HistoryEntry) -> String {
     let qos = qos(entry.qos);

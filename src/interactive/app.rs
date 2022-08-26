@@ -8,7 +8,8 @@ use url::Url;
 
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_tree_entry::get_visible;
-use crate::{json_view, topic};
+use crate::json_view;
+use crate::mqtt::topic;
 
 pub enum ElementInFocus {
     TopicOverview,

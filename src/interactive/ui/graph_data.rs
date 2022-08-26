@@ -2,7 +2,7 @@ use chrono::{DateTime, Local};
 use json::JsonValue;
 
 use crate::json_view;
-use crate::mqtt_packet::{HistoryEntry, Payload};
+use crate::mqtt::{HistoryEntry, Payload};
 
 #[allow(clippy::cast_precision_loss)]
 fn parse_time_to_chart_x(time: &DateTime<Local>) -> f64 {

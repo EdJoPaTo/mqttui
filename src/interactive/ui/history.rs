@@ -8,7 +8,7 @@ use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, 
 use tui::{symbols, Frame};
 
 use crate::interactive::ui::graph_data::GraphData;
-use crate::mqtt_packet::{HistoryEntry, Payload, Time};
+use crate::mqtt::{HistoryEntry, Payload, Time};
 use crate::{format, json_view};
 
 pub fn draw<B>(

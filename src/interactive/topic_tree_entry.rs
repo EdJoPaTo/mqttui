@@ -4,7 +4,7 @@ use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
 use tui_tree_widget::TreeItem;
 
-use crate::mqtt_packet::Payload;
+use crate::mqtt::Payload;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct TopicTreeEntry {

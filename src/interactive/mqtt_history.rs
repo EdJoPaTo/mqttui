@@ -6,7 +6,7 @@ use rumqttc::Publish;
 use tui_tree_widget::TreeIdentifierVec;
 
 use crate::interactive::topic_tree_entry::TopicTreeEntry;
-use crate::mqtt_packet::HistoryEntry;
+use crate::mqtt::HistoryEntry;
 
 struct Topic {
     /// Topic `foo/bar` would have the leaf `bar`

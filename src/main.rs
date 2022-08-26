@@ -14,11 +14,8 @@ mod format;
 mod interactive;
 mod json_view;
 mod log;
-#[cfg(feature = "tls")]
-mod mqtt_encryption;
-mod mqtt_packet;
+mod mqtt;
 mod publish;
-mod topic;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = cli::Cli::parse();
@@ -34,7 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ),
             #[cfg(feature = "tls")]
             "mqtts" => (
-                Transport::Tls(mqtt_encryption::create_tls_configuration(matches.insecure)),
+                Transport::Tls(mqtt::encryption::create_tls_configuration(matches.insecure)),
                 url.host_str().expect("Broker requires a Host").to_string(),
                 url.port().unwrap_or(8883),
             ),
@@ -43,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             "ws" => (Transport::Ws, url.to_string(), 666),
             #[cfg(feature = "tls")]
             "wss" => (
-                Transport::Wss(mqtt_encryption::create_tls_configuration(matches.insecure)),
+                Transport::Wss(mqtt::encryption::create_tls_configuration(matches.insecure)),
                 url.to_string(),
                 666,
             ),
