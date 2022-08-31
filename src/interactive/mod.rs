@@ -32,8 +32,6 @@ mod topic_overview;
 mod topic_tree_entry;
 mod ui;
 
-const TICK_RATE: Duration = Duration::from_millis(500);
-
 enum ElementInFocus {
     TopicOverview,
     JsonPayload,
@@ -63,6 +61,8 @@ pub fn show(
     let (tx, rx) = mpsc::channel();
 
     thread::spawn(move || {
+        const TICK_RATE: Duration = Duration::from_millis(500);
+
         let mut last_tick = Instant::now();
         loop {
             // poll for tick rate duration, if no events, sent tick event.
