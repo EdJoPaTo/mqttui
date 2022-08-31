@@ -15,9 +15,6 @@ use crossterm::terminal::{
 use rumqttc::{Client, Connection};
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
-use tui::widgets::{Block, Borders, Paragraph, Wrap};
 use tui::Frame;
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -28,6 +25,7 @@ use crate::interactive::mqtt_thread::MqttThread;
 mod app;
 mod clear_retained;
 mod details;
+mod info_header;
 mod mqtt_history;
 mod mqtt_thread;
 mod topic_overview;
@@ -56,8 +54,8 @@ const TICK_RATE: Duration = Duration::from_millis(500);
 pub fn show(
     client: Client,
     connection: Connection,
-    broker: Broker,
-    subscribe_topic: String,
+    broker: &Broker,
+    subscribe_topic: &str,
 ) -> Result<(), Box<dyn Error>> {
     let mqtt_thread = MqttThread::new(client, connection, subscribe_topic.to_string())?;
     let mut app = App::new(broker, subscribe_topic, mqtt_thread);
@@ -165,39 +163,17 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn E
     let chunks = Layout::default()
         .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
         .split(f.size());
-    draw_info_header(f, chunks[0], app);
+    app.info_header.draw(
+        f,
+        chunks[0],
+        app.mqtt_thread.has_connection_err().unwrap(),
+        app.topic_overview.get_selected(),
+    );
     draw_main(f, chunks[1], app)?;
     if let ElementInFocus::CleanRetainedPopup(topic) = &app.focus {
         clear_retained::draw_popup(f, topic);
     }
     Ok(())
-}
-
-fn draw_info_header<B>(f: &mut Frame<B>, area: Rect, app: &App)
-where
-    B: Backend,
-{
-    let broker = format!("MQTT Broker: {:?}", app.broker);
-    let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
-    let mut text = vec![Spans::from(broker), Spans::from(subscribed)];
-
-    if let Some(err) = app.mqtt_thread.has_connection_err().unwrap() {
-        text.push(Spans::from(Span::styled(
-            format!("MQTT Connection Error: {}", err),
-            Style::default()
-                .fg(Color::Red)
-                .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK),
-        )));
-    }
-
-    if let Some(topic) = app.topic_overview.get_selected() {
-        text.push(Spans::from(format!("Selected Topic: {}", topic)));
-    }
-
-    let title = format!("MQTT TUI {}", env!("CARGO_PKG_VERSION"));
-    let block = Block::default().borders(Borders::ALL).title(title);
-    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
-    f.render_widget(paragraph, area);
 }
 
 fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> Result<(), Box<dyn Error>>

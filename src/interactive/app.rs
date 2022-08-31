@@ -5,6 +5,7 @@ use json::JsonValue;
 use tui_tree_widget::{flatten, TreeState};
 
 use crate::cli::Broker;
+use crate::interactive::info_header::InfoHeader;
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_overview::TopicOverview;
 use crate::interactive::ui::{CursorMove, Direction};
@@ -17,25 +18,21 @@ pub enum ElementInFocus {
 }
 
 pub struct App {
-    pub broker: Broker,
-    pub subscribe_topic: String,
-    pub mqtt_thread: MqttThread,
-
     pub focus: ElementInFocus,
+    pub info_header: InfoHeader,
     pub json_view_state: TreeState,
+    pub mqtt_thread: MqttThread,
     pub should_quit: bool,
     pub topic_overview: TopicOverview,
 }
 
 impl App {
-    pub fn new(broker: Broker, subscribe_topic: String, mqtt_thread: MqttThread) -> Self {
+    pub fn new(broker: &Broker, subscribe_topic: &str, mqtt_thread: MqttThread) -> Self {
         Self {
-            broker,
-            subscribe_topic,
-            mqtt_thread,
-
             focus: ElementInFocus::TopicOverview,
+            info_header: InfoHeader::new(broker, subscribe_topic),
             json_view_state: TreeState::default(),
+            mqtt_thread,
             should_quit: false,
             topic_overview: TopicOverview::default(),
         }
