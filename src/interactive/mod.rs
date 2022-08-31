@@ -11,18 +11,18 @@ use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
+use json::JsonValue;
 use rumqttc::{Client, Connection};
 use tui::backend::Backend;
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::layout::{Constraint, Direction, Layout};
 use tui::Frame;
 use tui::{backend::CrosstermBackend, Terminal};
+use tui_tree_widget::flatten;
 
 use crate::cli::Broker;
-use crate::interactive::app::{App, ElementInFocus};
-use crate::interactive::mqtt_thread::MqttThread;
-use crate::interactive::ui::Event;
+use crate::interactive::ui::{CursorMove, Event};
+use crate::json_view::root_tree_items_from_json;
 
-mod app;
 mod clear_retained;
 mod details;
 mod info_header;
@@ -34,13 +34,20 @@ mod ui;
 
 const TICK_RATE: Duration = Duration::from_millis(500);
 
+enum ElementInFocus {
+    TopicOverview,
+    JsonPayload,
+    CleanRetainedPopup(String),
+}
+
 pub fn show(
     client: Client,
     connection: Connection,
     broker: &Broker,
     subscribe_topic: &str,
 ) -> anyhow::Result<()> {
-    let mqtt_thread = MqttThread::new(client, connection, subscribe_topic.to_string())?;
+    let mqtt_thread =
+        mqtt_thread::MqttThread::new(client, connection, subscribe_topic.to_string())?;
     let mut app = App::new(broker, subscribe_topic, mqtt_thread);
 
     enable_raw_mode()?;
@@ -117,7 +124,7 @@ where
 {
     let mut draw_error = None;
     terminal.draw(|f| {
-        if let Err(error) = draw(f, app) {
+        if let Err(error) = app.draw(f) {
             draw_error = Some(error);
         }
     })?;
@@ -158,59 +165,229 @@ where
     Ok(())
 }
 
-fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> anyhow::Result<()> {
-    let chunks = Layout::default()
-        .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
-        .split(f.size());
-    app.info_header.draw(
-        f,
-        chunks[0],
-        app.mqtt_thread.has_connection_err().unwrap(),
-        app.topic_overview.get_selected(),
-    );
-    draw_main(f, chunks[1], app)?;
-    if let ElementInFocus::CleanRetainedPopup(topic) = &app.focus {
-        clear_retained::draw_popup(f, topic);
-    }
-    Ok(())
+struct App {
+    details: details::Details,
+    focus: ElementInFocus,
+    info_header: info_header::InfoHeader,
+    mqtt_thread: mqtt_thread::MqttThread,
+    topic_overview: topic_overview::TopicOverview,
 }
 
-fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> anyhow::Result<()>
-where
-    B: Backend,
-{
-    let history = app.mqtt_thread.get_history()?;
-    let tree_items = history.to_tte();
-
-    #[allow(clippy::option_if_let_else)]
-    let overview_area = if let Some(selected_topic) = app.topic_overview.get_selected() {
-        if let Some(topic_history) = history.get(selected_topic) {
-            let chunks = Layout::default()
-                .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
-                .direction(Direction::Horizontal)
-                .split(area);
-
-            app.details.draw(
-                f,
-                chunks[1],
-                topic_history,
-                matches!(app.focus, ElementInFocus::JsonPayload),
-            );
-
-            chunks[0]
-        } else {
-            area
+impl App {
+    fn new(
+        broker: &Broker,
+        subscribe_topic: &str,
+        mqtt_thread: mqtt_thread::MqttThread,
+    ) -> Self {
+        Self {
+            details: details::Details::default(),
+            focus: ElementInFocus::TopicOverview,
+            info_header: info_header::InfoHeader::new(broker, subscribe_topic),
+            mqtt_thread,
+            topic_overview: topic_overview::TopicOverview::default(),
         }
-    } else {
-        area
-    };
+    }
 
-    app.topic_overview.ensure_state(&history);
-    app.topic_overview.draw(
-        f,
-        overview_area,
-        &tree_items,
-        matches!(app.focus, ElementInFocus::TopicOverview),
-    );
-    Ok(())
+    fn get_json_of_current_topic(&self) -> anyhow::Result<Option<JsonValue>> {
+        if let Some(topic) = self.topic_overview.get_selected() {
+            let json = self
+                .mqtt_thread
+                .get_history()?
+                .get_last(topic)
+                .and_then(|last| last.payload.as_optional_json().cloned());
+            Ok(json)
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn on_up(&mut self) -> anyhow::Result<()> {
+        const DIRECTION: CursorMove = CursorMove::RelativeUp;
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                self.topic_overview.change_selected(&tree_items, DIRECTION);
+            }
+            ElementInFocus::JsonPayload => {
+                let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                let items = root_tree_items_from_json(&json);
+                self.details.json_view.key_up(&items);
+            }
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
+        }
+
+        Ok(())
+    }
+
+    fn on_down(&mut self) -> anyhow::Result<()> {
+        const DIRECTION: CursorMove = CursorMove::RelativeDown;
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                self.topic_overview.change_selected(&tree_items, DIRECTION);
+            }
+            ElementInFocus::JsonPayload => {
+                let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                let items = root_tree_items_from_json(&json);
+                self.details.json_view.key_down(&items);
+            }
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
+        }
+
+        Ok(())
+    }
+
+    fn on_right(&mut self) {
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                self.topic_overview.open();
+            }
+            ElementInFocus::JsonPayload => {
+                self.details.json_view.key_right();
+            }
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
+        }
+    }
+
+    fn on_left(&mut self) {
+        match self.focus {
+            ElementInFocus::TopicOverview => {
+                self.topic_overview.close();
+            }
+            ElementInFocus::JsonPayload => {
+                self.details.json_view.key_left();
+            }
+            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
+        }
+    }
+
+    fn on_confirm(&mut self) -> anyhow::Result<()> {
+        match &self.focus {
+            ElementInFocus::TopicOverview => {
+                self.topic_overview.toggle();
+            }
+            ElementInFocus::JsonPayload => {
+                self.details.json_view.toggle_selected();
+            }
+            ElementInFocus::CleanRetainedPopup(topic) => {
+                let base = self.mqtt_thread.get_mqtt_options();
+                clear_retained::do_clear(base, topic)?;
+                self.focus = ElementInFocus::TopicOverview;
+            }
+        }
+        Ok(())
+    }
+
+    fn on_tab(&mut self) -> anyhow::Result<()> {
+        let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
+        self.focus = if is_json_on_topic {
+            match self.focus {
+                ElementInFocus::TopicOverview => ElementInFocus::JsonPayload,
+                ElementInFocus::JsonPayload | ElementInFocus::CleanRetainedPopup(_) => {
+                    ElementInFocus::TopicOverview
+                }
+            }
+        } else {
+            ElementInFocus::TopicOverview
+        };
+        Ok(())
+    }
+
+    fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<()> {
+        if let Some(index) = self.topic_overview.index_of_click(column, row) {
+            let tree_items = self.mqtt_thread.get_history()?.to_tte();
+            let changed = self
+                .topic_overview
+                .change_selected(&tree_items, CursorMove::Absolute(index));
+            if !changed {
+                self.topic_overview.toggle();
+            }
+            self.focus = ElementInFocus::TopicOverview;
+        }
+
+        if let Some(index) = self.details.json_index_of_click(column, row) {
+            let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+            let items = root_tree_items_from_json(&json);
+            let opened = self.details.json_view.get_all_opened();
+            let flattened = flatten(&opened, &items);
+            if let Some(picked) = flattened.get(index) {
+                if picked.identifier == self.details.json_view.selected() {
+                    self.details.json_view.toggle_selected();
+                } else {
+                    self.details.json_view.select(picked.identifier.clone());
+                }
+                self.focus = ElementInFocus::JsonPayload;
+            }
+        }
+        Ok(())
+    }
+
+    fn on_delete(&mut self) {
+        if matches!(self.focus, ElementInFocus::TopicOverview) {
+            if let Some(topic) = self.topic_overview.get_selected() {
+                self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
+            }
+        }
+    }
+
+    fn on_other(&mut self) {
+        if matches!(self.focus, ElementInFocus::CleanRetainedPopup(_)) {
+            self.focus = ElementInFocus::TopicOverview;
+        }
+    }
+
+    fn draw<B>(&mut self, f: &mut Frame<B>) -> anyhow::Result<()>
+    where
+        B: Backend,
+    {
+        let chunks = Layout::default()
+            .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
+            .split(f.size());
+        self.info_header.draw(
+            f,
+            chunks[0],
+            self.mqtt_thread.has_connection_err().unwrap(),
+            self.topic_overview.get_selected(),
+        );
+
+        let main_area = chunks[1];
+        let history = self.mqtt_thread.get_history()?;
+        let tree_items = history.to_tte();
+
+        #[allow(clippy::option_if_let_else)]
+        let overview_area = if let Some(selected_topic) = self.topic_overview.get_selected() {
+            if let Some(topic_history) = history.get(selected_topic) {
+                let chunks = Layout::default()
+                    .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
+                    .direction(Direction::Horizontal)
+                    .split(main_area);
+
+                self.details.draw(
+                    f,
+                    chunks[1],
+                    topic_history,
+                    matches!(self.focus, ElementInFocus::JsonPayload),
+                );
+
+                chunks[0]
+            } else {
+                main_area
+            }
+        } else {
+            main_area
+        };
+
+        self.topic_overview.ensure_state(&history);
+        self.topic_overview.draw(
+            f,
+            overview_area,
+            &tree_items,
+            matches!(self.focus, ElementInFocus::TopicOverview),
+        );
+
+        if let ElementInFocus::CleanRetainedPopup(topic) = &self.focus {
+            clear_retained::draw_popup(f, topic);
+        }
+        Ok(())
+    }
 }
