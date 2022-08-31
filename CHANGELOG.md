@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance: Use RwLock over Mutex
 - Performance: Simplify non-interactive output logic
 
+### Fixed
+
+- Simplify JSON Payload view of non-Object/Array datatypes (don't prefix with "root: ")
+
 ## [0.16.2] - 2022-05-01
 
 ### Fixed
