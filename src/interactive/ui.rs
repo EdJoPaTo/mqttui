@@ -7,3 +7,13 @@ pub const fn focus_color(has_focus: bool) -> Color {
         Color::Gray
     }
 }
+
+pub enum Direction {
+    Up,
+    Down,
+}
+
+pub enum CursorMove {
+    Absolute(usize),
+    Relative(Direction),
+}

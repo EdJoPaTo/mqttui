@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::error::Error;
 use std::thread;
 
@@ -7,24 +6,14 @@ use tui_tree_widget::{flatten, TreeState};
 
 use crate::cli::Broker;
 use crate::interactive::mqtt_thread::MqttThread;
-use crate::interactive::topic_tree_entry::get_visible;
+use crate::interactive::topic_overview::TopicOverview;
+use crate::interactive::ui::{CursorMove, Direction};
 use crate::json_view;
-use crate::mqtt::topic;
 
 pub enum ElementInFocus {
     TopicOverview,
     JsonPayload,
     CleanRetainedPopup(String),
-}
-
-enum Direction {
-    Up,
-    Down,
-}
-
-enum CursorMove {
-    Absolute(usize),
-    Relative(Direction),
 }
 
 pub struct App {
@@ -34,10 +23,8 @@ pub struct App {
 
     pub focus: ElementInFocus,
     pub json_view_state: TreeState,
-    pub opened_topics: HashSet<String>,
-    pub selected_topic: Option<String>,
     pub should_quit: bool,
-    pub topic_overview_state: TreeState,
+    pub topic_overview: TopicOverview,
 }
 
 impl App {
@@ -49,44 +36,13 @@ impl App {
 
             focus: ElementInFocus::TopicOverview,
             json_view_state: TreeState::default(),
-            opened_topics: HashSet::new(),
-            selected_topic: None,
             should_quit: false,
-            topic_overview_state: TreeState::default(),
+            topic_overview: TopicOverview::default(),
         }
-    }
-
-    fn change_selected_topic(&mut self, cursor_move: CursorMove) -> Result<bool, Box<dyn Error>> {
-        let tmlp_tree = self.mqtt_thread.get_history()?.to_tte();
-        let visible = get_visible(&self.opened_topics, &tmlp_tree);
-
-        let current_index = self
-            .selected_topic
-            .as_ref()
-            .and_then(|selected_topic| visible.iter().position(|o| &o.topic == selected_topic));
-        let new_index = match cursor_move {
-            CursorMove::Absolute(index) => index,
-            CursorMove::Relative(direction) => current_index.map_or_else(
-                || match direction {
-                    Direction::Down => 0,
-                    Direction::Up => usize::MAX,
-                },
-                |current_index| match direction {
-                    Direction::Up => current_index.overflowing_sub(1).0,
-                    Direction::Down => current_index.saturating_add(1) % visible.len(),
-                },
-            ),
-        }
-        .min(visible.len().saturating_sub(1));
-
-        let next_selected_topic = visible.get(new_index).map(|o| o.topic.clone());
-        let different = self.selected_topic != next_selected_topic;
-        self.selected_topic = next_selected_topic;
-        Ok(different)
     }
 
     fn get_json_of_current_topic(&self) -> Result<Option<JsonValue>, Box<dyn Error>> {
-        if let Some(topic) = &self.selected_topic {
+        if let Some(topic) = self.topic_overview.get_selected() {
             let json = self
                 .mqtt_thread
                 .get_history()?
@@ -126,7 +82,9 @@ impl App {
         let direction = Direction::Up;
         match self.focus {
             ElementInFocus::TopicOverview => {
-                self.change_selected_topic(CursorMove::Relative(direction))?;
+                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                self.topic_overview
+                    .change_selected(&tree_items, CursorMove::Relative(direction));
             }
             ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
@@ -139,7 +97,9 @@ impl App {
         let direction = Direction::Down;
         match self.focus {
             ElementInFocus::TopicOverview => {
-                self.change_selected_topic(CursorMove::Relative(direction))?;
+                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                self.topic_overview
+                    .change_selected(&tree_items, CursorMove::Relative(direction));
             }
             ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
@@ -151,9 +111,7 @@ impl App {
     pub fn on_right(&mut self) {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                if let Some(topic) = &self.selected_topic {
-                    self.opened_topics.insert(topic.clone());
-                }
+                self.topic_overview.open();
             }
             ElementInFocus::JsonPayload => {
                 self.json_view_state.open(self.json_view_state.selected());
@@ -165,12 +123,7 @@ impl App {
     pub fn on_left(&mut self) {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                if let Some(topic) = &self.selected_topic {
-                    if !self.opened_topics.remove(topic) {
-                        self.selected_topic =
-                            topic::get_parent(topic).map(std::borrow::ToOwned::to_owned);
-                    }
-                }
+                self.topic_overview.close();
             }
             ElementInFocus::JsonPayload => {
                 let selected = self.json_view_state.selected();
@@ -186,13 +139,7 @@ impl App {
     pub fn on_confirm(&mut self) -> Result<(), Box<dyn Error>> {
         match &self.focus {
             ElementInFocus::TopicOverview => {
-                if let Some(topic) = &self.selected_topic {
-                    if self.opened_topics.contains(topic) {
-                        self.opened_topics.remove(topic);
-                    } else {
-                        self.opened_topics.insert(topic.clone());
-                    }
-                }
+                self.topic_overview.toggle();
             }
             ElementInFocus::JsonPayload => {}
             ElementInFocus::CleanRetainedPopup(topic) => {
@@ -245,11 +192,14 @@ impl App {
         const VIEW_OFFSET_TOP: u16 = 6;
 
         if matches!(self.focus, ElementInFocus::TopicOverview) {
-            let overview_offset = self.topic_overview_state.get_offset();
+            let overview_offset = self.topic_overview.state.get_offset();
 
             if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
                 let index = overview_offset.saturating_add(row_in_tree as usize);
-                let changed = self.change_selected_topic(CursorMove::Absolute(index))?;
+                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                let changed = self
+                    .topic_overview
+                    .change_selected(&tree_items, CursorMove::Absolute(index));
 
                 if !changed {
                     self.on_confirm()?;
@@ -261,7 +211,7 @@ impl App {
 
     pub fn on_delete(&mut self) {
         if matches!(self.focus, ElementInFocus::TopicOverview) {
-            if let Some(topic) = &self.selected_topic {
+            if let Some(topic) = self.topic_overview.get_selected() {
                 self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
             }
         }

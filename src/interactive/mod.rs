@@ -30,7 +30,7 @@ mod clear_retained;
 mod details;
 mod mqtt_history;
 mod mqtt_thread;
-mod overview;
+mod topic_overview;
 mod topic_tree_entry;
 mod ui;
 
@@ -190,7 +190,7 @@ where
         )));
     }
 
-    if let Some(topic) = &app.selected_topic {
+    if let Some(topic) = app.topic_overview.get_selected() {
         text.push(Spans::from(format!("Selected Topic: {}", topic)));
     }
 
@@ -207,23 +207,10 @@ where
     let history = app.mqtt_thread.get_history()?;
     let tree_items = history.to_tte();
 
-    // Move opened_topics over to TreeState
-    app.topic_overview_state.close_all();
-    for topic in &app.opened_topics {
-        app.topic_overview_state
-            .open(history.get_tree_identifier(topic).unwrap_or_default());
-    }
-
-    // Ensure selected topic is selected index
-    app.topic_overview_state.select(
-        app.selected_topic
-            .as_ref()
-            .and_then(|selected_topic| history.get_tree_identifier(selected_topic))
-            .unwrap_or_default(),
-    );
+    app.topic_overview.ensure_state(&history);
 
     #[allow(clippy::option_if_let_else)]
-    let overview_area = if let Some(selected_topic) = &app.selected_topic {
+    let overview_area = if let Some(selected_topic) = app.topic_overview.get_selected() {
         if let Some(topic_history) = history.get(selected_topic) {
             let chunks = Layout::default()
                 .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
@@ -246,12 +233,11 @@ where
         area
     };
 
-    overview::draw(
+    app.topic_overview.draw(
         f,
         overview_area,
         &tree_items,
         matches!(app.focus, ElementInFocus::TopicOverview),
-        &mut app.topic_overview_state,
     );
     Ok(())
 }
