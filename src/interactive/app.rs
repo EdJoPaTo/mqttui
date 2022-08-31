@@ -2,14 +2,14 @@ use std::error::Error;
 use std::thread;
 
 use json::JsonValue;
-use tui_tree_widget::{flatten, TreeState};
 
 use crate::cli::Broker;
+use crate::interactive::details::Details;
 use crate::interactive::info_header::InfoHeader;
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_overview::TopicOverview;
 use crate::interactive::ui::CursorMove;
-use crate::json_view;
+use crate::json_view::root_tree_items_from_json;
 
 pub enum ElementInFocus {
     TopicOverview,
@@ -18,9 +18,9 @@ pub enum ElementInFocus {
 }
 
 pub struct App {
+    pub details: Details,
     pub focus: ElementInFocus,
     pub info_header: InfoHeader,
-    pub json_view_state: TreeState,
     pub mqtt_thread: MqttThread,
     pub should_quit: bool,
     pub topic_overview: TopicOverview,
@@ -29,9 +29,9 @@ pub struct App {
 impl App {
     pub fn new(broker: &Broker, subscribe_topic: &str, mqtt_thread: MqttThread) -> Self {
         Self {
+            details: Details::default(),
             focus: ElementInFocus::TopicOverview,
             info_header: InfoHeader::new(broker, subscribe_topic),
-            json_view_state: TreeState::default(),
             mqtt_thread,
             should_quit: false,
             topic_overview: TopicOverview::default(),
@@ -51,31 +51,6 @@ impl App {
         }
     }
 
-    fn change_selected_json_property(
-        &mut self,
-        cursor_move: CursorMove,
-    ) -> Result<(), Box<dyn Error>> {
-        let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
-        let tree_items = json_view::root_tree_items_from_json(&json);
-
-        let visible = flatten(&self.json_view_state.get_all_opened(), &tree_items);
-        let current_identifier = self.json_view_state.selected();
-        let current_index = visible
-            .iter()
-            .position(|o| o.identifier == current_identifier);
-        let new_index = current_index.map_or(0, |current_index| {
-            match cursor_move {
-                CursorMove::Absolute(index) => index,
-                CursorMove::RelativeUp => current_index.saturating_sub(1),
-                CursorMove::RelativeDown => current_index.saturating_add(1),
-            }
-            .min(visible.len() - 1)
-        });
-        let new_identifier = visible.get(new_index).unwrap().identifier.clone();
-        self.json_view_state.select(new_identifier);
-        Ok(())
-    }
-
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
         const DIRECTION: CursorMove = CursorMove::RelativeUp;
         match self.focus {
@@ -83,7 +58,11 @@ impl App {
                 let tree_items = self.mqtt_thread.get_history()?.to_tte();
                 self.topic_overview.change_selected(&tree_items, DIRECTION);
             }
-            ElementInFocus::JsonPayload => self.change_selected_json_property(DIRECTION)?,
+            ElementInFocus::JsonPayload => {
+                let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                let items = root_tree_items_from_json(&json);
+                self.details.json_view.key_up(&items);
+            }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
@@ -97,7 +76,11 @@ impl App {
                 let tree_items = self.mqtt_thread.get_history()?.to_tte();
                 self.topic_overview.change_selected(&tree_items, DIRECTION);
             }
-            ElementInFocus::JsonPayload => self.change_selected_json_property(DIRECTION)?,
+            ElementInFocus::JsonPayload => {
+                let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                let items = root_tree_items_from_json(&json);
+                self.details.json_view.key_down(&items);
+            }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
@@ -110,7 +93,7 @@ impl App {
                 self.topic_overview.open();
             }
             ElementInFocus::JsonPayload => {
-                self.json_view_state.open(self.json_view_state.selected());
+                self.details.json_view.key_right();
             }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
@@ -122,11 +105,7 @@ impl App {
                 self.topic_overview.close();
             }
             ElementInFocus::JsonPayload => {
-                let selected = self.json_view_state.selected();
-                if !self.json_view_state.close(&selected) {
-                    let (head, _) = tui_tree_widget::get_identifier_without_leaf(&selected);
-                    self.json_view_state.select(head);
-                }
+                self.details.json_view.key_left();
             }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
@@ -137,7 +116,9 @@ impl App {
             ElementInFocus::TopicOverview => {
                 self.topic_overview.toggle();
             }
-            ElementInFocus::JsonPayload => {}
+            ElementInFocus::JsonPayload => {
+                self.details.json_view.toggle_selected();
+            }
             ElementInFocus::CleanRetainedPopup(topic) => {
                 let base = self.mqtt_thread.get_mqtt_options();
 

@@ -14,38 +14,45 @@ use crate::mqtt::{HistoryEntry, Payload};
 
 mod history;
 
-pub fn draw<B>(
-    f: &mut Frame<B>,
-    area: Rect,
-    topic_history: &[HistoryEntry],
-    json_payload_has_focus: bool,
-    json_view_state: &mut TreeState,
-) where
-    B: Backend,
-{
-    let last = topic_history.last().unwrap();
-    let size = last.payload_size;
-    let history_area = match &last.payload {
-        Payload::Json(json) => {
-            let chunks = Layout::default()
-                .constraints([Constraint::Percentage(25), Constraint::Min(16)].as_ref())
-                .split(area);
+#[derive(Default)]
+pub struct Details {
+    pub json_view: TreeState,
+}
 
-            draw_payload_json(
-                f,
-                chunks[0],
-                size,
-                json,
-                json_payload_has_focus,
-                json_view_state,
-            );
-            chunks[1]
-        }
-        Payload::NotUtf8(err) => draw_payload_string(f, area, size, &err.to_string()),
-        Payload::String(str) => draw_payload_string(f, area, size, str),
-    };
+impl Details {
+    pub fn draw<B>(
+        &mut self,
+        f: &mut Frame<B>,
+        area: Rect,
+        topic_history: &[HistoryEntry],
+        json_payload_has_focus: bool,
+    ) where
+        B: Backend,
+    {
+        let last = topic_history.last().unwrap();
+        let size = last.payload_size;
+        let history_area = match &last.payload {
+            Payload::Json(json) => {
+                let chunks = Layout::default()
+                    .constraints([Constraint::Percentage(25), Constraint::Min(16)].as_ref())
+                    .split(area);
 
-    history::draw(f, history_area, topic_history, &json_view_state.selected());
+                draw_payload_json(
+                    f,
+                    chunks[0],
+                    size,
+                    json,
+                    json_payload_has_focus,
+                    &mut self.json_view,
+                );
+                chunks[1]
+            }
+            Payload::NotUtf8(err) => draw_payload_string(f, area, size, &err.to_string()),
+            Payload::String(str) => draw_payload_string(f, area, size, str),
+        };
+
+        history::draw(f, history_area, topic_history, &self.json_view.selected());
+    }
 }
 
 /// Returns remaining rect to be used for history

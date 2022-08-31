@@ -171,12 +171,11 @@ where
                 .direction(Direction::Horizontal)
                 .split(area);
 
-            details::draw(
+            app.details.draw(
                 f,
                 chunks[1],
                 topic_history,
                 matches!(app.focus, ElementInFocus::JsonPayload),
-                &mut app.json_view_state,
             );
 
             chunks[0]
