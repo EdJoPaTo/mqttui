@@ -174,11 +174,7 @@ struct App {
 }
 
 impl App {
-    fn new(
-        broker: &Broker,
-        subscribe_topic: &str,
-        mqtt_thread: mqtt_thread::MqttThread,
-    ) -> Self {
+    fn new(broker: &Broker, subscribe_topic: &str, mqtt_thread: mqtt_thread::MqttThread) -> Self {
         Self {
             details: details::Details::default(),
             focus: ElementInFocus::TopicOverview,
