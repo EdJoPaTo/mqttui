@@ -1,4 +1,5 @@
 use json::JsonValue;
+use tui_tree_widget::flatten;
 
 use crate::cli::Broker;
 use crate::interactive::details::Details;
@@ -138,22 +139,30 @@ impl App {
         Ok(())
     }
 
-    pub fn on_click(&mut self, row: u16, _column: u16) -> anyhow::Result<()> {
-        const VIEW_OFFSET_TOP: u16 = 6;
+    pub fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<()> {
+        if let Some(index) = self.topic_overview.index_of_click(column, row) {
+            let tree_items = self.mqtt_thread.get_history()?.to_tte();
+            let changed = self
+                .topic_overview
+                .change_selected(&tree_items, CursorMove::Absolute(index));
+            if !changed {
+                self.topic_overview.toggle();
+            }
+            self.focus = ElementInFocus::TopicOverview;
+        }
 
-        if matches!(self.focus, ElementInFocus::TopicOverview) {
-            let overview_offset = self.topic_overview.state.get_offset();
-
-            if let Some(row_in_tree) = row.checked_sub(VIEW_OFFSET_TOP) {
-                let index = overview_offset.saturating_add(row_in_tree as usize);
-                let tree_items = self.mqtt_thread.get_history()?.to_tte();
-                let changed = self
-                    .topic_overview
-                    .change_selected(&tree_items, CursorMove::Absolute(index));
-
-                if !changed {
-                    self.on_confirm()?;
+        if let Some(index) = self.details.json_index_of_click(column, row) {
+            let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+            let items = root_tree_items_from_json(&json);
+            let opened = self.details.json_view.get_all_opened();
+            let flattened = flatten(&opened, &items);
+            if let Some(picked) = flattened.get(index) {
+                if picked.identifier == self.details.json_view.selected() {
+                    self.details.json_view.toggle_selected();
+                } else {
+                    self.details.json_view.select(picked.identifier.clone());
                 }
+                self.focus = ElementInFocus::JsonPayload;
             }
         }
         Ok(())

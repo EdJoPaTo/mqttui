@@ -149,7 +149,7 @@ where
                 KeyCode::Backspace | KeyCode::Delete => app.on_delete(),
                 _ => app.on_other(),
             },
-            Event::MouseClick { column, row } => app.on_click(row, column)?,
+            Event::MouseClick { column, row } => app.on_click(column, row)?,
             Event::MouseScrollDown => app.on_down()?,
             Event::MouseScrollUp => app.on_up()?,
             Event::Tick => {}

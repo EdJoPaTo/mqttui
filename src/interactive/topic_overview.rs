@@ -9,14 +9,15 @@ use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::mqtt_history::MqttHistory;
 use crate::interactive::topic_tree_entry::{get_visible, TopicTreeEntry};
-use crate::interactive::ui::{focus_color, CursorMove};
+use crate::interactive::ui::{focus_color, get_row_inside, CursorMove};
 use crate::mqtt::topic::get_parent;
 
 #[derive(Default)]
 pub struct TopicOverview {
+    last_area: Rect,
     opened_topics: HashSet<String>,
     selected_topic: Option<String>,
-    pub state: TreeState, // TODO: remove pub
+    state: TreeState,
 }
 
 impl TopicOverview {
@@ -63,6 +64,7 @@ impl TopicOverview {
             )
             .highlight_style(Style::default().fg(Color::Black).bg(focus_color));
         f.render_stateful_widget(widget, area, &mut self.state);
+        self.last_area = area;
     }
 
     pub const fn get_selected(&self) -> &Option<String> {
@@ -123,6 +125,16 @@ impl TopicOverview {
             } else {
                 self.opened_topics.insert(topic.to_string());
             }
+        }
+    }
+
+    pub fn index_of_click(&mut self, column: u16, row: u16) -> Option<usize> {
+        if let Some(index) = get_row_inside(self.last_area, column, row) {
+            let offset = self.state.get_offset();
+            let new_index = (index as usize) + offset;
+            Some(new_index)
+        } else {
+            None
         }
     }
 }

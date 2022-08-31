@@ -8,7 +8,7 @@ use tui::widgets::{Block, Borders, List, ListItem};
 use tui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::ui::focus_color;
+use crate::interactive::ui::{focus_color, get_row_inside};
 use crate::json_view::root_tree_items_from_json;
 use crate::mqtt::{HistoryEntry, Payload};
 
@@ -17,6 +17,7 @@ mod history;
 #[derive(Default)]
 pub struct Details {
     pub json_view: TreeState,
+    pub last_json_area: Option<Rect>,
 }
 
 impl Details {
@@ -29,6 +30,8 @@ impl Details {
     ) where
         B: Backend,
     {
+        self.last_json_area = None;
+
         let last = topic_history.last().unwrap();
         let size = last.payload_size;
         let history_area = match &last.payload {
@@ -36,7 +39,7 @@ impl Details {
                 let chunks = Layout::default()
                     .constraints([Constraint::Percentage(25), Constraint::Min(16)].as_ref())
                     .split(area);
-
+                self.last_json_area = Some(chunks[0]);
                 draw_payload_json(
                     f,
                     chunks[0],
@@ -52,6 +55,19 @@ impl Details {
         };
 
         history::draw(f, history_area, topic_history, &self.json_view.selected());
+    }
+
+    pub fn json_index_of_click(&mut self, column: u16, row: u16) -> Option<usize> {
+        if let Some(index) = self
+            .last_json_area
+            .and_then(|area| get_row_inside(area, column, row))
+        {
+            let offset = self.json_view.get_offset();
+            let new_index = (index as usize) + offset;
+            Some(new_index)
+        } else {
+            None
+        }
     }
 }
 
