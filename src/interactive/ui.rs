@@ -12,16 +12,10 @@ pub const fn focus_color(has_focus: bool) -> Color {
 #[derive(Clone, Copy)]
 pub enum Event {
     Key(KeyEvent),
-    MouseClick(MousePosition),
+    MouseClick { column: u16, row: u16 },
     MouseScrollUp,
     MouseScrollDown,
     Tick,
-}
-
-#[derive(Clone, Copy)]
-pub struct MousePosition {
-    pub column: u16,
-    pub row: u16,
 }
 
 #[derive(Clone, Copy)]

@@ -20,7 +20,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 use crate::cli::Broker;
 use crate::interactive::app::{App, ElementInFocus};
 use crate::interactive::mqtt_thread::MqttThread;
-use crate::interactive::ui::{Event, MousePosition};
+use crate::interactive::ui::Event;
 
 mod app;
 mod clear_retained;
@@ -71,10 +71,10 @@ pub fn show(
                         MouseEventKind::ScrollUp => tx.send(Event::MouseScrollUp).unwrap(),
                         MouseEventKind::ScrollDown => tx.send(Event::MouseScrollDown).unwrap(),
                         MouseEventKind::Down(MouseButton::Left) => tx
-                            .send(Event::MouseClick(MousePosition {
+                            .send(Event::MouseClick {
                                 column: mouse.column,
                                 row: mouse.row,
-                            }))
+                            })
                             .unwrap(),
                         _ => {}
                     },
@@ -149,7 +149,7 @@ where
                 KeyCode::Backspace | KeyCode::Delete => app.on_delete(),
                 _ => app.on_other(),
             },
-            Event::MouseClick(position) => app.on_click(position.row, position.column)?,
+            Event::MouseClick { column, row } => app.on_click(row, column)?,
             Event::MouseScrollDown => app.on_down()?,
             Event::MouseScrollUp => app.on_up()?,
             Event::Tick => {}
