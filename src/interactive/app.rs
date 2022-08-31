@@ -8,7 +8,7 @@ use crate::cli::Broker;
 use crate::interactive::info_header::InfoHeader;
 use crate::interactive::mqtt_thread::MqttThread;
 use crate::interactive::topic_overview::TopicOverview;
-use crate::interactive::ui::{CursorMove, Direction};
+use crate::interactive::ui::CursorMove;
 use crate::json_view;
 
 pub enum ElementInFocus {
@@ -53,7 +53,7 @@ impl App {
 
     fn change_selected_json_property(
         &mut self,
-        direction: &Direction,
+        cursor_move: CursorMove,
     ) -> Result<(), Box<dyn Error>> {
         let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
         let tree_items = json_view::root_tree_items_from_json(&json);
@@ -64,9 +64,10 @@ impl App {
             .iter()
             .position(|o| o.identifier == current_identifier);
         let new_index = current_index.map_or(0, |current_index| {
-            match direction {
-                Direction::Up => current_index.saturating_sub(1),
-                Direction::Down => current_index.saturating_add(1),
+            match cursor_move {
+                CursorMove::Absolute(index) => index,
+                CursorMove::RelativeUp => current_index.saturating_sub(1),
+                CursorMove::RelativeDown => current_index.saturating_add(1),
             }
             .min(visible.len() - 1)
         });
@@ -76,14 +77,13 @@ impl App {
     }
 
     pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
-        let direction = Direction::Up;
+        const DIRECTION: CursorMove = CursorMove::RelativeUp;
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let tree_items = self.mqtt_thread.get_history()?.to_tte();
-                self.topic_overview
-                    .change_selected(&tree_items, CursorMove::Relative(direction));
+                self.topic_overview.change_selected(&tree_items, DIRECTION);
             }
-            ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
+            ElementInFocus::JsonPayload => self.change_selected_json_property(DIRECTION)?,
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 
@@ -91,14 +91,13 @@ impl App {
     }
 
     pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
-        let direction = Direction::Down;
+        const DIRECTION: CursorMove = CursorMove::RelativeDown;
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let tree_items = self.mqtt_thread.get_history()?.to_tte();
-                self.topic_overview
-                    .change_selected(&tree_items, CursorMove::Relative(direction));
+                self.topic_overview.change_selected(&tree_items, DIRECTION);
             }
-            ElementInFocus::JsonPayload => self.change_selected_json_property(&direction)?,
+            ElementInFocus::JsonPayload => self.change_selected_json_property(DIRECTION)?,
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
 

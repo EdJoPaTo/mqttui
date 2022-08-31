@@ -9,7 +9,7 @@ use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::mqtt_history::MqttHistory;
 use crate::interactive::topic_tree_entry::{get_visible, TopicTreeEntry};
-use crate::interactive::ui::{focus_color, CursorMove, Direction};
+use crate::interactive::ui::{focus_color, CursorMove};
 use crate::mqtt::topic::get_parent;
 
 #[derive(Default)]
@@ -89,16 +89,10 @@ impl TopicOverview {
             .and_then(|selected_topic| visible.iter().position(|o| &o.topic == selected_topic));
         let new_index = match cursor_move {
             CursorMove::Absolute(index) => index,
-            CursorMove::Relative(direction) => current_index.map_or_else(
-                || match direction {
-                    Direction::Down => 0,
-                    Direction::Up => usize::MAX,
-                },
-                |current_index| match direction {
-                    Direction::Up => current_index.overflowing_sub(1).0,
-                    Direction::Down => current_index.saturating_add(1) % visible.len(),
-                },
-            ),
+            CursorMove::RelativeUp => current_index.map_or(usize::MAX, |i| i.overflowing_sub(1).0),
+            CursorMove::RelativeDown => {
+                current_index.map_or(0, |i| i.saturating_add(1) % visible.len())
+            }
         }
         .min(visible.len().saturating_sub(1));
 

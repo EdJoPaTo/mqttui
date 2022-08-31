@@ -5,8 +5,8 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{
-    DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers,
-    MouseButton, MouseEventKind,
+    DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyModifiers, MouseButton,
+    MouseEventKind,
 };
 use crossterm::execute;
 use crossterm::terminal::{
@@ -21,6 +21,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 use crate::cli::Broker;
 use crate::interactive::app::{App, ElementInFocus};
 use crate::interactive::mqtt_thread::MqttThread;
+use crate::interactive::ui::{Event, MousePosition};
 
 mod app;
 mod clear_retained;
@@ -31,23 +32,6 @@ mod mqtt_thread;
 mod topic_overview;
 mod topic_tree_entry;
 mod ui;
-
-enum MouseScrollDirection {
-    Up,
-    Down,
-}
-
-struct MousePosition {
-    column: u16,
-    row: u16,
-}
-
-enum Event {
-    Key(KeyEvent),
-    MouseClick(MousePosition),
-    MouseScroll(MouseScrollDirection),
-    Tick,
-}
 
 const TICK_RATE: Duration = Duration::from_millis(500);
 
@@ -85,12 +69,8 @@ pub fn show(
                         tx.send(Event::Key(key)).unwrap();
                     }
                     CEvent::Mouse(mouse) => match mouse.kind {
-                        MouseEventKind::ScrollUp => tx
-                            .send(Event::MouseScroll(MouseScrollDirection::Up))
-                            .unwrap(),
-                        MouseEventKind::ScrollDown => tx
-                            .send(Event::MouseScroll(MouseScrollDirection::Down))
-                            .unwrap(),
+                        MouseEventKind::ScrollUp => tx.send(Event::MouseScrollUp).unwrap(),
+                        MouseEventKind::ScrollDown => tx.send(Event::MouseScrollDown).unwrap(),
                         MouseEventKind::Down(MouseButton::Left) => tx
                             .send(Event::MouseClick(MousePosition {
                                 column: mouse.column,
@@ -137,10 +117,8 @@ pub fn show(
                 _ => app.on_other(),
             },
             Event::MouseClick(position) => app.on_click(position.row, position.column)?,
-            Event::MouseScroll(direction) => match direction {
-                MouseScrollDirection::Up => app.on_up()?,
-                MouseScrollDirection::Down => app.on_down()?,
-            },
+            Event::MouseScrollDown => app.on_down()?,
+            Event::MouseScrollUp => app.on_up()?,
             Event::Tick => {}
         }
         if app.should_quit {
