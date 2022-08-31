@@ -13,15 +13,24 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use rumqttc::{Client, Connection};
+use tui::backend::Backend;
+use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::style::{Color, Modifier, Style};
+use tui::text::{Span, Spans};
+use tui::widgets::{Block, Borders, Paragraph, Wrap};
+use tui::Frame;
 use tui::{backend::CrosstermBackend, Terminal};
 
 use crate::cli::Broker;
-use crate::interactive::app::App;
+use crate::interactive::app::{App, ElementInFocus};
 use crate::interactive::mqtt_thread::MqttThread;
 
 mod app;
+mod clear_retained;
+mod details;
 mod mqtt_history;
 mod mqtt_thread;
+mod overview;
 mod topic_tree_entry;
 mod ui;
 
@@ -113,7 +122,7 @@ pub fn show(
     terminal.clear()?;
 
     loop {
-        terminal.draw(|f| ui::draw(f, &mut app).expect("failed to draw ui"))?;
+        terminal.draw(|f| draw(f, &mut app).expect("failed to draw ui"))?;
         match rx.recv()? {
             Event::Key(event) => match event.code {
                 KeyCode::Char('q') => app.should_quit = true,
@@ -149,5 +158,100 @@ pub fn show(
     )?;
     terminal.show_cursor()?;
 
+    Ok(())
+}
+
+pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn Error>> {
+    let chunks = Layout::default()
+        .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
+        .split(f.size());
+    draw_info_header(f, chunks[0], app);
+    draw_main(f, chunks[1], app)?;
+    if let ElementInFocus::CleanRetainedPopup(topic) = &app.focus {
+        clear_retained::draw_popup(f, topic);
+    }
+    Ok(())
+}
+
+fn draw_info_header<B>(f: &mut Frame<B>, area: Rect, app: &App)
+where
+    B: Backend,
+{
+    let broker = format!("MQTT Broker: {:?}", app.broker);
+    let subscribed = format!("Subscribed Topic: {}", app.subscribe_topic);
+    let mut text = vec![Spans::from(broker), Spans::from(subscribed)];
+
+    if let Some(err) = app.mqtt_thread.has_connection_err().unwrap() {
+        text.push(Spans::from(Span::styled(
+            format!("MQTT Connection Error: {}", err),
+            Style::default()
+                .fg(Color::Red)
+                .add_modifier(Modifier::BOLD | Modifier::SLOW_BLINK),
+        )));
+    }
+
+    if let Some(topic) = &app.selected_topic {
+        text.push(Spans::from(format!("Selected Topic: {}", topic)));
+    }
+
+    let title = format!("MQTT TUI {}", env!("CARGO_PKG_VERSION"));
+    let block = Block::default().borders(Borders::ALL).title(title);
+    let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+    f.render_widget(paragraph, area);
+}
+
+fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> Result<(), Box<dyn Error>>
+where
+    B: Backend,
+{
+    let history = app.mqtt_thread.get_history()?;
+    let tree_items = history.to_tte();
+
+    // Move opened_topics over to TreeState
+    app.topic_overview_state.close_all();
+    for topic in &app.opened_topics {
+        app.topic_overview_state
+            .open(history.get_tree_identifier(topic).unwrap_or_default());
+    }
+
+    // Ensure selected topic is selected index
+    app.topic_overview_state.select(
+        app.selected_topic
+            .as_ref()
+            .and_then(|selected_topic| history.get_tree_identifier(selected_topic))
+            .unwrap_or_default(),
+    );
+
+    #[allow(clippy::option_if_let_else)]
+    let overview_area = if let Some(selected_topic) = &app.selected_topic {
+        if let Some(topic_history) = history.get(selected_topic) {
+            let chunks = Layout::default()
+                .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
+                .direction(Direction::Horizontal)
+                .split(area);
+
+            details::draw(
+                f,
+                chunks[1],
+                topic_history,
+                matches!(app.focus, ElementInFocus::JsonPayload),
+                &mut app.json_view_state,
+            );
+
+            chunks[0]
+        } else {
+            area
+        }
+    } else {
+        area
+    };
+
+    overview::draw(
+        f,
+        overview_area,
+        &tree_items,
+        matches!(app.focus, ElementInFocus::TopicOverview),
+        &mut app.topic_overview_state,
+    );
     Ok(())
 }

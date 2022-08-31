@@ -7,9 +7,11 @@ use tui::text::Span;
 use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
 use tui::{symbols, Frame};
 
-use crate::interactive::ui::graph_data::GraphData;
 use crate::mqtt::{HistoryEntry, Payload, Time};
 use crate::{format, json_view};
+use graph_data::GraphData;
+
+mod graph_data;
 
 pub fn draw<B>(
     f: &mut Frame<B>,
