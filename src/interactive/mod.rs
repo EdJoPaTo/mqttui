@@ -1,6 +1,5 @@
-use std::error::Error;
 use std::io::stdout;
-use std::sync::mpsc;
+use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -40,7 +39,7 @@ pub fn show(
     connection: Connection,
     broker: &Broker,
     subscribe_topic: &str,
-) -> Result<(), Box<dyn Error>> {
+) -> anyhow::Result<()> {
     let mqtt_thread = MqttThread::new(client, connection, subscribe_topic.to_string())?;
     let mut app = App::new(broker, subscribe_topic, mqtt_thread);
 
@@ -99,13 +98,47 @@ pub fn show(
 
     terminal.clear()?;
 
+    let main_loop_result = main_loop(&mut app, &rx, &mut terminal);
+
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
+    terminal.show_cursor()?;
+
+    main_loop_result
+}
+
+fn terminal_draw<B>(app: &mut App, terminal: &mut Terminal<B>) -> anyhow::Result<()>
+where
+    B: Backend,
+{
+    let mut draw_error = None;
+    terminal.draw(|f| {
+        if let Err(error) = draw(f, app) {
+            draw_error = Some(error);
+        }
+    })?;
+    draw_error.map_or(Ok(()), Err)
+}
+
+fn main_loop<B>(
+    app: &mut App,
+    rx: &Receiver<Event>,
+    terminal: &mut Terminal<B>,
+) -> anyhow::Result<()>
+where
+    B: Backend,
+{
     loop {
-        terminal.draw(|f| draw(f, &mut app).expect("failed to draw ui"))?;
+        terminal_draw(app, terminal)?;
         match rx.recv()? {
             Event::Key(event) => match event.code {
-                KeyCode::Char('q') => app.should_quit = true,
+                KeyCode::Char('q') => break,
                 KeyCode::Char('c') if event.modifiers.contains(KeyModifiers::CONTROL) => {
-                    app.should_quit = true;
+                    break;
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => app.on_confirm()?,
                 KeyCode::Left | KeyCode::Char('h') => app.on_left(),
@@ -121,23 +154,11 @@ pub fn show(
             Event::MouseScrollUp => app.on_up()?,
             Event::Tick => {}
         }
-        if app.should_quit {
-            break;
-        }
     }
-
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
-
     Ok(())
 }
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn Error>> {
+fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> anyhow::Result<()> {
     let chunks = Layout::default()
         .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
         .split(f.size());
@@ -154,14 +175,12 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) -> Result<(), Box<dyn E
     Ok(())
 }
 
-fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> Result<(), Box<dyn Error>>
+fn draw_main<B>(f: &mut Frame<B>, area: Rect, app: &mut App) -> anyhow::Result<()>
 where
     B: Backend,
 {
     let history = app.mqtt_thread.get_history()?;
     let tree_items = history.to_tte();
-
-    app.topic_overview.ensure_state(&history);
 
     #[allow(clippy::option_if_let_else)]
     let overview_area = if let Some(selected_topic) = app.topic_overview.get_selected() {
@@ -186,6 +205,7 @@ where
         area
     };
 
+    app.topic_overview.ensure_state(&history);
     app.topic_overview.draw(
         f,
         overview_area,

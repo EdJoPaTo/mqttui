@@ -1,6 +1,3 @@
-use std::error::Error;
-use std::thread;
-
 use json::JsonValue;
 
 use crate::cli::Broker;
@@ -22,7 +19,6 @@ pub struct App {
     pub focus: ElementInFocus,
     pub info_header: InfoHeader,
     pub mqtt_thread: MqttThread,
-    pub should_quit: bool,
     pub topic_overview: TopicOverview,
 }
 
@@ -33,12 +29,11 @@ impl App {
             focus: ElementInFocus::TopicOverview,
             info_header: InfoHeader::new(broker, subscribe_topic),
             mqtt_thread,
-            should_quit: false,
             topic_overview: TopicOverview::default(),
         }
     }
 
-    fn get_json_of_current_topic(&self) -> Result<Option<JsonValue>, Box<dyn Error>> {
+    fn get_json_of_current_topic(&self) -> anyhow::Result<Option<JsonValue>> {
         if let Some(topic) = self.topic_overview.get_selected() {
             let json = self
                 .mqtt_thread
@@ -51,7 +46,7 @@ impl App {
         }
     }
 
-    pub fn on_up(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn on_up(&mut self) -> anyhow::Result<()> {
         const DIRECTION: CursorMove = CursorMove::RelativeUp;
         match self.focus {
             ElementInFocus::TopicOverview => {
@@ -69,7 +64,7 @@ impl App {
         Ok(())
     }
 
-    pub fn on_down(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn on_down(&mut self) -> anyhow::Result<()> {
         const DIRECTION: CursorMove = CursorMove::RelativeDown;
         match self.focus {
             ElementInFocus::TopicOverview => {
@@ -111,7 +106,7 @@ impl App {
         }
     }
 
-    pub fn on_confirm(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn on_confirm(&mut self) -> anyhow::Result<()> {
         match &self.focus {
             ElementInFocus::TopicOverview => {
                 self.topic_overview.toggle();
@@ -121,36 +116,14 @@ impl App {
             }
             ElementInFocus::CleanRetainedPopup(topic) => {
                 let base = self.mqtt_thread.get_mqtt_options();
-
-                let client_id = format!("mqttui-clean-{:x}", rand::random::<u32>());
-
-                let (host, port) = base.broker_address();
-                let mut options = rumqttc::MqttOptions::new(client_id, host, port);
-                if let Some((username, password)) = base.credentials() {
-                    options.set_credentials(username, password);
-                }
-
-                let (mut client, connection) = rumqttc::Client::new(options, 100);
-                client.subscribe(topic, rumqttc::QoS::AtLeastOnce)?;
-                client.subscribe(format!("{}/#", topic), rumqttc::QoS::AtLeastOnce)?;
-
-                thread::Builder::new()
-                    .name(format!("clean retained {}", topic))
-                    .spawn(move || {
-                        crate::clean_retained::clean_retained(
-                            client,
-                            connection,
-                            crate::clean_retained::Mode::Silent,
-                        );
-                    })?;
-
+                super::clear_retained::do_clear(base, topic)?;
                 self.focus = ElementInFocus::TopicOverview;
             }
         }
         Ok(())
     }
 
-    pub fn on_tab(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn on_tab(&mut self) -> anyhow::Result<()> {
         let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
         self.focus = if is_json_on_topic {
             match self.focus {
@@ -165,7 +138,7 @@ impl App {
         Ok(())
     }
 
-    pub fn on_click(&mut self, row: u16, _column: u16) -> Result<(), Box<dyn Error>> {
+    pub fn on_click(&mut self, row: u16, _column: u16) -> anyhow::Result<()> {
         const VIEW_OFFSET_TOP: u16 = 6;
 
         if matches!(self.focus, ElementInFocus::TopicOverview) {

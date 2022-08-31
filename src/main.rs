@@ -2,7 +2,6 @@
 
 use clap::Parser;
 use cli::SubCommands;
-use std::error::Error;
 use std::time::Duration;
 
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
@@ -16,7 +15,7 @@ mod log;
 mod mqtt;
 mod publish;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> anyhow::Result<()> {
     let matches = cli::Cli::parse();
 
     let (mut client, connection) = {
