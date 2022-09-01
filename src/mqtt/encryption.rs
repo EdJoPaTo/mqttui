@@ -1,8 +1,9 @@
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use rumqttc::{ClientConfig, TlsConfiguration};
+use rumqttc::TlsConfiguration;
 use rustls::client::{ServerCertVerified, ServerCertVerifier};
+use rustls::ClientConfig;
 
 struct NoVerifier;
 impl ServerCertVerifier for NoVerifier {
