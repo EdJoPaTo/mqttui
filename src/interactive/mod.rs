@@ -29,7 +29,6 @@ mod info_header;
 mod mqtt_history;
 mod mqtt_thread;
 mod topic_overview;
-mod topic_tree_entry;
 mod ui;
 
 enum ElementInFocus {
@@ -369,7 +368,6 @@ impl App {
 
         let main_area = chunks[1];
         let history = self.mqtt_thread.get_history()?;
-        let tree_items = history.to_tte();
 
         #[allow(clippy::option_if_let_else)]
         let overview_area = if let Some(selected_topic) = self.topic_overview.get_selected() {
@@ -394,10 +392,12 @@ impl App {
             main_area
         };
 
+        let (topic_amount, tree_items) = history.to_tree_items();
         self.topic_overview.ensure_state(&history);
         self.topic_overview.draw(
             f,
             overview_area,
+            topic_amount,
             &tree_items,
             matches!(self.focus, ElementInFocus::TopicOverview),
         );

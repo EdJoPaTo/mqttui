@@ -5,10 +5,9 @@ use tui::layout::Rect;
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders};
 use tui::Frame;
-use tui_tree_widget::{Tree, TreeState};
+use tui_tree_widget::{Tree, TreeItem, TreeState};
 
 use crate::interactive::mqtt_history::MqttHistory;
-use crate::interactive::topic_tree_entry::TopicTreeEntry;
 use crate::interactive::ui::{focus_color, get_row_inside, CursorMove};
 use crate::mqtt::topic::get_parent;
 
@@ -49,19 +48,13 @@ impl TopicOverview {
         &mut self,
         f: &mut Frame<B>,
         area: Rect,
-        tree_items: &[TopicTreeEntry],
+        topic_amount: usize,
+        tree_items: &[TreeItem],
         has_focus: bool,
     ) where
         B: Backend,
     {
-        let topic_amount = tree_items.iter().map(|o| o.topics_below).sum::<usize>();
         let title = format!("Topics ({})", topic_amount);
-
-        let tree_items = tree_items
-            .iter()
-            .map(std::convert::Into::into)
-            .collect::<Vec<_>>();
-
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(tree_items)
             .block(
