@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require URL scheme prefix for `--broker` (like `mqtt://`)
 - Performance: Do not store topic on each history entry
 - Performance: Store `String` as `Box<str>`
+- Performance: Store less data on non-UTF8 payload
 - Performance: Use RwLock over Mutex
 - Performance: Simplify interactive drawing logic
 - Performance: Simplify non-interactive output logic

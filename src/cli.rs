@@ -173,9 +173,7 @@ impl std::str::FromStr for Broker {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let url = Url::parse(s)?;
-        if !url.has_host() {
-            anyhow::bail!("Broker requires a Host");
-        }
+        anyhow::ensure!(url.has_host(), "Broker requires a Host");
 
         if matches!(url.scheme(), "mqtt" | "mqtts") {
             anyhow::ensure!(

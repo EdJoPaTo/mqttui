@@ -24,9 +24,7 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
     }
     for notification in connection.iter() {
         match notification {
-            Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect)) => {
-                break;
-            }
+            Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect)) => break,
             Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::PingReq)) => {
                 client.disconnect().unwrap();
             }
