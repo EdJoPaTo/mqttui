@@ -1,4 +1,4 @@
-use std::string::FromUtf8Error;
+use std::str::Utf8Error;
 
 use chrono::{DateTime, Local};
 use json::JsonValue;
@@ -32,7 +32,7 @@ impl ToString for Time {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Payload {
-    NotUtf8(FromUtf8Error),
+    NotUtf8(Utf8Error),
     String(Box<str>),
     Json(JsonValue),
 }
@@ -47,7 +47,7 @@ impl Payload {
                     Self::String(str.into())
                 }
             }
-            Err(err) => Self::NotUtf8(err),
+            Err(err) => Self::NotUtf8(err.utf8_error()),
         }
     }
 

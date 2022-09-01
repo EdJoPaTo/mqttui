@@ -19,9 +19,15 @@ pub const fn qos(qos: QoS) -> &'static str {
 }
 
 #[test]
-fn payload_works() {
+fn payload_string_works() {
     let p = Payload::String("bar".into());
     assert_eq!(payload(&p, 3), "Payload(  3): bar");
+}
+
+#[test]
+fn payload_json_works() {
+    let p = Payload::Json(json::array![42, false]);
+    assert_eq!(payload(&p, 666), "Payload(666): [42,false]");
 }
 
 #[test]
