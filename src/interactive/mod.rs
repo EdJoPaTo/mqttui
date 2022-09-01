@@ -20,7 +20,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 use tui_tree_widget::flatten;
 
 use crate::cli::Broker;
-use crate::interactive::ui::{CursorMove, Event, Refresh};
+use crate::interactive::ui::CursorMove;
 use crate::json_view::root_tree_items_from_json;
 
 mod clear_retained;
@@ -36,6 +36,23 @@ enum ElementInFocus {
     TopicOverview,
     JsonPayload,
     CleanRetainedPopup(String),
+}
+
+enum Event {
+    Key(KeyEvent),
+    MouseClick { column: u16, row: u16 },
+    MouseScrollUp,
+    MouseScrollDown,
+    Tick,
+}
+
+enum Refresh {
+    /// Update the TUI
+    Update,
+    /// Skip the update of the TUI
+    Skip,
+    /// Quit the TUI and return to the shell
+    Quit,
 }
 
 pub fn show(
