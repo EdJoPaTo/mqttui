@@ -791,9 +791,9 @@ dependencies = [
 
 [[package]]
 name = "rumqttc"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59d0bc9f169b15197e527c6784e7e7687683f503bfd0040d180422c9b2551eb8"
+checksum = "bfc3304ef531b4ff76b1997b6983475ac092ca94f450c88388fa2a8f4dd80bb1"
 dependencies = [
  "async-tungstenite",
  "bytes",
@@ -801,6 +801,7 @@ dependencies = [
  "http",
  "log",
  "pollster",
+ "rustls-native-certs",
  "rustls-pemfile 0.3.0",
  "thiserror",
  "tokio",
