@@ -263,11 +263,11 @@ impl App {
     }
 
     fn on_up(&mut self) -> anyhow::Result<Refresh> {
-        const DIRECTION: CursorMove = CursorMove::RelativeUp;
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let tree_items = self.mqtt_thread.get_history()?.to_tte();
-                self.topic_overview.change_selected(&tree_items, DIRECTION);
+                self.topic_overview
+                    .change_selected(&tree_items, CursorMove::RelativeUp);
             }
             ElementInFocus::JsonPayload => {
                 let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
@@ -280,11 +280,11 @@ impl App {
     }
 
     fn on_down(&mut self) -> anyhow::Result<Refresh> {
-        const DIRECTION: CursorMove = CursorMove::RelativeDown;
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let tree_items = self.mqtt_thread.get_history()?.to_tte();
-                self.topic_overview.change_selected(&tree_items, DIRECTION);
+                self.topic_overview
+                    .change_selected(&tree_items, CursorMove::RelativeDown);
             }
             ElementInFocus::JsonPayload => {
                 let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
