@@ -12,9 +12,13 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use json::JsonValue;
+use once_cell::sync::Lazy;
 use rumqttc::{Client, Connection};
 use tui::backend::Backend;
-use tui::layout::{Constraint, Direction, Layout};
+use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::style::{Color, Modifier, Style};
+use tui::text::{Span, Spans};
+use tui::widgets::Paragraph;
 use tui::Frame;
 use tui::{backend::CrosstermBackend, Terminal};
 use tui_tree_widget::flatten;
@@ -404,7 +408,14 @@ impl App {
         B: Backend,
     {
         let chunks = Layout::default()
-            .constraints([Constraint::Length(2 + 3), Constraint::Min(8)].as_ref())
+            .constraints(
+                [
+                    Constraint::Length(2 + 3),
+                    Constraint::Min(8),
+                    Constraint::Length(1),
+                ]
+                .as_ref(),
+            )
             .split(f.size());
         self.info_header.draw(
             f,
@@ -414,6 +425,8 @@ impl App {
         );
 
         let main_area = chunks[1];
+        draw_key_hints(f, chunks[2], &self.focus);
+
         let history = self.mqtt_thread.get_history()?;
 
         #[allow(clippy::option_if_let_else)]
@@ -454,4 +467,45 @@ impl App {
         }
         Ok(())
     }
+}
+
+fn draw_key_hints<B>(f: &mut Frame<B>, area: Rect, focus: &ElementInFocus)
+where
+    B: Backend,
+{
+    static STYLE: Lazy<Style> = Lazy::new(|| {
+        Style::default()
+            .add_modifier(Modifier::BOLD)
+            .fg(Color::Black)
+            .bg(Color::White)
+    });
+    f.render_widget(
+        Paragraph::new(Spans::from(match focus {
+            ElementInFocus::TopicOverview => vec![
+                Span::styled("q", *STYLE),
+                Span::from(" Quit  "),
+                Span::styled("Arrow keys, Home, End, PageUp/Down", *STYLE),
+                Span::from(" Navigate  "),
+                Span::styled("Tab", *STYLE),
+                Span::from(" Switch to JSON Payload  "),
+                Span::styled("Del", *STYLE),
+                Span::from(" Clean retained topics  "),
+            ],
+            ElementInFocus::JsonPayload => vec![
+                Span::styled("q", *STYLE),
+                Span::from(" Quit  "),
+                Span::styled("Arrow keys, Home, End, PageUp/Down", *STYLE),
+                Span::from(" Navigate  "),
+                Span::styled("Tab", *STYLE),
+                Span::from(" Switch to Topics  "),
+            ],
+            ElementInFocus::CleanRetainedPopup(_) => vec![
+                Span::styled("Enter", *STYLE),
+                Span::from(" Clean topic tree  "),
+                Span::styled("Any", *STYLE),
+                Span::from(" Abort  "),
+            ],
+        })),
+        area,
+    );
 }

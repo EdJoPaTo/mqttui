@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mouse clicks now select the overview / JSON Payload area
 - Home/End key support for overview and JSON Payload area
 - PageUp/Down key support for the overview
+- Add key hints in the bottom of the TUI
 
 ### Changed
 
