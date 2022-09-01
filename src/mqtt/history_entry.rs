@@ -89,10 +89,11 @@ fn time_optional_retained() {
     assert_eq!(time.as_optional(), None);
 }
 
-
 #[test]
 fn time_optional_time() {
-    let date = DateTime::parse_from_rfc3339("1996-12-19T16:39:57+01:00").unwrap().into();
+    let date = DateTime::parse_from_rfc3339("1996-12-19T16:39:57+01:00")
+        .unwrap()
+        .into();
     let time = Time::Local(date);
     assert_eq!(time.as_optional(), Some(date));
 }
@@ -101,13 +102,6 @@ fn time_optional_time() {
 fn time_retained_to_string() {
     let time = Time::Retained;
     assert_eq!(time.to_string(), "RETAINED");
-}
-
-#[test]
-fn time_local_to_string() {
-    let date = DateTime::parse_from_rfc3339("1996-12-19T16:39:57+01:00").unwrap().into();
-    let time = Time::Local(date);
-    assert_eq!(time.to_string(), "16:39:57.000");
 }
 
 #[cfg(test)]
