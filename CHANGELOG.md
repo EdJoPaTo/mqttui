@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support TLS encryption (via `--broker mqtts://`)
 - Support websockets (via `--broker ws://` or `--broker wss://`)
+- Mouse clicks now select the overview / JSON Payload area
 
 ### Changed
 
@@ -20,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Performance: Store `String` as `Box<str>`
 - Performance: Store less data on non-UTF8 payload
 - Performance: Use RwLock over Mutex
+- Performance: Simplify interactive drawing logic
 - Performance: Simplify non-interactive output logic
+- Performance: Only update TUI when key/mouse event did something
 
 ### Fixed
 

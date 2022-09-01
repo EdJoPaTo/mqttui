@@ -1,3 +1,4 @@
+use rumqttc::MqttOptions;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};
@@ -36,4 +37,32 @@ fn popup_area(r: Rect) -> Rect {
     let x = (r.width - width) / 2;
     let y = (r.height - height) / 2;
     Rect::new(x, y, width, height)
+}
+
+// TODO: use mqtt_thread instead of new mqtt connection
+// some people have strict requirements on their connection so a new connection wont help them here
+pub fn do_clear(base: &MqttOptions, topic: &str) -> anyhow::Result<()> {
+    let client_id = format!("mqttui-clean-{:x}", rand::random::<u32>());
+
+    let (host, port) = base.broker_address();
+    let mut options = rumqttc::MqttOptions::new(client_id, host, port);
+    if let Some((username, password)) = base.credentials() {
+        options.set_credentials(username, password);
+    }
+
+    let (mut client, connection) = rumqttc::Client::new(options, 100);
+    client.subscribe(topic, rumqttc::QoS::AtLeastOnce)?;
+    client.subscribe(format!("{}/#", topic), rumqttc::QoS::AtLeastOnce)?;
+
+    std::thread::Builder::new()
+        .name(format!("clean retained {}", topic))
+        .spawn(move || {
+            crate::clean_retained::clean_retained(
+                client,
+                connection,
+                crate::clean_retained::Mode::Silent,
+            );
+        })?;
+
+    Ok(())
 }
