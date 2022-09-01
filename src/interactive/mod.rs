@@ -4,8 +4,8 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{
-    DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyModifiers, MouseButton,
-    MouseEventKind,
+    DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers,
+    MouseButton, MouseEventKind,
 };
 use crossterm::execute;
 use crossterm::terminal::{
@@ -20,7 +20,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 use tui_tree_widget::flatten;
 
 use crate::cli::Broker;
-use crate::interactive::ui::{CursorMove, Event};
+use crate::interactive::ui::{CursorMove, Event, Refresh};
 use crate::json_view::root_tree_items_from_json;
 
 mod clear_retained;
@@ -71,9 +71,7 @@ pub fn show(
                 .unwrap_or_default();
             if crossterm::event::poll(timeout).unwrap() {
                 match crossterm::event::read().unwrap() {
-                    CEvent::Key(key) => {
-                        tx.send(Event::Key(key)).unwrap();
-                    }
+                    CEvent::Key(key) => tx.send(Event::Key(key)).unwrap(),
                     CEvent::Mouse(mouse) => match mouse.kind {
                         MouseEventKind::ScrollUp => tx.send(Event::MouseScrollUp).unwrap(),
                         MouseEventKind::ScrollDown => tx.send(Event::MouseScrollDown).unwrap(),
@@ -139,27 +137,19 @@ fn main_loop<B>(
 where
     B: Backend,
 {
+    terminal_draw(app, terminal)?;
     loop {
-        terminal_draw(app, terminal)?;
-        match rx.recv()? {
-            Event::Key(event) => match event.code {
-                KeyCode::Char('q') => break,
-                KeyCode::Char('c') if event.modifiers.contains(KeyModifiers::CONTROL) => {
-                    break;
-                }
-                KeyCode::Enter | KeyCode::Char(' ') => app.on_confirm()?,
-                KeyCode::Left | KeyCode::Char('h') => app.on_left(),
-                KeyCode::Down | KeyCode::Char('j') => app.on_down()?,
-                KeyCode::Up | KeyCode::Char('k') => app.on_up()?,
-                KeyCode::Right | KeyCode::Char('l') => app.on_right(),
-                KeyCode::Tab | KeyCode::BackTab => app.on_tab()?,
-                KeyCode::Backspace | KeyCode::Delete => app.on_delete(),
-                _ => app.on_other(),
-            },
+        let refresh = match rx.recv()? {
+            Event::Key(event) => app.on_key(event)?,
             Event::MouseClick { column, row } => app.on_click(column, row)?,
             Event::MouseScrollDown => app.on_down()?,
             Event::MouseScrollUp => app.on_up()?,
-            Event::Tick => {}
+            Event::Tick => Refresh::Update,
+        };
+        match refresh {
+            Refresh::Update => terminal_draw(app, terminal)?,
+            Refresh::Skip => {}
+            Refresh::Quit => break,
         }
     }
     Ok(())
@@ -197,7 +187,82 @@ impl App {
         }
     }
 
-    fn on_up(&mut self) -> anyhow::Result<()> {
+    fn on_key(&mut self, key: KeyEvent) -> anyhow::Result<Refresh> {
+        let refresh = match &self.focus {
+            ElementInFocus::TopicOverview => match key.code {
+                KeyCode::Char('q') => Refresh::Quit,
+                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    Refresh::Quit
+                }
+                KeyCode::Enter | KeyCode::Char(' ') => {
+                    self.topic_overview.toggle();
+                    Refresh::Update
+                }
+                KeyCode::Down | KeyCode::Char('j') => self.on_down()?,
+                KeyCode::Up | KeyCode::Char('k') => self.on_up()?,
+                KeyCode::Left | KeyCode::Char('h') => {
+                    self.topic_overview.close();
+                    Refresh::Update
+                }
+                KeyCode::Right | KeyCode::Char('l') => {
+                    self.topic_overview.open();
+                    Refresh::Update
+                }
+                KeyCode::Tab | KeyCode::BackTab => {
+                    let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
+                    if is_json_on_topic {
+                        self.focus = ElementInFocus::JsonPayload;
+                    }
+                    Refresh::Update
+                }
+                KeyCode::Backspace | KeyCode::Delete => {
+                    if let Some(topic) = self.topic_overview.get_selected() {
+                        self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
+                        Refresh::Update
+                    } else {
+                        Refresh::Skip
+                    }
+                }
+                _ => Refresh::Skip,
+            },
+            ElementInFocus::JsonPayload => match key.code {
+                KeyCode::Char('q') => Refresh::Quit,
+                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    Refresh::Quit
+                }
+                KeyCode::Enter | KeyCode::Char(' ') => {
+                    self.details.json_view.toggle_selected();
+                    Refresh::Update
+                }
+                KeyCode::Down | KeyCode::Char('j') => self.on_down()?,
+                KeyCode::Up | KeyCode::Char('k') => self.on_up()?,
+                KeyCode::Left | KeyCode::Char('h') => {
+                    self.details.json_view.key_left();
+                    Refresh::Update
+                }
+                KeyCode::Right | KeyCode::Char('l') => {
+                    self.details.json_view.key_right();
+                    Refresh::Update
+                }
+                KeyCode::Tab | KeyCode::BackTab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                _ => Refresh::Skip,
+            },
+            ElementInFocus::CleanRetainedPopup(topic) => {
+                if matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
+                    let base = self.mqtt_thread.get_mqtt_options();
+                    clear_retained::do_clear(base, topic)?;
+                }
+                self.focus = ElementInFocus::TopicOverview;
+                Refresh::Update
+            }
+        };
+        Ok(refresh)
+    }
+
+    fn on_up(&mut self) -> anyhow::Result<Refresh> {
         const DIRECTION: CursorMove = CursorMove::RelativeUp;
         match self.focus {
             ElementInFocus::TopicOverview => {
@@ -211,11 +276,10 @@ impl App {
             }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
-
-        Ok(())
+        Ok(Refresh::Update)
     }
 
-    fn on_down(&mut self) -> anyhow::Result<()> {
+    fn on_down(&mut self) -> anyhow::Result<Refresh> {
         const DIRECTION: CursorMove = CursorMove::RelativeDown;
         match self.focus {
             ElementInFocus::TopicOverview => {
@@ -229,67 +293,10 @@ impl App {
             }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
-
-        Ok(())
+        Ok(Refresh::Update)
     }
 
-    fn on_right(&mut self) {
-        match self.focus {
-            ElementInFocus::TopicOverview => {
-                self.topic_overview.open();
-            }
-            ElementInFocus::JsonPayload => {
-                self.details.json_view.key_right();
-            }
-            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
-        }
-    }
-
-    fn on_left(&mut self) {
-        match self.focus {
-            ElementInFocus::TopicOverview => {
-                self.topic_overview.close();
-            }
-            ElementInFocus::JsonPayload => {
-                self.details.json_view.key_left();
-            }
-            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
-        }
-    }
-
-    fn on_confirm(&mut self) -> anyhow::Result<()> {
-        match &self.focus {
-            ElementInFocus::TopicOverview => {
-                self.topic_overview.toggle();
-            }
-            ElementInFocus::JsonPayload => {
-                self.details.json_view.toggle_selected();
-            }
-            ElementInFocus::CleanRetainedPopup(topic) => {
-                let base = self.mqtt_thread.get_mqtt_options();
-                clear_retained::do_clear(base, topic)?;
-                self.focus = ElementInFocus::TopicOverview;
-            }
-        }
-        Ok(())
-    }
-
-    fn on_tab(&mut self) -> anyhow::Result<()> {
-        let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
-        self.focus = if is_json_on_topic {
-            match self.focus {
-                ElementInFocus::TopicOverview => ElementInFocus::JsonPayload,
-                ElementInFocus::JsonPayload | ElementInFocus::CleanRetainedPopup(_) => {
-                    ElementInFocus::TopicOverview
-                }
-            }
-        } else {
-            ElementInFocus::TopicOverview
-        };
-        Ok(())
-    }
-
-    fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<()> {
+    fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<Refresh> {
         if let Some(index) = self.topic_overview.index_of_click(column, row) {
             let tree_items = self.mqtt_thread.get_history()?.to_tte();
             let changed = self
@@ -299,6 +306,7 @@ impl App {
                 self.topic_overview.toggle();
             }
             self.focus = ElementInFocus::TopicOverview;
+            return Ok(Refresh::Update);
         }
 
         if let Some(index) = self.details.json_index_of_click(column, row) {
@@ -313,23 +321,10 @@ impl App {
                     self.details.json_view.select(picked.identifier.clone());
                 }
                 self.focus = ElementInFocus::JsonPayload;
+                return Ok(Refresh::Update);
             }
         }
-        Ok(())
-    }
-
-    fn on_delete(&mut self) {
-        if matches!(self.focus, ElementInFocus::TopicOverview) {
-            if let Some(topic) = self.topic_overview.get_selected() {
-                self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
-            }
-        }
-    }
-
-    fn on_other(&mut self) {
-        if matches!(self.focus, ElementInFocus::CleanRetainedPopup(_)) {
-            self.focus = ElementInFocus::TopicOverview;
-        }
+        Ok(Refresh::Skip)
     }
 
     fn draw<B>(&mut self, f: &mut Frame<B>) -> anyhow::Result<()>
