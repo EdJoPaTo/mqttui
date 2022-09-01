@@ -8,7 +8,7 @@ use tui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::mqtt_history::MqttHistory;
-use crate::interactive::topic_tree_entry::{get_visible, TopicTreeEntry};
+use crate::interactive::topic_tree_entry::TopicTreeEntry;
 use crate::interactive::ui::{focus_color, get_row_inside, CursorMove};
 use crate::mqtt::topic::get_parent;
 
@@ -21,6 +21,14 @@ pub struct TopicOverview {
 }
 
 impl TopicOverview {
+    pub const fn get_opened(&self) -> &HashSet<String> {
+        &self.opened_topics
+    }
+
+    pub const fn get_selected(&self) -> &Option<String> {
+        &self.selected_topic
+    }
+
     pub fn ensure_state(&mut self, history: &MqttHistory) {
         self.state.close_all();
         for topic in &self.opened_topics {
@@ -67,28 +75,11 @@ impl TopicOverview {
         self.last_area = area;
     }
 
-    pub const fn get_selected(&self) -> &Option<String> {
-        &self.selected_topic
-    }
-
-    pub fn get_visible<'a, I>(&self, entries: I) -> Vec<&'a TopicTreeEntry>
-    where
-        I: IntoIterator<Item = &'a TopicTreeEntry>,
-    {
-        get_visible(&self.opened_topics, entries)
-    }
-
-    pub fn change_selected(
-        &mut self,
-        tree_items: &[TopicTreeEntry],
-        cursor_move: CursorMove,
-    ) -> bool {
-        let visible = self.get_visible(tree_items);
-
+    pub fn change_selected(&mut self, visible: &[String], cursor_move: CursorMove) -> bool {
         let current_index = self
             .selected_topic
             .as_ref()
-            .and_then(|selected_topic| visible.iter().position(|o| &o.topic == selected_topic));
+            .and_then(|selected_topic| visible.iter().position(|o| o == selected_topic));
         let new_index = match cursor_move {
             CursorMove::Absolute(index) => index,
             CursorMove::RelativeUp => current_index.map_or(usize::MAX, |i| i.overflowing_sub(1).0),
@@ -98,7 +89,7 @@ impl TopicOverview {
         }
         .min(visible.len().saturating_sub(1));
 
-        let next_selected_topic = visible.get(new_index).map(|o| o.topic.clone());
+        let next_selected_topic = visible.get(new_index).cloned();
         let different = self.selected_topic != next_selected_topic;
         self.selected_topic = next_selected_topic;
         different

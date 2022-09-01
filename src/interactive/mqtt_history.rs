@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use chrono::{DateTime, Local};
 use ego_tree::{NodeId, NodeRef, Tree};
@@ -98,6 +98,36 @@ impl MqttHistory {
         Some(identifier)
     }
 
+    pub fn get_visible_topics(&self, opened_topics: &HashSet<String>) -> Vec<String> {
+        fn build_recursive(
+            opened_topics: &HashSet<String>,
+            prefix: &[&str],
+            node: NodeRef<Topic>,
+        ) -> Vec<String> {
+            let mut topic = prefix.to_vec();
+            topic.push(&node.value().leaf);
+
+            let topic_string = topic.join("/");
+
+            if opened_topics.contains(&topic_string) {
+                let mut entries_below = node
+                    .children()
+                    .flat_map(|c| build_recursive(opened_topics, &topic, c))
+                    .collect::<Vec<_>>();
+                entries_below.insert(0, topic_string);
+                entries_below
+            } else {
+                vec![topic_string]
+            }
+        }
+
+        self.tree
+            .root()
+            .children()
+            .flat_map(|o| build_recursive(opened_topics, &[], o))
+            .collect::<Vec<_>>()
+    }
+
     pub fn to_tte(&self) -> Vec<TopicTreeEntry> {
         fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> TopicTreeEntry {
             let value = node.value();
@@ -171,6 +201,21 @@ fn tree_identifier_works() {
     assert_eq!(history.get_tree_identifier("test").unwrap(), [1]);
     assert_eq!(history.get_tree_identifier("foo/bar").unwrap(), [0, 0]);
     assert_eq!(history.get_tree_identifier("foo/test").unwrap(), [0, 1]);
+}
+
+#[test]
+fn visible_all_closed_works() {
+    let opened_topics = HashSet::new();
+    let actual = MqttHistory::example().get_visible_topics(&opened_topics);
+    assert_eq!(actual, ["foo", "test"]);
+}
+
+#[test]
+fn visible_opened_works() {
+    let mut opened_topics = HashSet::new();
+    opened_topics.insert("foo".into());
+    let actual = MqttHistory::example().get_visible_topics(&opened_topics);
+    assert_eq!(actual, ["foo", "foo/bar", "foo/test", "test"]);
 }
 
 #[test]

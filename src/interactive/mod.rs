@@ -282,9 +282,12 @@ impl App {
     fn on_up(&mut self) -> anyhow::Result<Refresh> {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                let visible = self
+                    .mqtt_thread
+                    .get_history()?
+                    .get_visible_topics(self.topic_overview.get_opened());
                 self.topic_overview
-                    .change_selected(&tree_items, CursorMove::RelativeUp);
+                    .change_selected(&visible, CursorMove::RelativeUp);
             }
             ElementInFocus::JsonPayload => {
                 let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
@@ -299,9 +302,12 @@ impl App {
     fn on_down(&mut self) -> anyhow::Result<Refresh> {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let tree_items = self.mqtt_thread.get_history()?.to_tte();
+                let visible = self
+                    .mqtt_thread
+                    .get_history()?
+                    .get_visible_topics(self.topic_overview.get_opened());
                 self.topic_overview
-                    .change_selected(&tree_items, CursorMove::RelativeDown);
+                    .change_selected(&visible, CursorMove::RelativeDown);
             }
             ElementInFocus::JsonPayload => {
                 let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
@@ -315,10 +321,13 @@ impl App {
 
     fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<Refresh> {
         if let Some(index) = self.topic_overview.index_of_click(column, row) {
-            let tree_items = self.mqtt_thread.get_history()?.to_tte();
+            let visible = self
+                .mqtt_thread
+                .get_history()?
+                .get_visible_topics(self.topic_overview.get_opened());
             let changed = self
                 .topic_overview
-                .change_selected(&tree_items, CursorMove::Absolute(index));
+                .change_selected(&visible, CursorMove::Absolute(index));
             if !changed {
                 self.topic_overview.toggle();
             }

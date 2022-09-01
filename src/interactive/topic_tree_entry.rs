@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
 use tui_tree_widget::TreeItem;
@@ -89,39 +87,4 @@ impl TopicTreeEntry {
             },
         ]
     }
-}
-
-pub fn get_visible<'a, I>(opened: &HashSet<String>, entries: I) -> Vec<&'a TopicTreeEntry>
-where
-    I: IntoIterator<Item = &'a TopicTreeEntry>,
-{
-    let mut result = Vec::new();
-
-    for entry in entries {
-        result.push(entry);
-        if opened.contains(&entry.topic) {
-            result.append(&mut get_visible(opened, &entry.entries_below));
-        }
-    }
-
-    result
-}
-
-#[test]
-fn visible_topics_none_open_works() {
-    let topics = TopicTreeEntry::examples();
-    let opened = HashSet::new();
-    let visible = get_visible(&opened, &topics);
-    let visible = visible.iter().map(|o| o.topic.clone()).collect::<Vec<_>>();
-    assert_eq!(visible, ["foo", "test"]);
-}
-
-#[test]
-fn visible_topics_some_open_works() {
-    let topics = TopicTreeEntry::examples();
-    let mut opened = HashSet::new();
-    opened.insert("foo".to_string());
-    let visible = get_visible(&opened, &topics);
-    let visible = visible.iter().map(|o| o.topic.clone()).collect::<Vec<_>>();
-    assert_eq!(visible, ["foo", "foo/bar", "foo/test", "test"]);
 }
