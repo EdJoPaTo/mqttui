@@ -153,7 +153,6 @@ impl MqttHistory {
                 .sum();
 
             TopicTreeEntry {
-                topic: topic.join("/"),
                 leaf: value.leaf.clone().into(),
                 // TODO: without clone?
                 last_payload: value.history.last().map(|o| o.payload.clone()),
