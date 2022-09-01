@@ -83,26 +83,53 @@ impl HistoryEntry {
     }
 }
 
+#[test]
+fn time_optional_retained() {
+    let time = Time::Retained;
+    assert_eq!(time.as_optional(), None);
+}
+
+
+#[test]
+fn time_optional_time() {
+    let date = DateTime::parse_from_rfc3339("1996-12-19T16:39:57+01:00").unwrap().into();
+    let time = Time::Local(date);
+    assert_eq!(time.as_optional(), Some(date));
+}
+
+#[test]
+fn time_retained_to_string() {
+    let time = Time::Retained;
+    assert_eq!(time.to_string(), "RETAINED");
+}
+
+#[test]
+fn time_local_to_string() {
+    let date = DateTime::parse_from_rfc3339("1996-12-19T16:39:57+01:00").unwrap().into();
+    let time = Time::Local(date);
+    assert_eq!(time.to_string(), "16:39:57.000");
+}
+
 #[cfg(test)]
-fn json_testcase(json_str: &'static str) -> Option<String> {
+fn json_macro(json_str: &'static str) -> Option<String> {
     let payload = Payload::new(&json_str.into());
     payload.as_optional_json().map(JsonValue::dump)
 }
 
 #[test]
 fn payload_pretty_json_ignores_plain() {
-    assert_eq!(None, json_testcase("bob"));
+    assert_eq!(None, json_macro("bob"));
 }
 
 #[test]
 fn payload_pretty_json_object_works() {
     assert_eq!(
-        json_testcase(r#"{"a": "alpha", "b": "beta"}"#),
+        json_macro(r#"{"a": "alpha", "b": "beta"}"#),
         Some(r#"{"a":"alpha","b":"beta"}"#.to_string())
     );
 }
 
 #[test]
 fn payload_pretty_json_number_works() {
-    assert_eq!(json_testcase("42"), Some("42".to_string()));
+    assert_eq!(json_macro("42"), Some("42".to_string()));
 }
