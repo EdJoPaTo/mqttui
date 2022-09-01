@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support TLS encryption (via `--broker mqtts://`)
 - Support websockets (via `--broker ws://` or `--broker wss://`)
 - Mouse clicks now select the overview / JSON Payload area
+- Home/End key support for overview and JSON Payload area
 
 ### Changed
 

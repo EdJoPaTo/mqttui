@@ -210,6 +210,13 @@ impl App {
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     Refresh::Quit
                 }
+                KeyCode::Tab | KeyCode::BackTab => {
+                    let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
+                    if is_json_on_topic {
+                        self.focus = ElementInFocus::JsonPayload;
+                    }
+                    Refresh::Update
+                }
                 KeyCode::Enter | KeyCode::Char(' ') => {
                     self.topic_overview.toggle();
                     Refresh::Update
@@ -224,11 +231,22 @@ impl App {
                     self.topic_overview.open();
                     Refresh::Update
                 }
-                KeyCode::Tab | KeyCode::BackTab => {
-                    let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
-                    if is_json_on_topic {
-                        self.focus = ElementInFocus::JsonPayload;
-                    }
+                KeyCode::Home => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::Absolute(0));
+                    Refresh::Update
+                }
+                KeyCode::End => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::Absolute(usize::MAX));
                     Refresh::Update
                 }
                 KeyCode::Backspace | KeyCode::Delete => {
@@ -246,6 +264,10 @@ impl App {
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     Refresh::Quit
                 }
+                KeyCode::Tab | KeyCode::BackTab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
                 KeyCode::Enter | KeyCode::Char(' ') => {
                     self.details.json_view.toggle_selected();
                     Refresh::Update
@@ -260,8 +282,14 @@ impl App {
                     self.details.json_view.key_right();
                     Refresh::Update
                 }
-                KeyCode::Tab | KeyCode::BackTab => {
-                    self.focus = ElementInFocus::TopicOverview;
+                KeyCode::Home => {
+                    self.details.json_view.select_first();
+                    Refresh::Update
+                }
+                KeyCode::End => {
+                    let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                    let items = root_tree_items_from_json(&json);
+                    self.details.json_view.select_last(&items);
                     Refresh::Update
                 }
                 _ => Refresh::Skip,
