@@ -10,12 +10,12 @@ use crate::mqtt::HistoryEntry;
 
 struct Topic {
     /// Topic `foo/bar` would have the leaf `bar`
-    leaf: String,
+    leaf: Box<str>,
     history: Vec<HistoryEntry>,
 }
 
 impl Topic {
-    const fn new(leaf: String) -> Self {
+    const fn new(leaf: Box<str>) -> Self {
         Self {
             leaf,
             history: Vec::new(),
@@ -31,7 +31,7 @@ pub struct MqttHistory {
 impl MqttHistory {
     pub fn new() -> Self {
         Self {
-            tree: Tree::new(Topic::new("".to_string())),
+            tree: Tree::new(Topic::new("".into())),
             ids: HashMap::new(),
         }
     }
@@ -45,16 +45,16 @@ impl MqttHistory {
                 let noderef = self.tree.get(parent).unwrap();
                 let equal_or_after = noderef.children().find(|o| &*o.value().leaf >= part);
                 if let Some(eoa) = equal_or_after {
-                    if eoa.value().leaf == part {
+                    if eoa.value().leaf.as_ref() == part {
                         parent = eoa.id();
                         continue;
                     }
                     let eoa_id = eoa.id();
                     let mut eoamut = self.tree.get_mut(eoa_id).unwrap();
-                    parent = eoamut.insert_before(Topic::new(part.to_string())).id();
+                    parent = eoamut.insert_before(Topic::new(part.into())).id();
                 } else {
                     let mut nodemut = self.tree.get_mut(parent).unwrap();
-                    parent = nodemut.append(Topic::new(part.to_string())).id();
+                    parent = nodemut.append(Topic::new(part.into())).id();
                 }
             }
             self.ids.insert(topic.to_string(), parent);
@@ -124,7 +124,7 @@ impl MqttHistory {
 
             TopicTreeEntry {
                 topic: topic.join("/"),
-                leaf: value.leaf.clone(),
+                leaf: value.leaf.clone().into(),
                 // TODO: without clone?
                 last_payload: value.history.last().map(|o| o.payload.clone()),
                 messages: value.history.len(),
