@@ -4,8 +4,10 @@ use tui::style::Color;
 #[derive(Clone, Copy)]
 pub enum CursorMove {
     Absolute(usize),
-    RelativeUp,
-    RelativeDown,
+    OneUp,
+    OneDown,
+    PageUp,
+    PageDown,
 }
 
 pub const fn focus_color(has_focus: bool) -> Color {

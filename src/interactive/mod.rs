@@ -203,6 +203,7 @@ impl App {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn on_key(&mut self, key: KeyEvent) -> anyhow::Result<Refresh> {
         let refresh = match &self.focus {
             ElementInFocus::TopicOverview => match key.code {
@@ -247,6 +248,24 @@ impl App {
                         .get_visible_topics(self.topic_overview.get_opened());
                     self.topic_overview
                         .change_selected(&visible, CursorMove::Absolute(usize::MAX));
+                    Refresh::Update
+                }
+                KeyCode::PageUp => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::PageUp);
+                    Refresh::Update
+                }
+                KeyCode::PageDown => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::PageDown);
                     Refresh::Update
                 }
                 KeyCode::Backspace | KeyCode::Delete => {
@@ -314,7 +333,7 @@ impl App {
                     .get_history()?
                     .get_visible_topics(self.topic_overview.get_opened());
                 self.topic_overview
-                    .change_selected(&visible, CursorMove::RelativeUp);
+                    .change_selected(&visible, CursorMove::OneUp);
             }
             ElementInFocus::JsonPayload => {
                 let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
@@ -334,7 +353,7 @@ impl App {
                     .get_history()?
                     .get_visible_topics(self.topic_overview.get_opened());
                 self.topic_overview
-                    .change_selected(&visible, CursorMove::RelativeDown);
+                    .change_selected(&visible, CursorMove::OneDown);
             }
             ElementInFocus::JsonPayload => {
                 let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);

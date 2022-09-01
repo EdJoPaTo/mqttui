@@ -73,12 +73,13 @@ impl TopicOverview {
             .selected_topic
             .as_ref()
             .and_then(|selected_topic| visible.iter().position(|o| o == selected_topic));
+        let page_jump = (self.last_area.height / 2) as usize;
         let new_index = match cursor_move {
             CursorMove::Absolute(index) => index,
-            CursorMove::RelativeUp => current_index.map_or(usize::MAX, |i| i.overflowing_sub(1).0),
-            CursorMove::RelativeDown => {
-                current_index.map_or(0, |i| i.saturating_add(1) % visible.len())
-            }
+            CursorMove::OneUp => current_index.map_or(usize::MAX, |i| i.saturating_sub(1)),
+            CursorMove::OneDown => current_index.map_or(0, |i| i.saturating_add(1)),
+            CursorMove::PageUp => current_index.map_or(usize::MAX, |i| i.saturating_sub(page_jump)),
+            CursorMove::PageDown => current_index.map_or(0, |i| i.saturating_add(page_jump)),
         }
         .min(visible.len().saturating_sub(1));
 
