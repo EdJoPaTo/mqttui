@@ -487,7 +487,7 @@ where
                 Span::styled("Tab", *STYLE),
                 Span::from(" Switch to JSON Payload  "),
                 Span::styled("Del", *STYLE),
-                Span::from(" Clean retained topics  "),
+                Span::from(" Clean retained  "),
             ],
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", *STYLE),
