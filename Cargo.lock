@@ -550,6 +550,7 @@ dependencies = [
  "crossterm",
  "ego-tree",
  "json",
+ "once_cell",
  "rand",
  "rumqttc",
  "rustls",
