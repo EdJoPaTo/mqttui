@@ -484,8 +484,6 @@ where
             ElementInFocus::TopicOverview => vec![
                 Span::styled("q", *STYLE),
                 Span::from(" Quit  "),
-                Span::styled("Arrow keys, Home, End, PageUp/Down", *STYLE),
-                Span::from(" Navigate  "),
                 Span::styled("Tab", *STYLE),
                 Span::from(" Switch to JSON Payload  "),
                 Span::styled("Del", *STYLE),
@@ -494,8 +492,6 @@ where
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", *STYLE),
                 Span::from(" Quit  "),
-                Span::styled("Arrow keys, Home, End, PageUp/Down", *STYLE),
-                Span::from(" Navigate  "),
                 Span::styled("Tab", *STYLE),
                 Span::from(" Switch to Topics  "),
             ],
