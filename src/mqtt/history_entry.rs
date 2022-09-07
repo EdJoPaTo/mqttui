@@ -40,13 +40,7 @@ pub enum Payload {
 impl Payload {
     pub fn new(payload: &bytes::Bytes) -> Self {
         match String::from_utf8(payload.to_vec()) {
-            Ok(str) => {
-                if let Ok(json) = json::parse(&str) {
-                    Self::Json(json)
-                } else {
-                    Self::String(str.into())
-                }
-            }
+            Ok(str) => json::parse(&str).map_or_else(|_| Self::String(str.into()), Self::Json),
             Err(err) => Self::NotUtf8(err.utf8_error()),
         }
     }
