@@ -785,9 +785,9 @@ dependencies = [
 
 [[package]]
 name = "rumqttc"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfc3304ef531b4ff76b1997b6983475ac092ca94f450c88388fa2a8f4dd80bb1"
+checksum = "fc15cfb87b8998026f9ea9385530865d57207d120a40ebde9521730cd9561132"
 dependencies = [
  "async-tungstenite",
  "bytes",
