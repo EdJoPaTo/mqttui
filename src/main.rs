@@ -65,8 +65,8 @@ fn main() -> anyhow::Result<()> {
             } else {
                 clean_retained::Mode::Normal
             };
-            client.subscribe(topic, QoS::AtLeastOnce)?;
-            //clean_retained::clean_retained(client, connection, mode);
+            client.subscribe(topic.clone(), QoS::AtLeastOnce)?;
+            clean_retained::gather_topics_and_clean(&mut client, connection, &topic, mode);
         }
         Some(SubCommands::Log { topic, verbose }) => {
             for topic in topic {

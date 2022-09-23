@@ -4,19 +4,19 @@ use std::thread::{self, sleep};
 use std::time::Duration;
 
 use chrono::Local;
-use rumqttc::{Client, Connection, ConnectionError, MqttOptions, QoS};
+use rumqttc::{Client, Connection, ConnectionError, QoS};
 
 use crate::interactive::mqtt_history::MqttHistory;
 
 type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;
+
 /// The known topics, and if they were retained(true) or not
 type KnownTopicsArc = Arc<RwLock<HashSet<(String, bool)>>>;
 
 pub struct MqttThread {
     connection_err: ConnectionErrorArc,
     history: HistoryArc,
-    mqttoptions: MqttOptions,
     known_topics: KnownTopicsArc,
     client: Client,
 }
@@ -27,7 +27,6 @@ impl MqttThread {
         mut connection: Connection,
         subscribe_topic: String,
     ) -> anyhow::Result<Self> {
-        let mqttoptions = connection.eventloop.options.clone();
         // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
         for notification in connection.iter() {
             if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
@@ -64,13 +63,8 @@ impl MqttThread {
             client,
             connection_err,
             history,
-            mqttoptions,
             known_topics,
         })
-    }
-
-    pub const fn get_mqtt_options(&self) -> &MqttOptions {
-        &self.mqttoptions
     }
 
     pub fn has_connection_err(&self) -> anyhow::Result<Option<String>> {

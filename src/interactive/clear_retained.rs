@@ -1,4 +1,3 @@
-use rumqttc::MqttOptions;
 use tui::backend::Backend;
 use tui::layout::{Alignment, Rect};
 use tui::style::{Color, Modifier, Style};

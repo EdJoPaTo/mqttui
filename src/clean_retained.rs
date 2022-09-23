@@ -1,10 +1,46 @@
-use rumqttc::{Client, QoS};
+use rumqttc::{Client, Connection, Event, Packet, QoS};
 
 #[derive(Clone, Copy)]
 pub enum Mode {
     Dry,
     Normal,
     Silent,
+}
+pub fn gather_topics_and_clean(
+    client: &mut Client,
+    mut connection: Connection,
+    base_topic: &str,
+    mode: Mode,
+) {
+    let mut known_topics: Vec<(String, bool)> = Vec::new();
+    loop {
+        match connection.iter().next() {
+            Some(Ok(Event::Incoming(Packet::Publish(publish)))) => {
+                if !publish.retain {
+                    // First non retained means we exit
+                    break;
+                } else {
+                    let topic = publish.topic;
+                    let known = (topic.to_string(), true);
+                    known_topics.push(known);
+                }
+            }
+            Some(Ok(Event::Incoming(Packet::Disconnect))) => {
+                break;
+            }
+            Some(Ok(_)) => {}
+            Some(Err(e)) => {
+                eprintln!("connection error: {e:?}");
+                break;
+            }
+            None => {
+                break;
+            }
+        }
+    }
+    let known_topics = known_topics.iter().map(|t| t).collect::<Vec<_>>();
+    clean_retained(client, base_topic, known_topics, mode);
+    client.disconnect().unwrap();
 }
 
 pub fn clean_retained(
@@ -24,8 +60,7 @@ pub fn clean_retained(
         })
         .collect::<Vec<_>>();
 
-    eprintln!("{filtered_topics:?}");
-    let mut amount = filtered_topics.len();
+    let amount = filtered_topics.len();
 
     if !matches!(mode, Mode::Dry) {
         for topic in filtered_topics {
