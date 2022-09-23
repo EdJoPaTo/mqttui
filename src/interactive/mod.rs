@@ -319,8 +319,7 @@ impl App {
             },
             ElementInFocus::CleanRetainedPopup(topic) => {
                 if matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
-                    let base = self.mqtt_thread.get_mqtt_options();
-                    clear_retained::do_clear(base, topic)?;
+                    clear_retained::do_clear(&self.mqtt_thread, topic)?;
                 }
                 self.focus = ElementInFocus::TopicOverview;
                 Refresh::Update

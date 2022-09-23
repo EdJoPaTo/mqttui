@@ -66,7 +66,7 @@ fn main() -> anyhow::Result<()> {
                 clean_retained::Mode::Normal
             };
             client.subscribe(topic, QoS::AtLeastOnce)?;
-            clean_retained::clean_retained(client, connection, mode);
+            //clean_retained::clean_retained(client, connection, mode);
         }
         Some(SubCommands::Log { topic, verbose }) => {
             for topic in topic {

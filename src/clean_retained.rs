@@ -1,10 +1,4 @@
-use std::thread::sleep;
-use std::time::Duration;
-
-use rumqttc::{Client, Connection, QoS};
-
-use crate::format;
-use crate::mqtt::Payload;
+use rumqttc::{Client, QoS};
 
 #[derive(Clone, Copy)]
 pub enum Mode {
@@ -13,47 +7,31 @@ pub enum Mode {
     Silent,
 }
 
-pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode) {
-    let mut amount: usize = 0;
-    for notification in connection.iter() {
-        if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
-            notification.expect("connection error")
-        {
-            break;
-        }
-    }
-    for notification in connection.iter() {
-        match notification {
-            Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect)) => break,
-            Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::PingReq)) => {
-                client.disconnect().unwrap();
+pub fn clean_retained(
+    client: &mut Client,
+    base_topic: &str,
+    known_topics: Vec<&(String, bool)>,
+    mode: Mode,
+) {
+    let filtered_topics = known_topics
+        .iter()
+        .filter_map(|(t, retained)| {
+            if t.starts_with(base_topic) && *retained {
+                Some(t)
+            } else {
+                None
             }
-            Ok(rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish))) => {
-                if publish.payload.is_empty() {
-                    // Thats probably myself cleaning up
-                    continue;
-                }
-                if !publish.retain {
-                    client.disconnect().unwrap();
-                    continue;
-                }
-                let topic = publish.topic.clone();
-                if !matches!(mode, Mode::Silent) {
-                    let qos = format::qos(publish.qos);
-                    let size = publish.payload.len();
-                    let payload = format::payload(&Payload::new(&publish.payload), size);
-                    println!("QoS:{:11} {:50} {}", qos, publish.topic, payload);
-                }
-                amount += 1;
-                if !matches!(mode, Mode::Dry) {
-                    client.publish(topic, QoS::ExactlyOnce, true, []).unwrap();
-                }
-            }
-            Ok(_) => {}
-            Err(err) => {
-                eprintln!("Connection Error: {}", err);
-                sleep(Duration::from_millis(25));
-            }
+        })
+        .collect::<Vec<_>>();
+
+    eprintln!("{filtered_topics:?}");
+    let mut amount = filtered_topics.len();
+
+    if !matches!(mode, Mode::Dry) {
+        for topic in filtered_topics {
+            client
+                .publish(topic.to_string(), QoS::ExactlyOnce, true, [])
+                .unwrap();
         }
     }
     match mode {

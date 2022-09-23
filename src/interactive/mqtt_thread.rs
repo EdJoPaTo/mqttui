@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::thread::{self, sleep};
 use std::time::Duration;
@@ -9,11 +10,15 @@ use crate::interactive::mqtt_history::MqttHistory;
 
 type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;
+/// The known topics, and if they were retained(true) or not
+type KnownTopicsArc = Arc<RwLock<HashSet<(String, bool)>>>;
 
 pub struct MqttThread {
     connection_err: ConnectionErrorArc,
     history: HistoryArc,
     mqttoptions: MqttOptions,
+    known_topics: KnownTopicsArc,
+    client: Client,
 }
 
 impl MqttThread {
@@ -35,10 +40,12 @@ impl MqttThread {
 
         let connection_err = Arc::new(RwLock::new(None));
         let history = Arc::new(RwLock::new(MqttHistory::new()));
-
+        let known_topics = Arc::new(RwLock::new(HashSet::new()));
         {
+            let client = client.clone();
             let connection_err = Arc::clone(&connection_err);
             let history = Arc::clone(&history);
+            let known_topics = Arc::clone(&known_topics);
             thread::Builder::new()
                 .name("mqtt connection".into())
                 .spawn(move || {
@@ -48,14 +55,17 @@ impl MqttThread {
                         &subscribe_topic,
                         &connection_err,
                         &history,
+                        &known_topics,
                     );
                 })?;
         }
 
         Ok(Self {
+            client,
             connection_err,
             history,
             mqttoptions,
+            known_topics,
         })
     }
 
@@ -75,6 +85,14 @@ impl MqttThread {
             .read()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))
     }
+    pub fn get_topics(&self) -> anyhow::Result<RwLockReadGuard<HashSet<(String, bool)>>> {
+        self.known_topics
+            .read()
+            .map_err(|err| anyhow::anyhow!("failed to aquire lock of known_topics: {}", err))
+    }
+    pub fn get_mqtt_client(&self) -> &Client {
+        &self.client
+    }
 }
 
 fn thread_logic(
@@ -83,6 +101,7 @@ fn thread_logic(
     subscribe_topic: &str,
     connection_err: &ConnectionErrorArc,
     history: &HistoryArc,
+    known_topics: &KnownTopicsArc,
 ) {
     for notification in connection.iter() {
         let mut connection_err = connection_err.write().unwrap();
@@ -103,6 +122,10 @@ fn thread_logic(
                         }
                         let time = Local::now();
                         history.write().unwrap().add(&publish, time);
+                        known_topics
+                            .write()
+                            .unwrap()
+                            .insert((publish.topic, publish.retain));
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
                         break;
