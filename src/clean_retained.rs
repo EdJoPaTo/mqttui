@@ -12,7 +12,7 @@ pub fn gather_topics_and_clean(
     base_topic: &str,
     mode: Mode,
 ) {
-    let mut known_topics: Vec<(String, bool)> = Vec::new();
+    let mut known_topics: Vec<String> = Vec::new();
     loop {
         match connection.iter().next() {
             Some(Ok(Event::Incoming(Packet::Publish(publish)))) => {
@@ -20,9 +20,7 @@ pub fn gather_topics_and_clean(
                     // First non retained means we exit
                     break;
                 } else {
-                    let topic = publish.topic;
-                    let known = (topic.to_string(), true);
-                    known_topics.push(known);
+                    known_topics.push(publish.topic.to_string());
                 }
             }
             Some(Ok(Event::Incoming(Packet::Disconnect))) => {
@@ -46,13 +44,13 @@ pub fn gather_topics_and_clean(
 pub fn clean_retained(
     client: &mut Client,
     base_topic: &str,
-    known_topics: Vec<&(String, bool)>,
+    known_topics: Vec<&String>,
     mode: Mode,
 ) {
     let filtered_topics = known_topics
         .iter()
-        .filter_map(|(t, retained)| {
-            if t.starts_with(base_topic) && *retained {
+        .filter_map(|t| {
+            if t.starts_with(base_topic) {
                 Some(t)
             } else {
                 None

@@ -12,7 +12,7 @@ type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;
 
 /// The known topics, and if they were retained(true) or not
-type KnownTopicsArc = Arc<RwLock<HashSet<(String, bool)>>>;
+type KnownTopicsArc = Arc<RwLock<HashSet<String>>>;
 
 pub struct MqttThread {
     connection_err: ConnectionErrorArc,
@@ -79,7 +79,7 @@ impl MqttThread {
             .read()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))
     }
-    pub fn get_topics(&self) -> anyhow::Result<RwLockReadGuard<HashSet<(String, bool)>>> {
+    pub fn get_topics(&self) -> anyhow::Result<RwLockReadGuard<HashSet<String>>> {
         self.known_topics
             .read()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of known_topics: {}", err))
@@ -116,10 +116,7 @@ fn thread_logic(
                         }
                         let time = Local::now();
                         history.write().unwrap().add(&publish, time);
-                        known_topics
-                            .write()
-                            .unwrap()
-                            .insert((publish.topic, publish.retain));
+                        known_topics.write().unwrap().insert(publish.topic);
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
                         break;
