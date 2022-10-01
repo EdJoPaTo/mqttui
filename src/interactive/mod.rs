@@ -66,7 +66,7 @@ pub fn show(
 ) -> anyhow::Result<()> {
     let mqtt_thread =
         mqtt_thread::MqttThread::new(client, connection, subscribe_topic.to_string())?;
-    let mut app = App::new(broker, subscribe_topic, mqtt_thread);
+    let mut app = App::new(broker, mqtt_thread);
 
     enable_raw_mode()?;
 
@@ -184,11 +184,11 @@ struct App {
 }
 
 impl App {
-    fn new(broker: &Broker, subscribe_topic: &str, mqtt_thread: mqtt_thread::MqttThread) -> Self {
+    fn new(broker: &Broker, mqtt_thread: mqtt_thread::MqttThread) -> Self {
         Self {
             details: details::Details::default(),
             focus: ElementInFocus::TopicOverview,
-            info_header: info_header::InfoHeader::new(broker, subscribe_topic),
+            info_header: info_header::InfoHeader::new(broker),
             mqtt_thread,
             topic_overview: topic_overview::TopicOverview::default(),
         }
@@ -410,7 +410,7 @@ impl App {
         let chunks = Layout::default()
             .constraints(
                 [
-                    Constraint::Length(2 + 3),
+                    Constraint::Length(2),
                     Constraint::Min(8),
                     Constraint::Length(1),
                 ]
