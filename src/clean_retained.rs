@@ -6,14 +6,7 @@ use rumqttc::{Client, Connection, QoS};
 use crate::format;
 use crate::mqtt::Payload;
 
-#[derive(Clone, Copy)]
-pub enum Mode {
-    Dry,
-    Normal,
-    Silent,
-}
-
-pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode) {
+pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: bool) {
     let mut amount: usize = 0;
     for notification in connection.iter() {
         if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
@@ -38,14 +31,14 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
                     continue;
                 }
                 let topic = publish.topic.clone();
-                if !matches!(mode, Mode::Silent) {
+                {
                     let qos = format::qos(publish.qos);
                     let size = publish.payload.len();
                     let payload = format::payload(&Payload::new(&publish.payload), size);
                     println!("QoS:{:11} {:50} {}", qos, publish.topic, payload);
                 }
                 amount += 1;
-                if !matches!(mode, Mode::Dry) {
+                if !dry_run {
                     client.publish(topic, QoS::ExactlyOnce, true, []).unwrap();
                 }
             }
@@ -56,9 +49,9 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, mode: Mode
             }
         }
     }
-    match mode {
-        Mode::Silent => {}
-        Mode::Dry => println!("Dry run: would have cleaned {} topics", amount),
-        Mode::Normal => println!("Cleaned {} topics", amount),
+    if dry_run {
+        println!("Dry run: would have cleaned {} topics", amount);
+    } else {
+        println!("Cleaned {} topics", amount);
     }
 }

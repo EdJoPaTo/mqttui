@@ -3,7 +3,7 @@ use std::thread::{self, sleep};
 use std::time::Duration;
 
 use chrono::Local;
-use rumqttc::{Client, Connection, ConnectionError, MqttOptions, QoS};
+use rumqttc::{Client, Connection, ConnectionError, QoS};
 
 use crate::interactive::mqtt_history::MqttHistory;
 
@@ -11,9 +11,9 @@ type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;
 
 pub struct MqttThread {
+    client: Client,
     connection_err: ConnectionErrorArc,
     history: HistoryArc,
-    mqttoptions: MqttOptions,
 }
 
 impl MqttThread {
@@ -22,7 +22,6 @@ impl MqttThread {
         mut connection: Connection,
         subscribe_topic: String,
     ) -> anyhow::Result<Self> {
-        let mqttoptions = connection.eventloop.options.clone();
         // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
         for notification in connection.iter() {
             if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
@@ -37,6 +36,7 @@ impl MqttThread {
         let history = Arc::new(RwLock::new(MqttHistory::new()));
 
         {
+            let client = client.clone();
             let connection_err = Arc::clone(&connection_err);
             let history = Arc::clone(&history);
             thread::Builder::new()
@@ -53,14 +53,10 @@ impl MqttThread {
         }
 
         Ok(Self {
+            client,
             connection_err,
             history,
-            mqttoptions,
         })
-    }
-
-    pub const fn get_mqtt_options(&self) -> &MqttOptions {
-        &self.mqttoptions
     }
 
     pub fn has_connection_err(&self) -> anyhow::Result<Option<String>> {
@@ -74,6 +70,14 @@ impl MqttThread {
         self.history
             .read()
             .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))
+    }
+
+    pub fn clean_below(&mut self, topic: &str) -> anyhow::Result<()> {
+        let topics = self.get_history()?.get_topics_below(topic);
+        for topic in topics {
+            self.client.publish(topic, QoS::ExactlyOnce, true, [])?;
+        }
+        Ok(())
     }
 }
 

@@ -26,7 +26,7 @@ use crate::cli::Broker;
 use crate::interactive::ui::CursorMove;
 use crate::json_view::root_tree_items_from_json;
 
-mod clear_retained;
+mod clean_retained;
 mod details;
 mod info_header;
 mod mqtt_history;
@@ -318,8 +318,7 @@ impl App {
             },
             ElementInFocus::CleanRetainedPopup(topic) => {
                 if matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
-                    let base = self.mqtt_thread.get_mqtt_options();
-                    clear_retained::do_clear(base, topic)?;
+                    self.mqtt_thread.clean_below(topic)?;
                 }
                 self.focus = ElementInFocus::TopicOverview;
                 Refresh::Update
@@ -476,7 +475,7 @@ impl App {
         );
 
         if let ElementInFocus::CleanRetainedPopup(topic) = &self.focus {
-            clear_retained::draw_popup(f, topic);
+            clean_retained::draw_popup(f, topic);
         }
         Ok(())
     }

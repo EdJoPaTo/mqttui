@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smaller Info Header at the top (only 2 lines instead of 5)
 - Performance: Simplify interactive drawing logic
 
+### Fixed
+
+- Clean retained from interactive now uses the same mqtt connection. It now publishes on all topics below rather than only retained ones to ensure everything is being cleaned.
+
 ## [0.17.0] - 2022-09-07
 
 ### Added

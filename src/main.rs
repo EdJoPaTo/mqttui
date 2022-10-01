@@ -60,13 +60,8 @@ fn main() -> anyhow::Result<()> {
 
     match matches.subcommands {
         Some(SubCommands::CleanRetained { topic, dry_run, .. }) => {
-            let mode = if dry_run {
-                clean_retained::Mode::Dry
-            } else {
-                clean_retained::Mode::Normal
-            };
             client.subscribe(topic, QoS::AtLeastOnce)?;
-            clean_retained::clean_retained(client, connection, mode);
+            clean_retained::clean_retained(client, connection, dry_run);
         }
         Some(SubCommands::Log { topic, verbose }) => {
             for topic in topic {

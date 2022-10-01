@@ -114,6 +114,38 @@ impl MqttHistory {
         Some(identifier)
     }
 
+    pub fn get_topics_below(&self, topic: &str) -> Vec<String> {
+        fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> Vec<String> {
+            let mut topic = prefix.to_vec();
+            topic.push(&node.value().leaf);
+
+            let mut entries_below = node
+                .children()
+                .flat_map(|c| build_recursive(&topic, c))
+                .collect::<Vec<_>>();
+            if !node.value().history.is_empty() {
+                entries_below.insert(0, topic.join("/"));
+            }
+            entries_below
+        }
+
+        // Get the node of the given topic in the tree
+        let mut noderef = self.tree.root();
+        for part in topic.split('/') {
+            let node = noderef.children().find(|o| &*o.value().leaf == part);
+            if let Some(node) = node {
+                noderef = node;
+            } else {
+                // Node not found -> there are no topics below
+                return vec![];
+            }
+        }
+
+        let mut prefix = topic.split('/').collect::<Vec<_>>();
+        prefix.pop(); // The node itself will also be added so its not part of the prefix
+        build_recursive(&prefix, noderef)
+    }
+
     pub fn get_visible_topics(&self, opened_topics: &HashSet<String>) -> Vec<String> {
         fn build_recursive(
             opened_topics: &HashSet<String>,
@@ -241,6 +273,18 @@ fn tree_identifier_works() {
     assert_eq!(history.get_tree_identifier("test").unwrap(), [1]);
     assert_eq!(history.get_tree_identifier("foo/bar").unwrap(), [0, 0]);
     assert_eq!(history.get_tree_identifier("foo/test").unwrap(), [0, 1]);
+}
+
+#[test]
+fn topics_below_works() {
+    let actual = MqttHistory::example().get_topics_below("foo");
+    assert_eq!(actual, ["foo/bar", "foo/test"]);
+}
+
+#[test]
+fn topics_below_finds_itself_works() {
+    let actual = MqttHistory::example().get_topics_below("test");
+    assert_eq!(actual, ["test"]);
 }
 
 #[test]
