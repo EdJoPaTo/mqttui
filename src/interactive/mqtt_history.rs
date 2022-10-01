@@ -157,7 +157,7 @@ impl MqttHistory {
             let topics_below = entries_below
                 .iter()
                 .map(|below| {
-                    let has_messages = if below.messages > 0 { 1 } else { 0 };
+                    let has_messages = usize::from(below.messages > 0);
                     has_messages + below.topics_below
                 })
                 .sum();
@@ -194,7 +194,7 @@ impl MqttHistory {
             .collect::<Vec<_>>();
         let topics = children
             .iter()
-            .map(|o| o.topics_below + if o.messages > 0 { 1 } else { 0 })
+            .map(|o| o.topics_below + usize::from(o.messages > 0))
             .sum();
         let items = children
             .into_iter()
