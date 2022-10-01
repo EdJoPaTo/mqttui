@@ -6,6 +6,7 @@ use tui::widgets::{Paragraph, Wrap};
 use tui::Frame;
 
 use crate::cli::Broker;
+use crate::interactive::ui::STYLE_BOLD;
 
 pub struct InfoHeader {
     title: String,
@@ -43,13 +44,7 @@ impl InfoHeader {
         }
 
         if let Some(topic) = selected_topic {
-            const STYLE: Style = Style {
-                fg: None,
-                bg: None,
-                add_modifier: Modifier::BOLD,
-                sub_modifier: Modifier::empty(),
-            };
-            text.push(Spans::from(Span::styled(topic, STYLE)));
+            text.push(Spans::from(Span::styled(topic, STYLE_BOLD)));
         }
 
         let paragraph = Paragraph::new(text)

@@ -12,7 +12,6 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use json::JsonValue;
-use once_cell::sync::Lazy;
 use rumqttc::{Client, Connection};
 use tui::backend::Backend;
 use tui::layout::{Constraint, Direction, Layout, Rect};
@@ -473,32 +472,32 @@ fn draw_key_hints<B>(f: &mut Frame<B>, area: Rect, focus: &ElementInFocus)
 where
     B: Backend,
 {
-    static STYLE: Lazy<Style> = Lazy::new(|| {
-        Style::default()
-            .add_modifier(Modifier::BOLD)
-            .fg(Color::Black)
-            .bg(Color::White)
-    });
+    const STYLE: Style = Style {
+        fg: Some(Color::Black),
+        bg: Some(Color::White),
+        add_modifier: Modifier::BOLD,
+        sub_modifier: Modifier::empty(),
+    };
     f.render_widget(
         Paragraph::new(Spans::from(match focus {
             ElementInFocus::TopicOverview => vec![
-                Span::styled("q", *STYLE),
+                Span::styled("q", STYLE),
                 Span::from(" Quit  "),
-                Span::styled("Tab", *STYLE),
+                Span::styled("Tab", STYLE),
                 Span::from(" Switch to JSON Payload  "),
-                Span::styled("Del", *STYLE),
+                Span::styled("Del", STYLE),
                 Span::from(" Clean retained  "),
             ],
             ElementInFocus::JsonPayload => vec![
-                Span::styled("q", *STYLE),
+                Span::styled("q", STYLE),
                 Span::from(" Quit  "),
-                Span::styled("Tab", *STYLE),
+                Span::styled("Tab", STYLE),
                 Span::from(" Switch to Topics  "),
             ],
             ElementInFocus::CleanRetainedPopup(_) => vec![
-                Span::styled("Enter", *STYLE),
+                Span::styled("Enter", STYLE),
                 Span::from(" Clean topic tree  "),
-                Span::styled("Any", *STYLE),
+                Span::styled("Any", STYLE),
                 Span::from(" Abort  "),
             ],
         })),

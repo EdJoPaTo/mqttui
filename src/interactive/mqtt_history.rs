@@ -7,7 +7,15 @@ use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
 use tui_tree_widget::{TreeIdentifierVec, TreeItem};
 
+use crate::interactive::ui::STYLE_BOLD;
 use crate::mqtt::{HistoryEntry, Payload};
+
+pub const STYLE_DARKGRAY: Style = Style {
+    fg: Some(Color::DarkGray),
+    bg: None,
+    add_modifier: Modifier::empty(),
+    sub_modifier: Modifier::empty(),
+};
 
 struct Topic {
     /// Topic `foo/bar` would have the leaf `bar`
@@ -173,9 +181,9 @@ impl MqttHistory {
                 None => format!("({} topics, {} messages)", topics_below, messages_below),
             };
             let text = vec![Spans::from(vec![
-                Span::styled(leaf.as_ref(), Style::default().add_modifier(Modifier::BOLD)),
+                Span::styled(leaf.as_ref(), STYLE_BOLD),
                 Span::raw(" "),
-                Span::styled(meta, Style::default().fg(Color::DarkGray)),
+                Span::styled(meta, STYLE_DARKGRAY),
             ])];
 
             RecursiveTreeItemGenerator {

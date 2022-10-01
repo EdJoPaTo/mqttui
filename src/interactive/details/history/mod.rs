@@ -7,6 +7,7 @@ use tui::text::Span;
 use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
 use tui::{symbols, Frame};
 
+use crate::interactive::ui::STYLE_BOLD;
 use crate::mqtt::{HistoryEntry, Payload, Time};
 use crate::{format, json_view};
 use graph_data::GraphData;
@@ -90,11 +91,8 @@ fn draw_table<B>(
 
     let t = Table::new(rows)
         .block(Block::default().borders(Borders::ALL).title(title))
-        .header(
-            Row::new(vec!["Time", "QoS", "Value"])
-                .style(Style::default().add_modifier(Modifier::BOLD)),
-        )
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+        .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
+        .highlight_style(STYLE_BOLD)
         .widths(&[
             Constraint::Length(12),
             Constraint::Length(11),
@@ -111,10 +109,16 @@ fn draw_graph<B>(f: &mut Frame<B>, area: Rect, points: &GraphData)
 where
     B: Backend,
 {
+    const STYLE: Style = Style {
+        fg: Some(Color::LightGreen),
+        bg: None,
+        add_modifier: Modifier::empty(),
+        sub_modifier: Modifier::empty(),
+    };
     let datasets = vec![Dataset::default()
-        .marker(symbols::Marker::Braille)
-        .style(Style::default().fg(Color::LightGreen))
         .graph_type(GraphType::Line)
+        .marker(symbols::Marker::Braille)
+        .style(STYLE)
         .data(&points.data)];
 
     let chart = Chart::new(datasets)

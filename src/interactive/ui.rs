@@ -1,5 +1,5 @@
 use tui::layout::Rect;
-use tui::style::Color;
+use tui::style::{Color, Modifier, Style};
 
 #[derive(Clone, Copy)]
 pub enum CursorMove {
@@ -9,6 +9,13 @@ pub enum CursorMove {
     PageUp,
     PageDown,
 }
+
+pub const STYLE_BOLD: Style = Style {
+    fg: None,
+    bg: None,
+    add_modifier: Modifier::BOLD,
+    sub_modifier: Modifier::empty(),
+};
 
 pub const fn focus_color(has_focus: bool) -> Color {
     if has_focus {
