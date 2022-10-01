@@ -14,7 +14,7 @@ use crossterm::terminal::{
 use json::JsonValue;
 use rumqttc::{Client, Connection};
 use tui::backend::Backend;
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use tui::layout::Rect;
 use tui::style::{Color, Modifier, Style};
 use tui::text::{Span, Spans};
 use tui::widgets::Paragraph;
@@ -406,44 +406,58 @@ impl App {
     where
         B: Backend,
     {
-        let chunks = Layout::default()
-            .constraints(
-                [
-                    Constraint::Length(2),
-                    Constraint::Min(8),
-                    Constraint::Length(1),
-                ]
-                .as_ref(),
-            )
-            .split(f.size());
+        let area = f.size();
+        let Rect { width, height, .. } = area;
+        debug_assert_eq!(area.x, 0);
+        debug_assert_eq!(area.y, 0);
+        let header_area = Rect {
+            height: 2,
+            y: 0,
+            ..area
+        };
+        let main_area = Rect {
+            height: height - 3,
+            y: 2,
+            ..area
+        };
+        let key_hint_area = Rect {
+            height: 1,
+            y: height - 1,
+            ..area
+        };
+
         self.info_header.draw(
             f,
-            chunks[0],
+            header_area,
             self.mqtt_thread.has_connection_err().unwrap(),
             self.topic_overview.get_selected(),
         );
-
-        let main_area = chunks[1];
-        draw_key_hints(f, chunks[2], &self.focus);
+        draw_key_hints(f, key_hint_area, &self.focus);
 
         let history = self.mqtt_thread.get_history()?;
 
         #[allow(clippy::option_if_let_else)]
         let overview_area = if let Some(selected_topic) = self.topic_overview.get_selected() {
             if let Some(topic_history) = history.get(selected_topic) {
-                let chunks = Layout::default()
-                    .constraints([Constraint::Percentage(35), Constraint::Percentage(65)].as_ref())
-                    .direction(Direction::Horizontal)
-                    .split(main_area);
+                let x = width / 3;
+                let details_area = Rect {
+                    width: width - x,
+                    x,
+                    ..main_area
+                };
 
                 self.details.draw(
                     f,
-                    chunks[1],
+                    details_area,
                     topic_history,
                     matches!(self.focus, ElementInFocus::JsonPayload),
                 );
 
-                chunks[0]
+                Rect {
+                    width: x,
+                    x: 0,
+                    ..main_area
+                }
             } else {
                 main_area
             }

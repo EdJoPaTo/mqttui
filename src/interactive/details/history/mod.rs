@@ -1,13 +1,13 @@
 use std::fmt::Write;
 
 use tui::backend::Backend;
-use tui::layout::{Constraint, Layout, Rect};
+use tui::layout::{Constraint, Rect};
 use tui::style::{Color, Modifier, Style};
 use tui::text::Span;
 use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
 use tui::{symbols, Frame};
 
-use crate::interactive::ui::STYLE_BOLD;
+use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
 use crate::mqtt::{HistoryEntry, Payload, Time};
 use crate::{format, json_view};
 use graph_data::GraphData;
@@ -23,11 +23,9 @@ pub fn draw<B>(
     B: Backend,
 {
     let table_area = GraphData::parse(topic_history, json_selector).map_or(area, |data| {
-        let chunks = Layout::default()
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .split(area);
-        draw_graph(f, chunks[1], &data);
-        chunks[0]
+        let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
+        draw_graph(f, graph_area, &data);
+        table_area
     });
     draw_table(f, table_area, topic_history, json_selector);
 }

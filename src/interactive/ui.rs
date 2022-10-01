@@ -55,3 +55,16 @@ fn is_inside() {
     let result = get_row_inside(area, 7, 10);
     assert_eq!(result, Some(4));
 }
+
+pub const fn split_area_vertically(area: Rect, height_first: u16) -> (Rect, Rect) {
+    let first = Rect {
+        height: height_first,
+        ..area
+    };
+    let second = Rect {
+        height: area.height.saturating_sub(height_first),
+        y: area.y.saturating_add(height_first),
+        ..area
+    };
+    (first, second)
+}

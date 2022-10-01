@@ -2,13 +2,13 @@ use std::cmp::min;
 
 use json::JsonValue;
 use tui::backend::Backend;
-use tui::layout::{Constraint, Layout, Rect};
+use tui::layout::Rect;
 use tui::style::{Color, Style};
 use tui::widgets::{Block, Borders, List, ListItem};
 use tui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::ui::{focus_color, get_row_inside};
+use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
 use crate::json_view::root_tree_items_from_json;
 use crate::mqtt::{HistoryEntry, Payload};
 
@@ -36,19 +36,17 @@ impl Details {
         let size = last.payload_size;
         let history_area = match &last.payload {
             Payload::Json(json) => {
-                let chunks = Layout::default()
-                    .constraints([Constraint::Percentage(25), Constraint::Min(16)].as_ref())
-                    .split(area);
-                self.last_json_area = Some(chunks[0]);
+                let (payload_area, remaining_area) = split_area_vertically(area, area.height / 4);
+                self.last_json_area = Some(payload_area);
                 draw_payload_json(
                     f,
-                    chunks[0],
+                    payload_area,
                     size,
                     json,
                     json_payload_has_focus,
                     &mut self.json_view,
                 );
-                chunks[1]
+                remaining_area
             }
             Payload::NotUtf8(err) => draw_payload_string(f, area, size, &err.to_string()),
             Payload::String(str) => draw_payload_string(f, area, size, str),
@@ -80,20 +78,13 @@ where
     let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
 
     let max_payload_height = area.height / 3;
-    let chunks = Layout::default()
-        .constraints(
-            [
-                #[allow(clippy::cast_possible_truncation)]
-                Constraint::Length(min(max_payload_height as usize, 2 + items.len()) as u16),
-                Constraint::Min(16),
-            ]
-            .as_ref(),
-        )
-        .split(area);
+    #[allow(clippy::cast_possible_truncation)]
+    let payload_height = min(max_payload_height as usize, 2 + items.len() as usize) as u16;
+    let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
 
     let widget = List::new(items).block(Block::default().borders(Borders::ALL).title(title));
-    f.render_widget(widget, chunks[0]);
-    chunks[1]
+    f.render_widget(widget, payload_area);
+    remaining_area
 }
 
 fn draw_payload_json<B>(
