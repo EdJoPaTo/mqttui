@@ -124,6 +124,13 @@ mqttui "topic"
 
 `paru -S mqttui-bin` or `yay -S mqttui-bin`
 
+#### Homebrew (Mac or Linux)
+
+```
+brew update
+brew install mqttui
+```
+
 #### Other
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
