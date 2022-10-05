@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Clean retained from interactive now uses the same mqtt connection. It now publishes on all topics below rather than only retained ones to ensure everything is being cleaned.
+- Precompiled x86_64 build works again on Debian 11
 
 ## [0.17.0] - 2022-09-07
 

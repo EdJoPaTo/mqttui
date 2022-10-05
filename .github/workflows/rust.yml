@@ -166,7 +166,7 @@ jobs:
         with:
           command: build
           args: --release --verbose --locked ${{ matrix.features }} --target ${{ matrix.triple }}
-          use-cross: ${{ runner.os == 'Linux' && matrix.triple != 'x86_64-unknown-linux-gnu' }}
+          use-cross: ${{ runner.os == 'Linux' }}
 
       - name: Package tar.gz (*nix)
         if: runner.os != 'Windows'
