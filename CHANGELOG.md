@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2022-10-06
+
 ### Changed
 
 - Smaller Info Header at the top (only 2 lines instead of 5)

@@ -1,10 +1,12 @@
 [package]
 name = "mqttui"
 description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
-version = "0.17.0"
+version = "0.18.0"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/EdJoPaTo/mqttui"
 authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
+keywords = ["mqtt", "iot", "tui", "cli", "terminal"]
+categories = ["command-line-utilities", "network-programming"]
 edition = "2021"
 rust-version = "1.57.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
