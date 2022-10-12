@@ -127,7 +127,6 @@ mqttui "topic"
 #### Homebrew (Mac or Linux)
 
 ```
-brew update
 brew install mqttui
 ```
 
