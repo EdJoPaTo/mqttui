@@ -79,7 +79,7 @@ where
 
     let max_payload_height = area.height / 3;
     #[allow(clippy::cast_possible_truncation)]
-    let payload_height = min(max_payload_height as usize, 2 + items.len() as usize) as u16;
+    let payload_height = min(max_payload_height as usize, 2 + items.len()) as u16;
     let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
 
     let widget = List::new(items).block(Block::default().borders(Borders::ALL).title(title));
