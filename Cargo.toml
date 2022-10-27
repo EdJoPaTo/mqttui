@@ -22,7 +22,7 @@ lto = true
 
 [build-dependencies]
 anyhow = "1"
-clap = { version = "3", features = ["deprecated", "derive", "env"] }
+clap = { version = "4", features = ["deprecated", "derive", "env"] }
 clap_complete = "3"
 url = "2"
 
@@ -30,7 +30,7 @@ url = "2"
 anyhow = "1"
 bytes = "1"
 chrono = "0.4"
-clap = { version = "3", features = ["deprecated", "derive", "env", "wrap_help"] }
+clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] }
 crossterm = "0.25"
 ego-tree = "0.6"
 json = "0.12"
