@@ -5,7 +5,7 @@ pub fn eventloop(mut client: Client, mut connection: Connection, verbose: bool) 
         match notification.expect("connection error") {
             rumqttc::Event::Outgoing(outgoing) => {
                 if verbose {
-                    println!("outgoing {:?}", outgoing);
+                    println!("outgoing {outgoing:?}");
                 }
 
                 if outgoing == rumqttc::Outgoing::Disconnect {
@@ -14,7 +14,7 @@ pub fn eventloop(mut client: Client, mut connection: Connection, verbose: bool) 
             }
             rumqttc::Event::Incoming(packet) => {
                 if verbose {
-                    println!("incoming {:?}", packet);
+                    println!("incoming {packet:?}");
                 }
 
                 if let rumqttc::Packet::PubAck(_) = packet {

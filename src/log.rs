@@ -19,7 +19,7 @@ pub fn show(mut connection: Connection, verbose: bool) {
         match notification {
             Ok(rumqttc::Event::Outgoing(outgoing)) => {
                 if verbose {
-                    println!("outgoing {:?}", outgoing);
+                    println!("outgoing {outgoing:?}");
                 }
                 if outgoing == rumqttc::Outgoing::Disconnect {
                     break;
@@ -44,11 +44,11 @@ pub fn show(mut connection: Connection, verbose: bool) {
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {
-                    println!("incoming {:?}", packet);
+                    println!("incoming {packet:?}");
                 }
             }
             Err(err) => {
-                eprintln!("Connection Error: {}", err);
+                eprintln!("Connection Error: {err}");
                 sleep(Duration::from_millis(25));
             }
         }

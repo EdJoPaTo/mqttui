@@ -15,7 +15,7 @@ pub struct InfoHeader {
 impl InfoHeader {
     pub fn new(broker: &Broker) -> Self {
         Self {
-            title: format!("MQTT TUI {} @ {:?}", env!("CARGO_PKG_VERSION"), broker),
+            title: format!("MQTT TUI {} @ {broker:?}", env!("CARGO_PKG_VERSION")),
         }
     }
 
@@ -38,7 +38,7 @@ impl InfoHeader {
                 sub_modifier: Modifier::empty(),
             };
             text.push(Spans::from(Span::styled(
-                format!("MQTT Connection Error: {}", err),
+                format!("MQTT Connection Error: {err}"),
                 STYLE,
             )));
         }

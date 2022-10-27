@@ -4,9 +4,9 @@ use crate::mqtt::Payload;
 
 pub fn payload(payload: &Payload, size: usize) -> String {
     match payload {
-        Payload::NotUtf8(err) => format!("Payload({:>3}) is not valid UTF-8: {}", size, err),
-        Payload::String(str) => format!("Payload({:>3}): {}", size, str),
-        Payload::Json(json) => format!("Payload({:>3}): {}", size, json.dump()),
+        Payload::NotUtf8(err) => format!("Payload({size:>3}) is not valid UTF-8: {err}"),
+        Payload::String(str) => format!("Payload({size:>3}): {str}"),
+        Payload::Json(json) => format!("Payload({size:>3}): {}", json.dump()),
     }
 }
 

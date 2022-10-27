@@ -74,7 +74,7 @@ fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, payload_bytes: usize, pa
 where
     B: Backend,
 {
-    let title = format!("Payload (Bytes: {})", payload_bytes);
+    let title = format!("Payload (Bytes: {payload_bytes})");
     let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
 
     let max_payload_height = area.height / 3;
@@ -97,7 +97,7 @@ fn draw_payload_json<B>(
 ) where
     B: Backend,
 {
-    let title = format!("JSON Payload (Bytes: {})  (TAB to switch)", bytes);
+    let title = format!("JSON Payload (Bytes: {bytes})  (TAB to switch)");
     let items = root_tree_items_from_json(json);
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(items)

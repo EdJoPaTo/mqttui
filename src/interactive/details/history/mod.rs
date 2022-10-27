@@ -67,7 +67,7 @@ fn draw_table<B>(
         let seconds_since_start = last - first;
         let message_every_n_seconds = seconds_since_start as f64 / amount_without_retain as f64;
         if message_every_n_seconds < 100.0 {
-            let _ = write!(title, "{:.1} seconds", message_every_n_seconds);
+            let _ = write!(title, "{message_every_n_seconds:.1} seconds");
         } else {
             let _ = write!(title, "{:.1} minutes", message_every_n_seconds / 60.0);
         }
@@ -78,7 +78,7 @@ fn draw_table<B>(
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos).to_string();
         let value = match &entry.payload {
-            Payload::NotUtf8(err) => format!("invalid UTF-8: {}", err),
+            Payload::NotUtf8(err) => format!("invalid UTF-8: {err}"),
             Payload::String(str) => str.to_string(),
             Payload::Json(json) => json_view::get_selected_subvalue(json, json_selector)
                 .unwrap_or(json)
