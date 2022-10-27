@@ -23,7 +23,7 @@ lto = true
 [build-dependencies]
 anyhow = "1"
 clap = { version = "3", features = ["deprecated", "derive", "env"] }
-clap_complete = "3"
+clap_complete = "4"
 url = "2"
 
 [dependencies]
