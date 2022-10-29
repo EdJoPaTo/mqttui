@@ -253,9 +253,7 @@ impl App {
                         .change_selected(&visible, CursorMove::Absolute(usize::MAX));
                     Refresh::Update
                 }
-                KeyCode::PageUp | KeyCode::Char('u')
-                    if key.modifiers.contains(KeyModifiers::CONTROL) =>
-                {
+                KeyCode::PageUp => {
                     let visible = self
                         .mqtt_thread
                         .get_history()?
@@ -264,9 +262,25 @@ impl App {
                         .change_selected(&visible, CursorMove::PageUp);
                     Refresh::Update
                 }
-                KeyCode::PageDown | KeyCode::Char('d')
-                    if key.modifiers.contains(KeyModifiers::CONTROL) =>
-                {
+                KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::PageUp);
+                    Refresh::Update
+                }
+                KeyCode::PageDown => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::PageDown);
+                    Refresh::Update
+                }
+                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let visible = self
                         .mqtt_thread
                         .get_history()?
