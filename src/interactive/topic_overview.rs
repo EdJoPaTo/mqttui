@@ -54,7 +54,7 @@ impl TopicOverview {
     ) where
         B: Backend,
     {
-        let title = format!("Topics ({})", topic_amount);
+        let title = format!("Topics ({topic_amount})");
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(tree_items)
             .block(

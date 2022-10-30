@@ -25,7 +25,7 @@ pub fn root_tree_items_from_json(root: &JsonValue) -> Vec<TreeItem<'_>> {
     match root {
         JsonValue::Object(object) => tree_items_from_json_object(object),
         JsonValue::Array(array) => tree_items_from_json_array(array),
-        _ => vec![TreeItem::new_leaf(format!("{}", root))],
+        _ => vec![TreeItem::new_leaf(root.to_string())],
     }
 }
 
@@ -35,7 +35,7 @@ fn tree_items_from_json<'a>(key: &str, value: &'a JsonValue) -> TreeItem<'a> {
             TreeItem::new(key.to_owned(), tree_items_from_json_object(object))
         }
         JsonValue::Array(array) => TreeItem::new(key.to_owned(), tree_items_from_json_array(array)),
-        _ => TreeItem::new_leaf(format!("{}: {}", key, value)),
+        _ => TreeItem::new_leaf(format!("{key}: {value}")),
     }
 }
 
@@ -53,9 +53,9 @@ where
     array
         .into_iter()
         .enumerate()
-        .map(|(key, value)| {
-            let key = format!("{}", key);
-            tree_items_from_json(&key, value)
+        .map(|(index, value)| {
+            let index = index.to_string();
+            tree_items_from_json(&index, value)
         })
         .collect::<Vec<_>>()
 }

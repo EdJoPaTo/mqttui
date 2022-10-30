@@ -6,16 +6,27 @@ on:
 
 jobs:
   tarpaulin:
-    name: Tarpaulin
     runs-on: ubuntu-22.04
     steps:
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          toolchain: stable
+        shell: bash -eux {0}
+        run: |
+          rustup --version
+          rustup show
+          rustup toolchain install stable --profile minimal
+          rustup default stable
 
       - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          key: tarpaulin-${{ hashFiles('**/Cargo.lock') }}
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
 
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1

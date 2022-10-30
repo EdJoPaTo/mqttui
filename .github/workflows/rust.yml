@@ -5,6 +5,19 @@ on:
   pull_request:
 
 jobs:
+  rustfmt:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Rust
+        shell: bash -eux {0}
+        run: |
+          rustup --version
+          rustup show
+          rustup toolchain install stable --profile minimal --component rustfmt
+          rustup default stable
+      - uses: actions/checkout@v3
+      - run: cargo fmt --check --verbose
+
   test:
     name: Test ${{ matrix.toolchain }} ${{ matrix.os }} ${{ matrix.features }}
     runs-on: ${{ matrix.os }}
@@ -28,7 +41,7 @@ jobs:
           - toolchain: beta
             os: ubuntu-22.04
             features: --all-features
-            clippyargs: -W clippy::pedantic -W clippy::nursery
+            clippyargs: -W clippy::pedantic -W clippy::nursery -W clippy::cargo
           - toolchain: nightly
             os: ubuntu-22.04
             features: --all-features
@@ -38,17 +51,17 @@ jobs:
           # Sometimes old rust versions don't yet have the lints (allow unknown) or don't have fixes in lints (false positives -> don't error, just warn).
           # When a certain distro is a target look up its version: https://repology.org/project/rust/versions
           - os: ubuntu-22.04
-            toolchain: 1.57.0
+            toolchain: 1.60.0
             clippyargs: -A unknown-lints
             features: --all-features
     steps:
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          components: clippy
-          override: true
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
+        shell: bash -eux {0}
+        run: |
+          rustup --version
+          rustup show
+          rustup toolchain install ${{ matrix.toolchain }} --profile minimal --component clippy
+          rustup default ${{ matrix.toolchain }}
 
       - uses: actions/checkout@v3
 
@@ -76,10 +89,32 @@ jobs:
           command: test
           args: --verbose --locked ${{ matrix.features }}
 
+  prepare-packaging-tools:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Rust
+        shell: bash -eux {0}
+        run: |
+          rustup --version
+          rustup show
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Cache packaging tools
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-cargo-packaging-tools
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/.crates*
+
+      - name: Install packaging tools
+        run: cargo install cargo-deb cargo-generate-rpm
+
   github-release:
     name: Release ${{ matrix.triple }}
     runs-on: ${{ matrix.os }}
-    needs: test
+    needs: [test, prepare-packaging-tools]
     strategy:
       fail-fast: false
       matrix:
@@ -120,25 +155,21 @@ jobs:
             features: --no-default-features
     steps:
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          profile: minimal
-          target: ${{ matrix.triple }}
-          toolchain: stable
+        shell: bash -eux {0}
+        run: |
+          rustup --version
+          rustup show
+          rustup toolchain install stable --profile minimal --target ${{ matrix.triple }}
+          rustup default stable
 
-      - name: Setup deb tools
+      - name: Get packaging tools from cache
         if: runner.os == 'Linux'
-        uses: actions-rs/cargo@v1
+        uses: actions/cache@v3
         with:
-          command: install
-          args: cargo-deb
-      - name: Setup rpm tools
-        if: matrix.rpm
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-generate-rpm
+          key: ${{ runner.os }}-cargo-packaging-tools
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/.crates*
 
       - uses: actions/checkout@v3
         with:
@@ -156,10 +187,7 @@ jobs:
           echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
 
       - name: Fetch dependencies
-        uses: actions-rs/cargo@v1
-        with:
-          command: fetch
-          args: --verbose --locked
+        run: cargo fetch --verbose --locked
 
       - name: Build
         uses: actions-rs/cargo@v1

@@ -207,10 +207,10 @@ impl MqttHistory {
                 .collect::<Vec<_>>();
 
             let meta = match history.last().map(|o| &o.payload) {
-                Some(Payload::String(str)) => format!("= {}", str),
+                Some(Payload::String(str)) => format!("= {str}"),
                 Some(Payload::Json(json)) => format!("= {}", json.dump()),
                 Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_string(),
-                None => format!("({} topics, {} messages)", topics_below, messages_below),
+                None => format!("({topics_below} topics, {messages_below} messages)"),
             };
             let text = vec![Spans::from(vec![
                 Span::styled(leaf.as_ref(), STYLE_BOLD),

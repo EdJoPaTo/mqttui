@@ -8,16 +8,16 @@ pub enum SubCommands {
     /// This works by subscribing to the topic and waiting for messages with the retained flag.
     /// Then a message with an empty payload is published retained which clears the topic on the broker.
     /// Ends on the first non retained message or when the timeout is reached.
-    #[clap(visible_alias = "c", visible_alias = "clean")]
+    #[command(visible_alias = "c", visible_alias = "clean")]
     CleanRetained {
         /// Topic which gets cleaned.
         ///
         /// Supports filters like 'foo/bar/#'.
-        #[clap(value_hint = ValueHint::Other)]
+        #[arg(value_hint = ValueHint::Other)]
         topic: String,
 
         /// When there is no message received for the given time the operation is considered done
-        #[clap(
+        #[arg(
             long,
             value_hint = ValueHint::Other,
             value_name = "SECONDS",
@@ -26,15 +26,15 @@ pub enum SubCommands {
         timeout: f32,
 
         /// Dont clean topics, only log them
-        #[clap(long)]
+        #[arg(long)]
         dry_run: bool,
     },
 
     /// Log values from subscribed topics to stdout
-    #[clap(visible_alias = "l")]
+    #[command(visible_alias = "l")]
     Log {
         /// Topics to watch
-        #[clap(
+        #[arg(
             env = "MQTTUI_TOPIC",
             value_hint = ValueHint::Other,
             default_value = "#",
@@ -42,33 +42,33 @@ pub enum SubCommands {
         topic: Vec<String>,
 
         /// Show full MQTT communication
-        #[clap(short, long)]
+        #[arg(short, long)]
         verbose: bool,
     },
 
     /// Publish a value quickly
-    #[clap(visible_alias = "p", visible_alias = "pub")]
+    #[command(visible_alias = "p", visible_alias = "pub")]
     Publish {
         /// Topic to publish to
-        #[clap(value_hint = ValueHint::Other)]
+        #[arg(value_hint = ValueHint::Other)]
         topic: String,
 
         /// Payload to be published
-        #[clap(value_hint = ValueHint::Unknown)]
+        #[arg(value_hint = ValueHint::Unknown)]
         payload: String,
 
         /// Publish the MQTT message retained
-        #[clap(short, long, env = "MQTTUI_RETAIN")]
+        #[arg(short, long, env = "MQTTUI_RETAIN")]
         retain: bool,
 
         /// Show full MQTT communication
-        #[clap(short, long)]
+        #[arg(short, long)]
         verbose: bool,
     },
 }
 
 #[derive(Debug, Parser)]
-#[clap(about, author, version, name = "MQTT TUI")]
+#[command(about, version)]
 pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<SubCommands>,
@@ -84,7 +84,7 @@ pub struct Cli {
     /// `ws://localhost:9001/path`
     /// `wss://localhost/path`
     /// `wss://localhost:9001/path`
-    #[clap(
+    #[arg(
         short,
         long,
         env = "MQTTUI_BROKER",
@@ -98,7 +98,7 @@ pub struct Cli {
     /// Username to access the mqtt broker.
     ///
     /// Anonymous access when not supplied.
-    #[clap(
+    #[arg(
         short,
         long,
         env = "MQTTUI_USERNAME",
@@ -116,7 +116,7 @@ pub struct Cli {
     ///
     /// Passing the password via command line is insecure as the password can be read from the history!
     /// You should pass it via environment variable.
-    #[clap(
+    #[arg(
         long,
         env = "MQTTUI_PASSWORD",
         value_hint = ValueHint::Other,
@@ -128,7 +128,7 @@ pub struct Cli {
     pub password: Option<String>,
 
     /// Specify the client id to connect with
-    #[clap(
+    #[arg(
         short = 'i',
         long,
         env = "MQTTUI_CLIENTID",
@@ -139,12 +139,12 @@ pub struct Cli {
     pub client_id: Option<String>,
 
     /// Allow insecure TLS connections
-    #[clap(long, global = true)]
+    #[arg(long, global = true)]
     #[cfg(feature = "tls")]
     pub insecure: bool,
 
     /// Topic to watch
-    #[clap(
+    #[arg(
         env = "MQTTUI_TOPIC",
         value_hint = ValueHint::Other,
         default_value = "#",

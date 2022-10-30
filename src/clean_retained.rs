@@ -35,7 +35,7 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: b
                     let qos = format::qos(publish.qos);
                     let size = publish.payload.len();
                     let payload = format::payload(&Payload::new(&publish.payload), size);
-                    println!("QoS:{:11} {:50} {}", qos, publish.topic, payload);
+                    println!("QoS:{qos:11} {topic:50} {payload}");
                 }
                 amount += 1;
                 if !dry_run {
@@ -44,14 +44,14 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: b
             }
             Ok(_) => {}
             Err(err) => {
-                eprintln!("Connection Error: {}", err);
+                eprintln!("Connection Error: {err}");
                 sleep(Duration::from_millis(25));
             }
         }
     }
     if dry_run {
-        println!("Dry run: would have cleaned {} topics", amount);
+        println!("Dry run: would have cleaned {amount} topics");
     } else {
-        println!("Cleaned {} topics", amount);
+        println!("Cleaned {amount} topics");
     }
 }

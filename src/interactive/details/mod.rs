@@ -74,12 +74,12 @@ fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, payload_bytes: usize, pa
 where
     B: Backend,
 {
-    let title = format!("Payload (Bytes: {})", payload_bytes);
+    let title = format!("Payload (Bytes: {payload_bytes})");
     let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
 
     let max_payload_height = area.height / 3;
     #[allow(clippy::cast_possible_truncation)]
-    let payload_height = min(max_payload_height as usize, 2 + items.len() as usize) as u16;
+    let payload_height = min(max_payload_height as usize, 2 + items.len()) as u16;
     let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
 
     let widget = List::new(items).block(Block::default().borders(Borders::ALL).title(title));
@@ -97,7 +97,7 @@ fn draw_payload_json<B>(
 ) where
     B: Backend,
 {
-    let title = format!("JSON Payload (Bytes: {})  (TAB to switch)", bytes);
+    let title = format!("JSON Payload (Bytes: {bytes})  (TAB to switch)");
     let items = root_tree_items_from_json(json);
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(items)

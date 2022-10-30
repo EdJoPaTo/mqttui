@@ -8,7 +8,7 @@ authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
 keywords = ["mqtt", "iot", "tui", "cli", "terminal"]
 categories = ["command-line-utilities", "network-programming"]
 edition = "2021"
-rust-version = "1.57.0"
+rust-version = "1.60.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
@@ -22,15 +22,15 @@ lto = true
 
 [build-dependencies]
 anyhow = "1"
-clap = { version = "3", features = ["deprecated", "derive", "env"] }
-clap_complete = "3"
+clap = { version = "4", features = ["deprecated", "derive", "env"] }
+clap_complete = "4"
 url = "2"
 
 [dependencies]
 anyhow = "1"
 bytes = "1"
 chrono = "0.4"
-clap = { version = "3", features = ["deprecated", "derive", "env", "wrap_help"] }
+clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] }
 crossterm = "0.25"
 ego-tree = "0.6"
 json = "0.12"

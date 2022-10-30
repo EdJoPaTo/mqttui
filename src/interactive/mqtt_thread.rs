@@ -61,15 +61,15 @@ impl MqttThread {
 
     pub fn has_connection_err(&self) -> anyhow::Result<Option<String>> {
         match self.connection_err.read() {
-            Ok(err) => Ok(err.as_ref().map(|err| format!("{}", err))),
-            Err(err) => Err(anyhow::anyhow!("mqtt history thread paniced {}", err)),
+            Ok(err) => Ok(err.as_ref().map(std::string::ToString::to_string)),
+            Err(err) => Err(anyhow::anyhow!("mqtt history thread paniced {err}")),
         }
     }
 
     pub fn get_history(&self) -> anyhow::Result<RwLockReadGuard<MqttHistory>> {
         self.history
             .read()
-            .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {}", err))
+            .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {err}"))
     }
 
     pub fn clean_below(&mut self, topic: &str) -> anyhow::Result<()> {
