@@ -262,7 +262,25 @@ impl App {
                         .change_selected(&visible, CursorMove::PageUp);
                     Refresh::Update
                 }
+                KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::PageUp);
+                    Refresh::Update
+                }
                 KeyCode::PageDown => {
+                    let visible = self
+                        .mqtt_thread
+                        .get_history()?
+                        .get_visible_topics(self.topic_overview.get_opened());
+                    self.topic_overview
+                        .change_selected(&visible, CursorMove::PageDown);
+                    Refresh::Update
+                }
+                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let visible = self
                         .mqtt_thread
                         .get_history()?
