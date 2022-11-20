@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{Parser, ValueHint};
 use url::Url;
 
@@ -150,6 +152,24 @@ pub struct Cli {
         default_value = "#",
     )]
     pub topic: String,
+
+    /// Client cert path
+    #[arg(
+        long = "client-cert",
+        global = true,
+        env = "MQTTUI_CLIENT_CERTIFICATE",
+        value_hint = ValueHint::FilePath
+    )]
+    pub client_cert_path: Option<PathBuf>,
+
+    /// Client private key path
+    #[arg(
+        long = "client-key",
+        global = true,
+        env = "MQTTUI_CLIENT_PRIVATE_KEY",
+        value_hint = ValueHint::FilePath
+    )]
+    pub client_private_key: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]

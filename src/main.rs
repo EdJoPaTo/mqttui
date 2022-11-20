@@ -3,7 +3,6 @@
 use clap::Parser;
 use cli::SubCommands;
 use std::time::Duration;
-
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
 
 mod clean_retained;
@@ -23,7 +22,11 @@ fn main() -> anyhow::Result<()> {
             cli::Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
             #[cfg(feature = "tls")]
             cli::Broker::Ssl { host, port } => (
-                Transport::Tls(mqtt::encryption::create_tls_configuration(matches.insecure)),
+                Transport::Tls(mqtt::encryption::create_tls_configuration(
+                    matches.insecure,
+                    &matches.client_cert_path,
+                    &matches.client_private_key,
+                )?),
                 host.clone(),
                 *port,
             ),
@@ -32,7 +35,11 @@ fn main() -> anyhow::Result<()> {
             cli::Broker::WebSocket(url) => (Transport::Ws, url.to_string(), 666),
             #[cfg(feature = "tls")]
             cli::Broker::WebSocketSsl(url) => (
-                Transport::Wss(mqtt::encryption::create_tls_configuration(matches.insecure)),
+                Transport::Wss(mqtt::encryption::create_tls_configuration(
+                    matches.insecure,
+                    &matches.client_cert_path,
+                    &matches.client_private_key,
+                )?),
                 url.to_string(),
                 666,
             ),
