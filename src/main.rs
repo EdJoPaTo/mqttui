@@ -2,8 +2,8 @@
 
 use clap::Parser;
 use cli::SubCommands;
-use std::time::Duration;
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
+use std::time::Duration;
 
 mod clean_retained;
 mod cli;
@@ -24,8 +24,8 @@ fn main() -> anyhow::Result<()> {
             cli::Broker::Ssl { host, port } => (
                 Transport::Tls(mqtt::encryption::create_tls_configuration(
                     matches.insecure,
-                    &matches.client_cert_path,
-                    &matches.client_private_key,
+                    &matches.client_cert,
+                    &matches.client_key,
                 )?),
                 host.clone(),
                 *port,
@@ -37,8 +37,8 @@ fn main() -> anyhow::Result<()> {
             cli::Broker::WebSocketSsl(url) => (
                 Transport::Wss(mqtt::encryption::create_tls_configuration(
                     matches.insecure,
-                    &matches.client_cert_path,
-                    &matches.client_private_key,
+                    &matches.client_cert,
+                    &matches.client_key,
                 )?),
                 url.to_string(),
                 666,

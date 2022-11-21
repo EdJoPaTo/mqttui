@@ -153,23 +153,27 @@ pub struct Cli {
     )]
     pub topic: String,
 
-    /// Client cert path
+    /// Path to the TLS client certificate file.
+    /// Used together with --client-key to enable TLS client authentication.
+    /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
     #[arg(
         long = "client-cert",
         global = true,
         env = "MQTTUI_CLIENT_CERTIFICATE",
         value_hint = ValueHint::FilePath
     )]
-    pub client_cert_path: Option<PathBuf>,
+    pub client_cert: Option<PathBuf>,
 
-    /// Client private key path
+    /// Path to the TLS client private key.
+    /// Used together with --client-cert to enable TLS client authentication.
+    /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
     #[arg(
         long = "client-key",
         global = true,
         env = "MQTTUI_CLIENT_PRIVATE_KEY",
         value_hint = ValueHint::FilePath
     )]
-    pub client_private_key: Option<PathBuf>,
+    pub client_key: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
