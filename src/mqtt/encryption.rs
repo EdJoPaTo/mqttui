@@ -71,7 +71,7 @@ pub fn read_cert(filename: &Path) -> anyhow::Result<Vec<Certificate>> {
 
     let certs = rustls_pemfile::certs(&mut f)?;
 
-    Ok(certs.into_iter().map(|bytes| Certificate(bytes)).collect())
+    Ok(certs.into_iter().map(Certificate).collect())
 }
 
 pub fn read_priv(filename: &Path) -> anyhow::Result<PrivateKey> {
