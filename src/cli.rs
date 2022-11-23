@@ -157,7 +157,7 @@ pub struct Cli {
     /// Used together with --client-key to enable TLS client authentication.
     /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
     #[arg(
-        long = "client-cert",
+        long,
         global = true,
         env = "MQTTUI_CLIENT_CERTIFICATE",
         value_hint = ValueHint::FilePath
