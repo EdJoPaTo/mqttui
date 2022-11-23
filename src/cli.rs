@@ -168,7 +168,7 @@ pub struct Cli {
     /// Used together with --client-cert to enable TLS client authentication.
     /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
     #[arg(
-        long = "client-key",
+        long,
         global = true,
         env = "MQTTUI_CLIENT_PRIVATE_KEY",
         value_hint = ValueHint::FilePath
