@@ -7,7 +7,6 @@ use std::time::SystemTime;
 use rumqttc::TlsConfiguration;
 use rustls::client::{ServerCertVerified, ServerCertVerifier, WantsTransparencyPolicyOrClientCert};
 use rustls::{Certificate, ClientConfig, ConfigBuilder, PrivateKey};
-use rustls_pemfile::Item;
 
 struct NoVerifier;
 impl ServerCertVerifier for NoVerifier {
@@ -64,8 +63,6 @@ pub fn configure_client_cert_auth(
 }
 
 pub fn read_cert(filename: &Path) -> anyhow::Result<Vec<Certificate>> {
-    println!("cert file is:");
-    debug_pemfile(filename).ok();
     let f = File::open(filename)?;
     let mut f = BufReader::new(f);
 
@@ -75,8 +72,6 @@ pub fn read_cert(filename: &Path) -> anyhow::Result<Vec<Certificate>> {
 }
 
 pub fn read_priv(filename: &Path) -> anyhow::Result<PrivateKey> {
-    println!("priv key file is:");
-    debug_pemfile(filename).ok();
     let f = File::open(filename)?;
     let mut f = BufReader::new(f);
 
@@ -86,24 +81,4 @@ pub fn read_priv(filename: &Path) -> anyhow::Result<PrivateKey> {
     let privkey = PrivateKey(vec);
 
     Ok(privkey)
-}
-
-pub fn debug_pemfile(filename: &Path) -> anyhow::Result<()> {
-    let f = File::open(filename)?;
-    let mut f = BufReader::new(f);
-
-    let keys = rustls_pemfile::read_all(&mut f)?;
-
-    for item in keys.iter() {
-        println!("{:?}", item);
-        match item {
-            Item::X509Certificate(cert) => println!("certificate {:?}", cert),
-            Item::RSAKey(key) => println!("rsa pkcs1 key {:?}", key),
-            Item::PKCS8Key(key) => println!("pkcs8 key {:?}", key),
-            Item::ECKey(key) => println!("sec1 ec key {:?}", key),
-            _ => println!("invalid item!"),
-        }
-    }
-
-    Ok(())
 }
