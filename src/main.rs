@@ -1,9 +1,9 @@
 #![forbid(unsafe_code)]
 
-use std::time::Duration;
 use clap::Parser;
 use cli::SubCommands;
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
+use std::time::Duration;
 
 mod clean_retained;
 mod cli;
