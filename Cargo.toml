@@ -35,7 +35,7 @@ crossterm = "0.25"
 ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
-rumqttc = { version = "0.18", default-features = false }
+rumqttc = { version = "0.19", default-features = false }
 rustls = { version = "0.20", features = ["dangerous_configuration"], optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
 tui = "0.19"
