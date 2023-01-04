@@ -140,6 +140,36 @@ pub struct Cli {
     )]
     pub client_id: Option<String>,
 
+    /// Path to the TLS client certificate file.
+    ///
+    /// Used together with --client-key to enable TLS client authentication.
+    /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
+    #[arg(
+        long,
+        env = "MQTTUI_CLIENT_CERTIFICATE",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        requires = "client_key",
+        global = true,
+    )]
+    #[cfg(feature = "tls")]
+    pub client_cert: Option<PathBuf>,
+
+    /// Path to the TLS client private key.
+    ///
+    /// Used together with --client-cert to enable TLS client authentication.
+    /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
+    #[arg(
+        long,
+        env = "MQTTUI_CLIENT_PRIVATE_KEY",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        requires = "client_cert",
+        global = true,
+    )]
+    #[cfg(feature = "tls")]
+    pub client_key: Option<PathBuf>,
+
     /// Allow insecure TLS connections
     #[arg(long, global = true)]
     #[cfg(feature = "tls")]
@@ -152,28 +182,6 @@ pub struct Cli {
         default_value = "#",
     )]
     pub topic: String,
-
-    /// Path to the TLS client certificate file.
-    /// Used together with --client-key to enable TLS client authentication.
-    /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
-    #[arg(
-        long,
-        global = true,
-        env = "MQTTUI_CLIENT_CERTIFICATE",
-        value_hint = ValueHint::FilePath
-    )]
-    pub client_cert: Option<PathBuf>,
-
-    /// Path to the TLS client private key.
-    /// Used together with --client-cert to enable TLS client authentication.
-    /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
-    #[arg(
-        long,
-        global = true,
-        env = "MQTTUI_CLIENT_PRIVATE_KEY",
-        value_hint = ValueHint::FilePath
-    )]
-    pub client_key: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone)]
