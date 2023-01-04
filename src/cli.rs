@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use clap::{Parser, ValueHint};
 use url::Url;
 
@@ -153,7 +151,7 @@ pub struct Cli {
         global = true,
     )]
     #[cfg(feature = "tls")]
-    pub client_cert: Option<PathBuf>,
+    pub client_cert: Option<std::path::PathBuf>,
 
     /// Path to the TLS client private key.
     ///
@@ -168,7 +166,7 @@ pub struct Cli {
         global = true,
     )]
     #[cfg(feature = "tls")]
-    pub client_key: Option<PathBuf>,
+    pub client_key: Option<std::path::PathBuf>,
 
     /// Allow insecure TLS connections
     #[arg(long, global = true)]
