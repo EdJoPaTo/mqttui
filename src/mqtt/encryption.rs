@@ -25,19 +25,19 @@ impl ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
-    client_cert_path: &Option<PathBuf>,
-    client_key_path: &Option<PathBuf>,
+    client_certificate_path: &Option<PathBuf>,
+    client_private_key_path: &Option<PathBuf>,
 ) -> anyhow::Result<TlsConfiguration> {
-    let certs = rustls_native_certs::load_native_certs().unwrap();
     let mut roots = rustls::RootCertStore::empty();
+    let certs = rustls_native_certs::load_native_certs()?;
     for cert in certs {
         let _ = roots.add(&rustls::Certificate(cert.0));
     }
+
     let conf = ClientConfig::builder()
         .with_safe_defaults()
         .with_root_certificates(roots);
-
-    let mut conf = configure_client_cert_auth(conf, client_cert_path, client_key_path)?;
+    let mut conf = configure_client_auth(conf, client_certificate_path, client_private_key_path)?;
 
     if insecure {
         let mut danger = conf.dangerous();
@@ -47,38 +47,35 @@ pub fn create_tls_configuration(
     Ok(TlsConfiguration::Rustls(Arc::new(conf)))
 }
 
-pub fn configure_client_cert_auth(
+fn configure_client_auth(
     conf: ConfigBuilder<ClientConfig, WantsTransparencyPolicyOrClientCert>,
-    client_cert_path: &Option<PathBuf>,
-    client_key_path: &Option<PathBuf>,
+    certificate_path: &Option<PathBuf>,
+    private_key_path: &Option<PathBuf>,
 ) -> anyhow::Result<ClientConfig> {
-    if let (Some(client_cert_path), Some(priv_key_path)) = (client_cert_path, client_key_path) {
-        let client_cert = read_cert(client_cert_path)?;
-        let private_key = read_priv(priv_key_path)?;
-
-        Ok(conf.with_single_cert(client_cert, private_key)?)
+    if let (Some(certificate_path), Some(private_key_path)) = (certificate_path, private_key_path) {
+        Ok(conf.with_single_cert(
+            read_certificate_file(certificate_path)?,
+            read_private_key_file(private_key_path)?,
+        )?)
     } else {
         Ok(conf.with_no_client_auth())
     }
 }
 
-pub fn read_cert(filename: &Path) -> anyhow::Result<Vec<Certificate>> {
-    let f = File::open(filename)?;
-    let mut f = BufReader::new(f);
-
-    let certs = rustls_pemfile::certs(&mut f)?;
-
+fn read_certificate_file(file: &Path) -> anyhow::Result<Vec<Certificate>> {
+    let file = File::open(file)?;
+    let mut file = BufReader::new(file);
+    let certs = rustls_pemfile::certs(&mut file)?;
     Ok(certs.into_iter().map(Certificate).collect())
 }
 
-pub fn read_priv(filename: &Path) -> anyhow::Result<PrivateKey> {
-    let f = File::open(filename)?;
-    let mut f = BufReader::new(f);
-
-    let keys = rustls_pemfile::pkcs8_private_keys(&mut f)?;
-    let vec = keys[0].clone();
-
-    let privkey = PrivateKey(vec);
-
-    Ok(privkey)
+fn read_private_key_file(file: &Path) -> anyhow::Result<PrivateKey> {
+    let file = File::open(file)?;
+    let mut file = BufReader::new(file);
+    let keys = rustls_pemfile::pkcs8_private_keys(&mut file)?;
+    if let [key] = keys.as_slice() {
+        Ok(PrivateKey(key.clone()))
+    } else {
+        anyhow::bail!("Private key file must contain exactly one key");
+    }
 }
