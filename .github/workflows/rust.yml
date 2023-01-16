@@ -51,7 +51,7 @@ jobs:
           # Sometimes old rust versions don't yet have the lints (allow unknown) or don't have fixes in lints (false positives -> don't error, just warn).
           # When a certain distro is a target look up its version: https://repology.org/project/rust/versions
           - os: ubuntu-22.04
-            toolchain: 1.60.0
+            toolchain: 1.64.0
             clippyargs: -A unknown-lints
             features: --all-features
     steps:
