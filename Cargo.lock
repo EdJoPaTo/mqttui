@@ -651,6 +651,7 @@ dependencies = [
  "rumqttc",
  "rustls",
  "rustls-native-certs",
+ "rustls-pemfile 1.0.1",
  "tui",
  "tui-tree-widget",
  "url",
