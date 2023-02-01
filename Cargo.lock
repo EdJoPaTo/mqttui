@@ -639,7 +639,7 @@ dependencies = [
  "rumqttc",
  "rustls",
  "rustls-native-certs",
- "rustls-pemfile 1.0.2",
+ "rustls-pemfile",
  "tui",
  "tui-tree-widget",
  "url",
@@ -878,9 +878,9 @@ dependencies = [
 
 [[package]]
 name = "rumqttc"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e17ff7ccc0a8d360c7d5cc8f282604a5592133efbefa47cb62cc2e7df91a65d"
+checksum = "8b616bf8b706c2a6235604f5d93f9578c37d0c6161e13898b68a1da4af2d812c"
 dependencies = [
  "async-tungstenite",
  "bytes",
@@ -890,7 +890,7 @@ dependencies = [
  "log",
  "pollster",
  "rustls-native-certs",
- "rustls-pemfile 0.3.0",
+ "rustls-pemfile",
  "thiserror",
  "tokio",
  "tokio-rustls",
@@ -939,18 +939,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0167bac7a9f490495f3c33013e7722b53cb087ecbe082fb0c6387c96f634ea50"
 dependencies = [
  "openssl-probe",
- "rustls-pemfile 1.0.2",
+ "rustls-pemfile",
  "schannel",
  "security-framework",
-]
-
-[[package]]
-name = "rustls-pemfile"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ee86d63972a7c661d1536fefe8c3c8407321c3df668891286de28abcd087360"
-dependencies = [
- "base64 0.13.1",
 ]
 
 [[package]]
