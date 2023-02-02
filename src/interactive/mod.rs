@@ -453,9 +453,12 @@ impl App {
 
         let history = self.mqtt_thread.get_history()?;
 
-        #[allow(clippy::option_if_let_else)]
-        let overview_area = if let Some(selected_topic) = self.topic_overview.get_selected() {
-            if let Some(topic_history) = history.get(selected_topic) {
+        let overview_area = self
+            .topic_overview
+            .get_selected()
+            .as_ref()
+            .and_then(|selected_topic| history.get(selected_topic))
+            .map_or(main_area, |topic_history| {
                 let x = width / 3;
                 let details_area = Rect {
                     width: width - x,
@@ -475,12 +478,7 @@ impl App {
                     x: 0,
                     ..main_area
                 }
-            } else {
-                main_area
-            }
-        } else {
-            main_area
-        };
+            });
 
         let (topic_amount, tree_items) = history.to_tree_items();
         self.topic_overview.ensure_state(&history);
