@@ -30,8 +30,6 @@ pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
 /// helper function to create a centered rect using up certain percentage of the available rect `r`
 fn popup_area(r: Rect) -> Rect {
     let height = 6;
-    // manual_clamp is not yet on Rust stable
-    #[allow(unknown_lints)]
     // The order is important here. Clamp just panics on min > max which is not what is wanted.
     #[allow(clippy::manual_clamp)]
     let width = (r.width.saturating_mul(4) / 5)
