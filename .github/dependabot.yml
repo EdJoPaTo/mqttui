@@ -11,6 +11,9 @@ updates:
       time: "02:42" # UTC
     commit-message:
       prefix: "build(cargo):"
+    ignore:
+      - dependency-name: crossterm
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
