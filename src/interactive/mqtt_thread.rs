@@ -24,9 +24,7 @@ impl MqttThread {
     ) -> anyhow::Result<Self> {
         // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
         for notification in connection.iter() {
-            if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
-                notification.expect("connection error")
-            {
+            if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) = notification? {
                 client.subscribe(&subscribe_topic, QoS::ExactlyOnce)?;
                 break;
             }

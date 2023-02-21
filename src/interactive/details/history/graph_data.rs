@@ -32,12 +32,9 @@ impl Point {
                     JsonValue::Null | JsonValue::Object(_) => None,
                 }
             }
-        }?;
-        if y.is_finite() {
-            Some(Self { time, y })
-        } else {
-            None
         }
+        .filter(|y| y.is_finite())?;
+        Some(Self { time, y })
     }
 
     fn as_graph_point(&self) -> (f64, f64) {

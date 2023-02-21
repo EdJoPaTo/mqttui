@@ -199,7 +199,7 @@ pub enum Broker {
     WebSocketSsl(Url),
 }
 
-impl std::str::FromStr for Broker {
+impl core::str::FromStr for Broker {
     type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let url = Url::parse(s)?;
@@ -220,12 +220,18 @@ impl std::str::FromStr for Broker {
 
         let broker = match url.scheme() {
             "mqtt" => Self::Tcp {
-                host: url.host_str().unwrap().to_string(),
+                host: url
+                    .host_str()
+                    .ok_or_else(|| anyhow::anyhow!("Broker requires a Host"))?
+                    .to_string(),
                 port: url.port().unwrap_or(1883),
             },
             #[cfg(feature = "tls")]
             "mqtts" => Self::Ssl {
-                host: url.host_str().unwrap().to_string(),
+                host: url
+                    .host_str()
+                    .ok_or_else(|| anyhow::anyhow!("Broker requires a Host"))?
+                    .to_string(),
                 port: url.port().unwrap_or(8883),
             },
             #[cfg(feature = "tls")]
