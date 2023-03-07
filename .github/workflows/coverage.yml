@@ -5,37 +5,36 @@ on:
   pull_request:
 
 jobs:
-  tarpaulin:
+  coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Rust
         shell: bash -eux {0}
         run: |
-          rustup toolchain install stable --profile minimal
+          rustup toolchain install stable --profile minimal --component llvm-tools-preview
           rustup default stable
 
-      - name: Install cargo-tarpaulin
+      - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-tarpaulin
+          tool: cargo-llvm-cov
 
       - uses: actions/checkout@v3
 
       - uses: actions/cache@v3
         with:
-          key: tarpaulin-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: tarpaulin-
+          key: coverage-${{ hashFiles('**/Cargo.lock') }}
           path: |
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
 
-      - name: Run cargo-tarpaulin
-        run: cargo tarpaulin --all-features --out Html
+      - name: Run cargo-llvm-cov
+        run: cargo llvm-cov --all-features --html
 
       - name: Upload Report
         uses: actions/upload-artifact@v3
         with:
-          name: report
-          path: tarpaulin-report.html
+          name: coverage-report
+          path: target/llvm-cov/html
