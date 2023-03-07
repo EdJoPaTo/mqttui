@@ -88,6 +88,7 @@ jobs:
 
   prepare-packaging-tools:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Setup Rust
         shell: bash -eux {0}
@@ -108,6 +109,8 @@ jobs:
     name: Release ${{ matrix.triple }}
     runs-on: ${{ matrix.os }}
     needs: [test, prepare-packaging-tools]
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
