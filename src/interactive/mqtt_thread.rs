@@ -87,12 +87,9 @@ fn thread_logic(
     history: &HistoryArc,
 ) {
     for notification in connection.iter() {
-        let mut connection_err = connection_err.write().unwrap();
-
         match notification {
             Ok(e) => {
-                *connection_err = None;
-
+                *connection_err.write().unwrap() = None;
                 match e {
                     rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(ack)) => {
                         if !ack.session_present {
@@ -113,8 +110,7 @@ fn thread_logic(
                 }
             }
             Err(err) => {
-                *connection_err = Some(err);
-                drop(connection_err);
+                *connection_err.write().unwrap() = Some(err);
                 sleep(Duration::from_millis(25));
             }
         };

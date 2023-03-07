@@ -489,6 +489,7 @@ impl App {
             &tree_items,
             matches!(self.focus, ElementInFocus::TopicOverview),
         );
+        drop(history);
 
         if let ElementInFocus::CleanRetainedPopup(topic) = &self.focus {
             clean_retained::draw_popup(f, topic);
