@@ -47,8 +47,6 @@ fn draw_table<B>(
         .collect::<Vec<_>>();
     let amount_without_retain = without_retain.len().saturating_sub(1);
     if amount_without_retain > 0 {
-        title += ", every ~";
-
         let first = without_retain
             .first()
             .expect("is not empty")
@@ -66,10 +64,17 @@ fn draw_table<B>(
 
         let seconds_since_start = last - first;
         let message_every_n_seconds = seconds_since_start as f64 / amount_without_retain as f64;
-        if message_every_n_seconds < 100.0 {
-            let _ = write!(title, "{message_every_n_seconds:.1} seconds");
+        if message_every_n_seconds < 1.0 {
+            let messages_per_second = 1.0 / message_every_n_seconds;
+            let _ = write!(title, ", ~{messages_per_second:.1} per second");
+        } else if message_every_n_seconds < 100.0 {
+            let _ = write!(title, ", every ~{message_every_n_seconds:.1} seconds");
         } else {
-            let _ = write!(title, "{:.1} minutes", message_every_n_seconds / 60.0);
+            let _ = write!(
+                title,
+                ", every ~{:.1} minutes",
+                message_every_n_seconds / 60.0
+            );
         }
     }
     title += ")";

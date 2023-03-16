@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.18.0] - 2022-10-06
 
+### Added
+
+- Show messages per second instead of every n seconds when >1 per second
+
 ### Changed
 
 - Smaller Info Header at the top (only 2 lines instead of 5)
