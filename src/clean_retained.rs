@@ -30,7 +30,7 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: b
                     client.disconnect().unwrap();
                     continue;
                 }
-                let topic = publish.topic.clone();
+                let topic = &publish.topic;
                 {
                     let qos = format::qos(publish.qos);
                     let size = publish.payload.len();

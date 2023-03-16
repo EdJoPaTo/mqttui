@@ -15,7 +15,7 @@ pub fn get_selected_subvalue<'a>(
 ) -> Option<&'a JsonValue> {
     let mut current = root;
     for select in selection {
-        current = get_nth_subvalue(current, select.to_owned())?;
+        current = get_nth_subvalue(current, *select)?;
     }
 
     Some(current)

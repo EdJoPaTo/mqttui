@@ -88,7 +88,7 @@ fn main() -> anyhow::Result<()> {
         }
         None => {
             let broker = matches.broker;
-            interactive::show(client.clone(), connection, &broker, &matches.topic)?;
+            interactive::show(client.clone(), connection, &broker, matches.topic)?;
             client.disconnect()?;
         }
     }

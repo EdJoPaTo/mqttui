@@ -61,10 +61,9 @@ pub fn show(
     client: Client,
     connection: Connection,
     broker: &Broker,
-    subscribe_topic: &str,
+    subscribe_topic: String,
 ) -> anyhow::Result<()> {
-    let mqtt_thread =
-        mqtt_thread::MqttThread::new(client, connection, subscribe_topic.to_string())?;
+    let mqtt_thread = mqtt_thread::MqttThread::new(client, connection, subscribe_topic)?;
     let mut app = App::new(broker, mqtt_thread);
 
     enable_raw_mode()?;

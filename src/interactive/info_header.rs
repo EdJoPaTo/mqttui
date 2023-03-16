@@ -28,7 +28,7 @@ impl InfoHeader {
     ) where
         B: Backend,
     {
-        let mut text = vec![Spans::from(self.title.clone())];
+        let mut text = vec![Spans::from(self.title.as_str())];
 
         if let Some(err) = connection_error {
             const STYLE: Style = Style {
