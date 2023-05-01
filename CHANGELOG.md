@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- TLS client certificate authentication
 - Interactive: Vim paging keys
 - Interactive: Show messages per second instead of every n seconds when >1 per second
+
+### Changed
+
+- Performance: drop mutex locks faster
+- Performance: less variable clones
 
 ## [0.18.0] - 2022-10-06
 
