@@ -9,13 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Vim paging keys
+- Interactive: Vim paging keys
+- Interactive: Show messages per second instead of every n seconds when >1 per second
 
 ## [0.18.0] - 2022-10-06
-
-### Added
-
-- Show messages per second instead of every n seconds when >1 per second
 
 ### Changed
 
