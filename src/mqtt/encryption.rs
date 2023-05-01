@@ -31,7 +31,7 @@ pub fn create_tls_configuration(
     let mut roots = rustls::RootCertStore::empty();
     let certs = rustls_native_certs::load_native_certs()?;
     for cert in certs {
-        let _ = roots.add(&rustls::Certificate(cert.0));
+        _ = roots.add(&rustls::Certificate(cert.0));
     }
 
     let conf = ClientConfig::builder()
