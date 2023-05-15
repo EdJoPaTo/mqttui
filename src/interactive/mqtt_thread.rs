@@ -20,14 +20,17 @@ impl MqttThread {
     pub fn new(
         mut client: Client,
         mut connection: Connection,
-        subscribe_topic: String,
+        subscribe_topic: Vec<String>,
     ) -> anyhow::Result<Self> {
         // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
         for notification in connection.iter() {
             if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) = notification? {
-                client.subscribe(&subscribe_topic, QoS::ExactlyOnce)?;
                 break;
             }
+        }
+
+        for t in &subscribe_topic {
+            client.subscribe(t, QoS::ExactlyOnce)?;
         }
 
         let connection_err = Arc::new(RwLock::new(None));
@@ -82,7 +85,7 @@ impl MqttThread {
 fn thread_logic(
     mut client: Client,
     mut connection: Connection,
-    subscribe_topic: &str,
+    subscribe_topic: &[String],
     connection_err: &ConnectionErrorArc,
     history: &HistoryArc,
 ) {
@@ -91,9 +94,9 @@ fn thread_logic(
             Ok(e) => {
                 *connection_err.write().unwrap() = None;
                 match e {
-                    rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(ack)) => {
-                        if !ack.session_present {
-                            client.subscribe(subscribe_topic, QoS::ExactlyOnce).unwrap();
+                    rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) => {
+                        for t in subscribe_topic {
+                            client.subscribe(t, QoS::ExactlyOnce).unwrap();
                         }
                     }
                     rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish)) => {

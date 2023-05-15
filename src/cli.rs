@@ -179,7 +179,7 @@ pub struct Cli {
         value_hint = ValueHint::Other,
         default_value = "#",
     )]
-    pub topic: String,
+    pub topic: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
