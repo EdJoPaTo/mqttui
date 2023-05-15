@@ -37,7 +37,7 @@ pub enum SubCommands {
         #[arg(
             env = "MQTTUI_TOPIC",
             value_hint = ValueHint::Other,
-            default_value = "#",
+            default_values_t = vec!["#".to_string(), "$SYS/#".to_string()],
         )]
         topic: Vec<String>,
 
@@ -177,7 +177,7 @@ pub struct Cli {
     #[arg(
         env = "MQTTUI_TOPIC",
         value_hint = ValueHint::Other,
-        default_value = "#",
+        default_values_t = vec!["#".to_string(), "$SYS/#".to_string()],
     )]
     pub topic: Vec<String>,
 }
