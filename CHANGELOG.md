@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interactive: Vim paging keys
 - Interactive: Show messages per second instead of every n seconds when >1 per second
 - Interactive: Allow to subscribe to multiple topics
+- ReadOne: New Subcommand to receive one payload from a given topic
 
 ### Changed
 

@@ -46,6 +46,33 @@ pub enum SubCommands {
         verbose: bool,
     },
 
+    /// Wait for the first message on the given topic(s) and return its payload to stdout.
+    ///
+    /// Returns exactly one payload of the first received message on the given topic(s).
+    /// The topic of the received message is printed to stderr.
+    /// This means that you can handle stdout and stderr separately.
+    ///
+    /// This can be helpful for scripting to get the current temperature reading and pipe it to somewhere else:
+    ///
+    /// `echo "The temperature is $(mqttui read-one room/temp)"`
+    ///
+    /// When the payload is parsable JSON its printed as single line non-pretty JSON.
+    /// When the payload is not unicode the process exists without printing anything to stdout and with exit code 1.
+    #[command(visible_alias = "r", visible_alias = "read")]
+    ReadOne {
+        /// Topics to watch
+        #[arg(
+            env = "MQTTUI_TOPIC",
+            value_hint = ValueHint::Other,
+            default_value = "#",
+        )]
+        topic: Vec<String>,
+
+        /// Do not return on a retained message on connection, wait for another message to arrive
+        #[arg(long, short = 'r')]
+        ignore_retained: bool,
+    },
+
     /// Publish a value quickly
     #[command(visible_alias = "p", visible_alias = "pub")]
     Publish {

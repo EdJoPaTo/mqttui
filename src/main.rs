@@ -14,6 +14,7 @@ mod json_view;
 mod log;
 mod mqtt;
 mod publish;
+mod read_one;
 
 fn main() -> anyhow::Result<()> {
     let matches = cli::Cli::parse();
@@ -76,6 +77,15 @@ fn main() -> anyhow::Result<()> {
                 client.subscribe(topic, QoS::AtLeastOnce)?;
             }
             log::show(connection, verbose);
+        }
+        Some(SubCommands::ReadOne {
+            topic,
+            ignore_retained,
+        }) => {
+            for topic in topic {
+                client.subscribe(topic, QoS::AtLeastOnce)?;
+            }
+            read_one::show(client, connection, ignore_retained);
         }
         Some(SubCommands::Publish {
             topic,
