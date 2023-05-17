@@ -76,6 +76,26 @@ mqttui log "topic1" "topic2"
 mqttui log --help
 ```
 
+### Read a single payload to stdout
+
+In scripts, it's helpful to get the current payload of a specific topic.
+
+```bash
+# Print the first received message to stdout and the topic to stderr
+mqttui read-one room/temp
+
+# Save the payload to a bash variable to use it
+temp=$(mqttui read-one room/temp)
+echo "The temperature is $temp right now"
+
+# Wait for a non retained message (default when there is none)
+temp=$(mqttui read-one --ignore-retained room/temp)
+echo "Breaking news: We just received an updated temperature of $temp"
+
+# More arguments and details
+mqttui read-one --help
+```
+
 ### Clean retained topics
 
 Use the interactive TUI and press Delete or Backspace on a topic to clean the tree or use the subcommand.
@@ -105,7 +125,7 @@ mqttui clean-arguments --help
 
 See the `--help` command for environment variables to be set.
 
-Personally I have set my default broker so I don't have to use `--broker` all the time:
+Personally I have set my default broker, so I don't have to use `--broker` all the time:
 
 ```bash
 export MQTTUI_BROKER=mqtt://pi-home.local
@@ -126,7 +146,7 @@ mqttui "topic"
 
 #### Homebrew (Mac or Linux)
 
-```
+```bash
 brew install mqttui
 ```
 
