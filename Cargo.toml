@@ -48,6 +48,7 @@ url = "2"
 depends = ""
 assets = [
     ["target/release/mqttui", "/usr/bin/mqttui", "755"],
+    ["CHANGELOG.md", "/usr/share/doc/mqttui/CHANGELOG.md", "644"],
     ["LICENSE", "/usr/share/licenses/mqttui/LICENSE", "644"],
     ["README.md", "/usr/share/doc/mqttui/README.md", "644"],
 
@@ -60,6 +61,7 @@ assets = [
 [package.metadata.generate-rpm]
 assets = [
     { source = "target/release/mqttui", dest = "/usr/bin/mqttui", mode = "755" },
+    { source = "CHANGELOG.md", dest = "/usr/share/doc/mqttui/CHANGELOG.md", mode = "644", doc = true },
     { source = "LICENSE", dest = "/usr/share/licenses/mqttui/LICENSE", mode = "644", doc = true },
     { source = "README.md", dest = "/usr/share/doc/mqttui/README.md", mode = "644", doc = true },
 
