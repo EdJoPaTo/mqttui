@@ -40,7 +40,7 @@ rustls = { version = "0.20", features = ["dangerous_configuration"], optional = 
 rustls-native-certs = { version = "0.6", optional = true }
 rustls-pemfile = { version = "1", optional = true }
 tui = "0.19"
-tui-tree-widget = "0.11"
+tui-tree-widget = "0.12"
 url = "2"
 
 # https://crates.io/crates/cargo-deb
