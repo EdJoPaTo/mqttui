@@ -1,0 +1,13 @@
+{
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=827846
+	"recommendations": [
+		"vadimcn.vscode-lldb",
+		"mutantdino.resourcemonitor",
+		"rust-lang.rust-analyzer",
+		"tamasfe.even-better-toml",
+		"serayuzgur.crates",
+		"ms-azuretools.vscode-docker",
+		"ms-vscode-remote.vscode-remote-extensionpack",
+		"usernamehw.errorlens"
+	]
+}

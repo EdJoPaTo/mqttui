@@ -2,3 +2,10 @@
 
 /perf.data*
 /flamegraph.svg
+
+.vs/*
+.vscode/*
+!.vscode/extensions.json
+
+#Exclude macos metadata
+**/.DS_Store
