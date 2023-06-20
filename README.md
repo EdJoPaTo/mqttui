@@ -150,6 +150,16 @@ mqttui "topic"
 brew install mqttui
 ```
 
+#### Vscode [Devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)
+
+Windows users `Shift+CTRL+P` then select `Dev Containers: Clone Repository in Container Volume`, enter the URL of this repository.
+
+```bash
+#open a bash terminal
+cargo build
+./target/debug/mqttui --help
+```
+
 #### Other
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
