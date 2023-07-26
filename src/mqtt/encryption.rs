@@ -53,7 +53,7 @@ fn configure_client_auth(
     private_key_path: &Option<PathBuf>,
 ) -> anyhow::Result<ClientConfig> {
     if let (Some(certificate_path), Some(private_key_path)) = (certificate_path, private_key_path) {
-        Ok(conf.with_single_cert(
+        Ok(conf.with_client_auth_cert(
             read_certificate_file(certificate_path)?,
             read_private_key_file(private_key_path)?,
         )?)
