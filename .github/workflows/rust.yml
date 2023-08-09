@@ -210,7 +210,7 @@ jobs:
         run: cargo deb --verbose --no-build --no-strip --target ${{ matrix.triple }} --output ${{ env.ARTIFACT_NAME }}.deb
       - name: Package rpm
         if: matrix.rpm
-        run: cargo generate-rpm --auto-req no --target ${{ matrix.triple }} --output ${{ env.ARTIFACT_NAME }}.rpm
+        run: cargo generate-rpm --auto-req disabled --target ${{ matrix.triple }} --output ${{ env.ARTIFACT_NAME }}.rpm
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
