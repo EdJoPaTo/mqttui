@@ -59,8 +59,9 @@ impl TopicOverview {
         let widget = Tree::new(tree_items)
             .block(
                 Block::default()
-                    .borders(Borders::ALL)
+                    .borders(Borders::TOP)
                     .border_style(Style::default().fg(focus_color))
+                    .title_alignment(tui::layout::Alignment::Center)
                     .title(title),
             )
             .highlight_style(Style::default().fg(Color::Black).bg(focus_color));
