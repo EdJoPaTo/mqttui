@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Borderless Topic view for more characters of topic names
+- Display broker text easier to read
 
 ## [0.19.0] - 2023-05-17
 

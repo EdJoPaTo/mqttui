@@ -272,6 +272,30 @@ impl core::str::FromStr for Broker {
     }
 }
 
+impl std::fmt::Display for Broker {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Tcp { host, port } => {
+                if *port == 1883 {
+                    f.write_str("mqtt://")?;
+                    f.write_str(host)
+                } else {
+                    f.write_fmt(format_args!("mqtt://{host}@{port}"))
+                }
+            }
+            Self::Ssl { host, port } => {
+                if *port == 8883 {
+                    f.write_str("mqtts://")?;
+                    f.write_str(host)
+                } else {
+                    f.write_fmt(format_args!("mqtts://{host}@{port}"))
+                }
+            }
+            Self::WebSocket(url) | Self::WebSocketSsl(url) => f.write_str(url.as_str()),
+        }
+    }
+}
+
 #[test]
 fn verify() {
     use clap::CommandFactory;

@@ -15,7 +15,7 @@ pub struct InfoHeader {
 impl InfoHeader {
     pub fn new(broker: &Broker) -> Self {
         Self {
-            title: format!("MQTT TUI {} @ {broker:?}", env!("CARGO_PKG_VERSION")),
+            title: format!("MQTT TUI {} @ {broker}", env!("CARGO_PKG_VERSION")),
         }
     }
 
