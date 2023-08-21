@@ -14,9 +14,8 @@ use crossterm::terminal::{
 use json::JsonValue;
 use rumqttc::{Client, Connection};
 use tui::backend::Backend;
-use tui::layout::Rect;
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
+use tui::layout::{Alignment, Rect};
+use tui::text::Span;
 use tui::widgets::Paragraph;
 use tui::Frame;
 use tui::{backend::CrosstermBackend, Terminal};
@@ -28,13 +27,14 @@ use crate::json_view::root_tree_items_from_json;
 
 mod clean_retained;
 mod details;
-mod info_header;
+mod footer;
+mod mqtt_error_widget;
 mod mqtt_history;
 mod mqtt_thread;
 mod topic_overview;
 mod ui;
 
-enum ElementInFocus {
+pub enum ElementInFocus {
     TopicOverview,
     JsonPayload,
     CleanRetainedPopup(String),
@@ -176,7 +176,7 @@ where
 struct App {
     details: details::Details,
     focus: ElementInFocus,
-    info_header: info_header::InfoHeader,
+    footer: footer::Footer,
     mqtt_thread: mqtt_thread::MqttThread,
     topic_overview: topic_overview::TopicOverview,
 }
@@ -186,7 +186,7 @@ impl App {
         Self {
             details: details::Details::default(),
             focus: ElementInFocus::TopicOverview,
-            info_header: info_header::InfoHeader::new(broker),
+            footer: footer::Footer::new(broker),
             mqtt_thread,
             topic_overview: topic_overview::TopicOverview::default(),
         }
@@ -422,33 +422,51 @@ impl App {
     where
         B: Backend,
     {
+        const HEADER_HEIGHT: u16 = 1;
+        const FOOTER_HEIGHT: u16 = 1;
+
+        let connection_error = self.mqtt_thread.has_connection_err().unwrap();
+
         let area = f.size();
         let Rect { width, height, .. } = area;
         debug_assert_eq!(area.x, 0);
         debug_assert_eq!(area.y, 0);
+
         let header_area = Rect {
-            height: 2,
+            height: HEADER_HEIGHT,
             y: 0,
             ..area
         };
-        let main_area = Rect {
-            height: height - 3,
-            y: 2,
-            ..area
-        };
-        let key_hint_area = Rect {
-            height: 1,
+        let footer_area = Rect {
+            height: FOOTER_HEIGHT,
             y: height - 1,
             ..area
         };
+        let error_height = if connection_error.is_some() { 4 } else { 0 };
+        let error_area = Rect {
+            height: error_height,
+            y: height
+                .saturating_sub(FOOTER_HEIGHT)
+                .saturating_sub(error_height),
+            ..area
+        };
+        let main_area = Rect {
+            height: height
+                .saturating_sub(HEADER_HEIGHT + FOOTER_HEIGHT)
+                .saturating_sub(error_height),
+            y: HEADER_HEIGHT,
+            ..area
+        };
 
-        self.info_header.draw(
-            f,
-            header_area,
-            self.mqtt_thread.has_connection_err().unwrap(),
-            self.topic_overview.get_selected(),
-        );
-        draw_key_hints(f, key_hint_area, &self.focus);
+        if let Some(topic) = self.topic_overview.get_selected() {
+            let paragraph = Paragraph::new(Span::styled(topic, ui::STYLE_BOLD));
+            f.render_widget(paragraph.alignment(Alignment::Center), header_area);
+        }
+
+        self.footer.draw(f, footer_area, &self.focus);
+        if let Some(connection_error) = connection_error {
+            mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
+        }
 
         let history = self.mqtt_thread.get_history()?;
 
@@ -495,41 +513,4 @@ impl App {
         }
         Ok(())
     }
-}
-
-fn draw_key_hints<B>(f: &mut Frame<B>, area: Rect, focus: &ElementInFocus)
-where
-    B: Backend,
-{
-    const STYLE: Style = Style {
-        fg: Some(Color::Black),
-        bg: Some(Color::White),
-        add_modifier: Modifier::BOLD,
-        sub_modifier: Modifier::empty(),
-    };
-    f.render_widget(
-        Paragraph::new(Spans::from(match focus {
-            ElementInFocus::TopicOverview => vec![
-                Span::styled("q", STYLE),
-                Span::from(" Quit  "),
-                Span::styled("Tab", STYLE),
-                Span::from(" Switch to JSON Payload  "),
-                Span::styled("Del", STYLE),
-                Span::from(" Clean retained  "),
-            ],
-            ElementInFocus::JsonPayload => vec![
-                Span::styled("q", STYLE),
-                Span::from(" Quit  "),
-                Span::styled("Tab", STYLE),
-                Span::from(" Switch to Topics  "),
-            ],
-            ElementInFocus::CleanRetainedPopup(_) => vec![
-                Span::styled("Enter", STYLE),
-                Span::from(" Clean topic tree  "),
-                Span::styled("Any", STYLE),
-                Span::from(" Abort  "),
-            ],
-        })),
-        area,
-    );
 }

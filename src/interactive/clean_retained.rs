@@ -9,6 +9,7 @@ pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
     let block = Block::default()
         .border_style(Style::default().fg(Color::Red))
         .borders(Borders::ALL)
+        .title_alignment(Alignment::Center)
         .title("Clean retained topics");
     let text = vec![
         Spans::from("Clean the following topic and all relative below?"),
