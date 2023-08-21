@@ -283,6 +283,7 @@ impl std::fmt::Display for Broker {
                     f.write_fmt(format_args!("mqtt://{host}@{port}"))
                 }
             }
+            #[cfg(feature = "tls")]
             Self::Ssl { host, port } => {
                 if *port == 8883 {
                     f.write_str("mqtts://")?;
@@ -291,6 +292,7 @@ impl std::fmt::Display for Broker {
                     f.write_fmt(format_args!("mqtts://{host}@{port}"))
                 }
             }
+            #[cfg(feature = "tls")]
             Self::WebSocket(url) | Self::WebSocketSsl(url) => f.write_str(url.as_str()),
         }
     }
