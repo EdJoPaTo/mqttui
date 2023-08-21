@@ -47,25 +47,25 @@ url = "2"
 [package.metadata.deb]
 depends = ""
 assets = [
-    ["target/release/mqttui", "/usr/bin/mqttui", "755"],
-    ["CHANGELOG.md", "/usr/share/doc/mqttui/CHANGELOG.md", "644"],
-    ["LICENSE", "/usr/share/licenses/mqttui/LICENSE", "644"],
-    ["README.md", "/usr/share/doc/mqttui/README.md", "644"],
+	["target/release/mqttui", "/usr/bin/mqttui", "755"],
+	["CHANGELOG.md", "/usr/share/doc/mqttui/CHANGELOG.md", "644"],
+	["LICENSE", "/usr/share/licenses/mqttui/LICENSE", "644"],
+	["README.md", "/usr/share/doc/mqttui/README.md", "644"],
 
-    ["target/completions/mqttui.bash", "/usr/share/bash-completion/completions/mqttui", "644"],
-    ["target/completions/mqttui.fish", "/usr/share/fish/completions/mqttui.fish", "644"],
-    ["target/completions/_mqttui", "/usr/share/zsh/site-functions/_mqttui", "644"],
+	["target/completions/mqttui.bash", "/usr/share/bash-completion/completions/mqttui", "644"],
+	["target/completions/mqttui.fish", "/usr/share/fish/completions/mqttui.fish", "644"],
+	["target/completions/_mqttui", "/usr/share/zsh/site-functions/_mqttui", "644"],
 ]
 
 # https://crates.io/crates/cargo-generate-rpm
 [package.metadata.generate-rpm]
 assets = [
-    { source = "target/release/mqttui", dest = "/usr/bin/mqttui", mode = "755" },
-    { source = "CHANGELOG.md", dest = "/usr/share/doc/mqttui/CHANGELOG.md", mode = "644", doc = true },
-    { source = "LICENSE", dest = "/usr/share/licenses/mqttui/LICENSE", mode = "644", doc = true },
-    { source = "README.md", dest = "/usr/share/doc/mqttui/README.md", mode = "644", doc = true },
+	{ source = "target/release/mqttui", dest = "/usr/bin/mqttui", mode = "755" },
+	{ source = "CHANGELOG.md", dest = "/usr/share/doc/mqttui/CHANGELOG.md", mode = "644", doc = true },
+	{ source = "LICENSE", dest = "/usr/share/licenses/mqttui/LICENSE", mode = "644", doc = true },
+	{ source = "README.md", dest = "/usr/share/doc/mqttui/README.md", mode = "644", doc = true },
 
-    { source = "target/completions/mqttui.bash", dest = "/usr/share/bash-completion/completions/mqttui", mode = "644" },
-    { source = "target/completions/mqttui.fish", dest = "/usr/share/fish/vendor_completions.d/mqttui.fish", mode = "644" },
-    { source = "target/completions/_mqttui", dest = "/usr/share/zsh/site-functions/_mqttui", mode = "644" },
+	{ source = "target/completions/mqttui.bash", dest = "/usr/share/bash-completion/completions/mqttui", mode = "644" },
+	{ source = "target/completions/mqttui.fish", dest = "/usr/share/fish/vendor_completions.d/mqttui.fish", mode = "644" },
+	{ source = "target/completions/_mqttui", dest = "/usr/share/zsh/site-functions/_mqttui", mode = "644" },
 ]
