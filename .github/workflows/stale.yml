@@ -1,0 +1,19 @@
+name: stale
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '42 2 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v8
+        with:
+          stale-issue-message: This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs.
+          stale-pr-message: This pull request has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs.
+          exempt-issue-labels: pinned
+          exempt-pr-labels: pinned
