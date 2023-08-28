@@ -8,7 +8,7 @@ authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
 keywords = ["mqtt", "iot", "tui", "cli", "terminal"]
 categories = ["command-line-utilities", "network-programming"]
 edition = "2021"
-rust-version = "1.64.0"
+rust-version = "1.70.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
