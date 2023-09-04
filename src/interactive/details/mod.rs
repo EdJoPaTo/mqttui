@@ -82,7 +82,7 @@ where
     let payload_height = min(max_payload_height as usize, 2 + items.len()) as u16;
     let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
 
-    let widget = List::new(items).block(Block::default().borders(Borders::ALL).title(title));
+    let widget = List::new(items).block(Block::new().borders(Borders::ALL).title(title));
     f.render_widget(widget, payload_area);
     remaining_area
 }
@@ -101,12 +101,12 @@ fn draw_payload_json<B>(
     let items = root_tree_items_from_json(json);
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(items)
+        .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
         .block(
-            Block::default()
+            Block::new()
                 .borders(Borders::ALL)
-                .border_style(Style::default().fg(focus_color))
+                .border_style(Style::new().fg(focus_color))
                 .title(title),
-        )
-        .highlight_style(Style::default().fg(Color::Black).bg(focus_color));
+        );
     f.render_stateful_widget(widget, area, view_state);
 }

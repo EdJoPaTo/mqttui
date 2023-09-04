@@ -57,14 +57,14 @@ impl TopicOverview {
         let title = format!("Topics ({topic_amount})");
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(tree_items)
+            .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
-                Block::default()
+                Block::new()
                     .borders(Borders::TOP)
-                    .border_style(Style::default().fg(focus_color))
+                    .border_style(Style::new().fg(focus_color))
                     .title_alignment(Alignment::Center)
                     .title(title),
-            )
-            .highlight_style(Style::default().fg(Color::Black).bg(focus_color));
+            );
         f.render_stateful_widget(widget, area, &mut self.state);
         self.last_area = area;
     }

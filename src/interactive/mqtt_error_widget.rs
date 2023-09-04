@@ -6,7 +6,7 @@ use ratatui::Frame;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, area: Rect, title: &str, error: &str) {
     const STYLE: Style = Style::new().fg(Color::Black).bg(Color::Red);
-    let block = Block::default()
+    let block = Block::new()
         .border_style(STYLE)
         .borders(Borders::TOP)
         .title(title);

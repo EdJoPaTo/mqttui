@@ -6,8 +6,8 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
 
 pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
-    let block = Block::default()
-        .border_style(Style::default().fg(Color::Red))
+    let block = Block::new()
+        .border_style(Style::new().fg(Color::Red))
         .borders(Borders::ALL)
         .title_alignment(Alignment::Center)
         .title("Clean retained topics");
@@ -15,7 +15,7 @@ pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
         Line::from("Clean the following topic and all relative below?"),
         Line::styled(
             topic,
-            Style::default().add_modifier(Modifier::BOLD | Modifier::ITALIC),
+            Style::new().add_modifier(Modifier::BOLD | Modifier::ITALIC),
         ),
         Line::from(""),
         Line::from("Confirm with Enter, abort with Esc"),

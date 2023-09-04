@@ -94,14 +94,14 @@ fn draw_table<B>(
     });
 
     let t = Table::new(rows)
-        .block(Block::default().borders(Borders::ALL).title(title))
-        .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
         .highlight_style(STYLE_BOLD)
         .widths(&[
             Constraint::Length(12),
             Constraint::Length(11),
             Constraint::Percentage(100),
-        ]);
+        ])
+        .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
+        .block(Block::new().borders(Borders::ALL).title(title));
 
     let mut state = TableState::default();
     state.select(Some(topic_history.len() - 1));
@@ -121,22 +121,22 @@ where
         .data(&points.data)];
 
     let chart = Chart::new(datasets)
-        .block(Block::default().title("Graph").borders(Borders::ALL))
+        .block(Block::new().borders(Borders::ALL).title("Graph"))
         .x_axis(
             Axis::default()
+                .bounds([points.x_min, points.x_max])
                 .labels(vec![
                     Span::raw(points.first_time.format("%H:%M:%S").to_string()),
                     Span::raw(points.last_time.format("%H:%M:%S").to_string()),
-                ])
-                .bounds([points.x_min, points.x_max]),
+                ]),
         )
         .y_axis(
             Axis::default()
+                .bounds([points.y_min, points.y_max])
                 .labels(vec![
                     Span::raw(points.y_min.to_string()),
                     Span::raw(points.y_max.to_string()),
-                ])
-                .bounds([points.y_min, points.y_max]),
+                ]),
         );
     f.render_widget(chart, area);
 }
