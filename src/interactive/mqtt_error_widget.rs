@@ -1,16 +1,11 @@
-use tui::backend::Backend;
-use tui::layout::Rect;
-use tui::style::{Color, Modifier, Style};
-use tui::widgets::{Block, Borders, Paragraph, Wrap};
-use tui::Frame;
+use ratatui::backend::Backend;
+use ratatui::layout::Rect;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
+use ratatui::Frame;
 
 pub fn draw<B: Backend>(f: &mut Frame<B>, area: Rect, title: &str, error: &str) {
-    const STYLE: Style = Style {
-        fg: Some(Color::Black),
-        bg: Some(Color::Red),
-        add_modifier: Modifier::empty(),
-        sub_modifier: Modifier::empty(),
-    };
+    const STYLE: Style = Style::new().fg(Color::Black).bg(Color::Red);
     let block = Block::default()
         .border_style(STYLE)
         .borders(Borders::TOP)

@@ -1,5 +1,5 @@
-use tui::layout::Rect;
-use tui::style::{Color, Modifier, Style};
+use ratatui::layout::Rect;
+use ratatui::style::{Color, Modifier, Style};
 
 #[derive(Clone, Copy)]
 pub enum CursorMove {
@@ -10,12 +10,7 @@ pub enum CursorMove {
     PageDown,
 }
 
-pub const STYLE_BOLD: Style = Style {
-    fg: None,
-    bg: None,
-    add_modifier: Modifier::BOLD,
-    sub_modifier: Modifier::empty(),
-};
+pub const STYLE_BOLD: Style = Style::new().add_modifier(Modifier::BOLD);
 
 pub const fn focus_color(has_focus: bool) -> Color {
     if has_focus {
@@ -27,7 +22,7 @@ pub const fn focus_color(has_focus: bool) -> Color {
 
 /// When the column/row is inside the area, return the row relative to the area.
 /// Otherwise `None` is returned.
-pub fn get_row_inside(area: Rect, column: u16, row: u16) -> Option<u16> {
+pub const fn get_row_inside(area: Rect, column: u16, row: u16) -> Option<u16> {
     if row > area.top() && row < area.bottom() && column > area.left() && column < area.right() {
         Some(row - area.top() - 1)
     } else {

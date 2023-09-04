@@ -2,20 +2,15 @@ use std::collections::{HashMap, HashSet};
 
 use chrono::{DateTime, Local};
 use ego_tree::{NodeId, NodeRef, Tree};
+use ratatui::style::{Color, Style};
+use ratatui::text::{Line, Span};
 use rumqttc::Publish;
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
 use tui_tree_widget::{TreeIdentifierVec, TreeItem};
 
 use crate::interactive::ui::STYLE_BOLD;
 use crate::mqtt::{HistoryEntry, Payload};
 
-pub const STYLE_DARKGRAY: Style = Style {
-    fg: Some(Color::DarkGray),
-    bg: None,
-    add_modifier: Modifier::empty(),
-    sub_modifier: Modifier::empty(),
-};
+pub const STYLE_DARKGRAY: Style = Style::new().fg(Color::DarkGray);
 
 struct Topic {
     /// Topic `foo/bar` would have the leaf `bar`
@@ -212,11 +207,11 @@ impl MqttHistory {
                 Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_string(),
                 None => format!("({topics_below} topics, {messages_below} messages)"),
             };
-            let text = vec![Spans::from(vec![
+            let text = Line::from(vec![
                 Span::styled(leaf.as_ref(), STYLE_BOLD),
                 Span::raw(" "),
                 Span::styled(meta, STYLE_DARKGRAY),
-            ])];
+            ]);
 
             RecursiveTreeItemGenerator {
                 messages_below,

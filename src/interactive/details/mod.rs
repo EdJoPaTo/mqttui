@@ -1,11 +1,11 @@
 use std::cmp::min;
 
 use json::JsonValue;
-use tui::backend::Backend;
-use tui::layout::Rect;
-use tui::style::{Color, Style};
-use tui::widgets::{Block, Borders, List, ListItem};
-use tui::Frame;
+use ratatui::backend::Backend;
+use ratatui::layout::Rect;
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, Borders, List, ListItem};
+use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};

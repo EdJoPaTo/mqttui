@@ -1,9 +1,9 @@
-use tui::backend::Backend;
-use tui::layout::{Alignment, Rect};
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
-use tui::widgets::Paragraph;
-use tui::Frame;
+use ratatui::backend::Backend;
+use ratatui::layout::{Alignment, Rect};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::Paragraph;
+use ratatui::Frame;
 
 use crate::cli::Broker;
 use crate::interactive::ElementInFocus;
@@ -25,13 +25,11 @@ impl Footer {
     where
         B: Backend,
     {
-        const STYLE: Style = Style {
-            fg: Some(Color::Black),
-            bg: Some(Color::White),
-            add_modifier: Modifier::BOLD,
-            sub_modifier: Modifier::empty(),
-        };
-        let spans = Spans(match focus {
+        const STYLE: Style = Style::new()
+            .fg(Color::Black)
+            .bg(Color::White)
+            .add_modifier(Modifier::BOLD);
+        let line = Line::from(match focus {
             ElementInFocus::TopicOverview => vec![
                 Span::styled("q", STYLE),
                 Span::from(" Quit  "),
@@ -53,7 +51,7 @@ impl Footer {
                 Span::from(" Abort  "),
             ],
         });
-        let remaining = area.width as usize - spans.width();
+        let remaining = area.width as usize - line.width();
         let full_info = format!("{VERSION_TEXT} @ {}", self.broker);
         if remaining > full_info.len() {
             let paragraph = Paragraph::new(full_info);
@@ -65,6 +63,6 @@ impl Footer {
             let paragraph = Paragraph::new(VERSION_TEXT);
             f.render_widget(paragraph.alignment(Alignment::Right), area);
         }
-        f.render_widget(Paragraph::new(spans), area);
+        f.render_widget(Paragraph::new(line), area);
     }
 }

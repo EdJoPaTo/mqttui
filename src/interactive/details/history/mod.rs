@@ -1,11 +1,11 @@
 use std::fmt::Write;
 
-use tui::backend::Backend;
-use tui::layout::{Constraint, Rect};
-use tui::style::{Color, Modifier, Style};
-use tui::text::Span;
-use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
-use tui::{symbols, Frame};
+use ratatui::backend::Backend;
+use ratatui::layout::{Constraint, Rect};
+use ratatui::style::{Color, Style};
+use ratatui::text::Span;
+use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
+use ratatui::{symbols, Frame};
 
 use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
 use crate::mqtt::{HistoryEntry, Payload, Time};
@@ -113,12 +113,7 @@ fn draw_graph<B>(f: &mut Frame<B>, area: Rect, points: &GraphData)
 where
     B: Backend,
 {
-    const STYLE: Style = Style {
-        fg: Some(Color::LightGreen),
-        bg: None,
-        add_modifier: Modifier::empty(),
-        sub_modifier: Modifier::empty(),
-    };
+    const STYLE: Style = Style::new().fg(Color::LightGreen);
     let datasets = vec![Dataset::default()
         .graph_type(GraphType::Line)
         .marker(symbols::Marker::Braille)

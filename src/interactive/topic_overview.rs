@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use tui::backend::Backend;
-use tui::layout::Rect;
-use tui::style::{Color, Style};
-use tui::widgets::{Block, Borders};
-use tui::Frame;
+use ratatui::backend::Backend;
+use ratatui::layout::{Alignment, Rect};
+use ratatui::style::{Color, Style};
+use ratatui::widgets::{Block, Borders};
+use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeItem, TreeState};
 
 use crate::interactive::mqtt_history::MqttHistory;
@@ -61,7 +61,7 @@ impl TopicOverview {
                 Block::default()
                     .borders(Borders::TOP)
                     .border_style(Style::default().fg(focus_color))
-                    .title_alignment(tui::layout::Alignment::Center)
+                    .title_alignment(Alignment::Center)
                     .title(title),
             )
             .highlight_style(Style::default().fg(Color::Black).bg(focus_color));

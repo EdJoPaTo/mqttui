@@ -12,13 +12,13 @@ use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use json::JsonValue;
+use ratatui::backend::Backend;
+use ratatui::layout::{Alignment, Rect};
+use ratatui::text::Span;
+use ratatui::widgets::Paragraph;
+use ratatui::Frame;
+use ratatui::{backend::CrosstermBackend, Terminal};
 use rumqttc::{Client, Connection};
-use tui::backend::Backend;
-use tui::layout::{Alignment, Rect};
-use tui::text::Span;
-use tui::widgets::Paragraph;
-use tui::Frame;
-use tui::{backend::CrosstermBackend, Terminal};
 use tui_tree_widget::flatten;
 
 use crate::cli::Broker;

@@ -1,9 +1,9 @@
-use tui::backend::Backend;
-use tui::layout::{Alignment, Rect};
-use tui::style::{Color, Modifier, Style};
-use tui::text::{Span, Spans};
-use tui::widgets::{Block, Borders, Clear, Paragraph};
-use tui::Frame;
+use ratatui::backend::Backend;
+use ratatui::layout::{Alignment, Rect};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::Line;
+use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use ratatui::Frame;
 
 pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
     let block = Block::default()
@@ -12,13 +12,13 @@ pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
         .title_alignment(Alignment::Center)
         .title("Clean retained topics");
     let text = vec![
-        Spans::from("Clean the following topic and all relative below?"),
-        Spans::from(Span::styled(
+        Line::from("Clean the following topic and all relative below?"),
+        Line::styled(
             topic,
             Style::default().add_modifier(Modifier::BOLD | Modifier::ITALIC),
-        )),
-        Spans::from(""),
-        Spans::from("Confirm with Enter, abort with Esc"),
+        ),
+        Line::from(""),
+        Line::from("Confirm with Enter, abort with Esc"),
     ];
     let paragraph = Paragraph::new(text)
         .block(block)
