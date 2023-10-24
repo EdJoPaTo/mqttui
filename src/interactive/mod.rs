@@ -503,7 +503,7 @@ impl App {
             f,
             overview_area,
             topic_amount,
-            &tree_items,
+            tree_items,
             matches!(self.focus, ElementInFocus::TopicOverview),
         );
         drop(history);

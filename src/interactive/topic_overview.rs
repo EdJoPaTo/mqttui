@@ -49,7 +49,7 @@ impl TopicOverview {
         f: &mut Frame<B>,
         area: Rect,
         topic_amount: usize,
-        tree_items: &[TreeItem],
+        tree_items: Vec<TreeItem>,
         has_focus: bool,
     ) where
         B: Backend,
