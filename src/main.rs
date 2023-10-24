@@ -22,7 +22,6 @@ fn main() -> anyhow::Result<()> {
     let (mut client, connection) = {
         let (transport, host, port) = match &matches.broker {
             cli::Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
-            #[cfg(feature = "tls")]
             cli::Broker::Ssl { host, port } => (
                 Transport::Tls(mqtt::encryption::create_tls_configuration(
                     matches.insecure,
@@ -33,9 +32,7 @@ fn main() -> anyhow::Result<()> {
                 *port,
             ),
             // On WebSockets the port is ignored. See https://github.com/bytebeamio/rumqtt/issues/270
-            #[cfg(feature = "tls")]
             cli::Broker::WebSocket(url) => (Transport::Ws, url.to_string(), 666),
-            #[cfg(feature = "tls")]
             cli::Broker::WebSocketSsl(url) => (
                 Transport::Wss(mqtt::encryption::create_tls_configuration(
                     matches.insecure,

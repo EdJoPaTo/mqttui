@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Display version & broker in the lower right corner
 - Display MQTT connection error in its own area
 - Performance: Less clones on interactive draw
+- Build: always build with TLS support
 
 ## [0.19.0] - 2023-05-17
 

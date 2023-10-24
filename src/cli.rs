@@ -177,7 +177,6 @@ pub struct Cli {
         requires = "client_key",
         global = true,
     )]
-    #[cfg(feature = "tls")]
     pub client_cert: Option<std::path::PathBuf>,
 
     /// Path to the TLS client private key.
@@ -192,12 +191,10 @@ pub struct Cli {
         requires = "client_cert",
         global = true,
     )]
-    #[cfg(feature = "tls")]
     pub client_key: Option<std::path::PathBuf>,
 
     /// Allow insecure TLS connections
     #[arg(long, global = true)]
-    #[cfg(feature = "tls")]
     pub insecure: bool,
 
     /// Topic to watch
@@ -211,18 +208,9 @@ pub struct Cli {
 
 #[derive(Debug, Clone)]
 pub enum Broker {
-    Tcp {
-        host: String,
-        port: u16,
-    },
-    #[cfg(feature = "tls")]
-    Ssl {
-        host: String,
-        port: u16,
-    },
-    #[cfg(feature = "tls")]
+    Tcp { host: String, port: u16 },
+    Ssl { host: String, port: u16 },
     WebSocket(Url),
-    #[cfg(feature = "tls")]
     WebSocketSsl(Url),
 }
 
@@ -253,7 +241,6 @@ impl core::str::FromStr for Broker {
                     .to_string(),
                 port: url.port().unwrap_or(1883),
             },
-            #[cfg(feature = "tls")]
             "mqtts" => Self::Ssl {
                 host: url
                     .host_str()
@@ -261,9 +248,7 @@ impl core::str::FromStr for Broker {
                     .to_string(),
                 port: url.port().unwrap_or(8883),
             },
-            #[cfg(feature = "tls")]
             "ws" => Self::WebSocket(url),
-            #[cfg(feature = "tls")]
             "wss" => Self::WebSocketSsl(url),
             _ => anyhow::bail!("Broker URL scheme is not supported"),
         };
@@ -283,7 +268,6 @@ impl std::fmt::Display for Broker {
                     f.write_fmt(format_args!("mqtt://{host}@{port}"))
                 }
             }
-            #[cfg(feature = "tls")]
             Self::Ssl { host, port } => {
                 if *port == 8883 {
                     f.write_str("mqtts://")?;
@@ -292,7 +276,6 @@ impl std::fmt::Display for Broker {
                     f.write_fmt(format_args!("mqtts://{host}@{port}"))
                 }
             }
-            #[cfg(feature = "tls")]
             Self::WebSocket(url) | Self::WebSocketSsl(url) => f.write_str(url.as_str()),
         }
     }

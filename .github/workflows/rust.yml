@@ -33,8 +33,7 @@ jobs:
         clippyargs:
           - -D clippy::pedantic -D warnings
         features:
-          - --no-default-features
-          - --all-features
+          - "" # default features
         include:
           # Check future versions and maybe get some glances on soon to be lints
           - toolchain: beta
@@ -117,38 +116,27 @@ jobs:
         include:
           - triple: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            features: --all-features
             rpm: true
           - triple: aarch64-unknown-linux-gnu
             os: ubuntu-latest
-            features: --all-features
             rpm: true
           - triple: armv7-unknown-linux-gnueabihf
             os: ubuntu-latest
-            features: --all-features
             rpm: true
           - triple: arm-unknown-linux-gnueabihf
             os: ubuntu-latest
-            features: --all-features
           - triple: riscv64gc-unknown-linux-gnu
             os: ubuntu-latest
-            # https://github.com/briansmith/ring/issues/1419
-            features: --no-default-features
 
           - triple: x86_64-apple-darwin
             os: macos-latest
-            features: --all-features
           - triple: aarch64-apple-darwin
             os: macos-latest
-            features: --all-features
 
           - triple: x86_64-pc-windows-msvc
             os: windows-latest
-            features: --all-features
           - triple: aarch64-pc-windows-msvc
             os: windows-latest
-            # https://github.com/briansmith/ring/issues/1167
-            features: --no-default-features
     steps:
       - name: Setup Rust
         shell: bash -eux {0}
@@ -187,7 +175,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --verbose --locked ${{ matrix.features }} --target ${{ matrix.triple }}
+          args: --release --verbose --locked --target ${{ matrix.triple }}
           use-cross: ${{ runner.os == 'Linux' }}
 
       - name: Package tar.gz (*nix)
