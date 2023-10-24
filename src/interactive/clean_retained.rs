@@ -11,13 +11,13 @@ pub fn draw_popup(f: &mut Frame, topic: &str) {
         .title_alignment(Alignment::Center)
         .title("Clean retained topics");
     let text = vec![
-        Line::from("Clean the following topic and all relative below?"),
+        Line::raw("Clean the following topic and all relative below?"),
         Line::styled(
             topic,
             Style::new().add_modifier(Modifier::BOLD | Modifier::ITALIC),
         ),
-        Line::from(""),
-        Line::from("Confirm with Enter, abort with Esc"),
+        Line::raw(""),
+        Line::raw("Confirm with Enter, abort with Esc"),
     ];
     let paragraph = Paragraph::new(text)
         .block(block)

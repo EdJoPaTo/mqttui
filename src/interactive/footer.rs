@@ -28,23 +28,23 @@ impl Footer {
         let line = Line::from(match focus {
             ElementInFocus::TopicOverview => vec![
                 Span::styled("q", STYLE),
-                Span::from(" Quit  "),
+                Span::raw(" Quit  "),
                 Span::styled("Tab", STYLE),
-                Span::from(" Switch to JSON Payload  "),
+                Span::raw(" Switch to JSON Payload  "),
                 Span::styled("Del", STYLE),
-                Span::from(" Clean retained  "),
+                Span::raw(" Clean retained  "),
             ],
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", STYLE),
-                Span::from(" Quit  "),
+                Span::raw(" Quit  "),
                 Span::styled("Tab", STYLE),
-                Span::from(" Switch to Topics  "),
+                Span::raw(" Switch to Topics  "),
             ],
             ElementInFocus::CleanRetainedPopup(_) => vec![
                 Span::styled("Enter", STYLE),
-                Span::from(" Clean topic tree  "),
+                Span::raw(" Clean topic tree  "),
                 Span::styled("Any", STYLE),
-                Span::from(" Abort  "),
+                Span::raw(" Abort  "),
             ],
         });
         let remaining = area.width as usize - line.width();
