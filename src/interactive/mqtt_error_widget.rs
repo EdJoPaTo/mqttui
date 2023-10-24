@@ -1,10 +1,9 @@
-use ratatui::backend::Backend;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use ratatui::Frame;
 
-pub fn draw<B: Backend>(f: &mut Frame<B>, area: Rect, title: &str, error: &str) {
+pub fn draw(f: &mut Frame, area: Rect, title: &str, error: &str) {
     const STYLE: Style = Style::new().fg(Color::Black).bg(Color::Red);
     let block = Block::new()
         .border_style(STYLE)

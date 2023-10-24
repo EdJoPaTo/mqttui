@@ -1,6 +1,5 @@
 use std::fmt::Write;
 
-use ratatui::backend::Backend;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
@@ -14,14 +13,7 @@ use graph_data::GraphData;
 
 mod graph_data;
 
-pub fn draw<B>(
-    f: &mut Frame<B>,
-    area: Rect,
-    topic_history: &[HistoryEntry],
-    json_selector: &[usize],
-) where
-    B: Backend,
-{
+pub fn draw(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_selector: &[usize]) {
     let table_area = GraphData::parse(topic_history, json_selector).map_or(area, |data| {
         let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
         draw_graph(f, graph_area, &data);
@@ -31,14 +23,7 @@ pub fn draw<B>(
 }
 
 #[allow(clippy::cast_precision_loss)]
-fn draw_table<B>(
-    f: &mut Frame<B>,
-    area: Rect,
-    topic_history: &[HistoryEntry],
-    json_selector: &[usize],
-) where
-    B: Backend,
-{
+fn draw_table(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_selector: &[usize]) {
     let mut title = format!("History ({}", topic_history.len());
 
     let without_retain = topic_history
@@ -109,10 +94,7 @@ fn draw_table<B>(
     f.render_stateful_widget(t, area, &mut state);
 }
 
-fn draw_graph<B>(f: &mut Frame<B>, area: Rect, points: &GraphData)
-where
-    B: Backend,
-{
+fn draw_graph(f: &mut Frame, area: Rect, points: &GraphData) {
     const STYLE: Style = Style::new().fg(Color::LightGreen);
     let datasets = vec![Dataset::default()
         .graph_type(GraphType::Line)

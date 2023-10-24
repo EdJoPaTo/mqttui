@@ -418,10 +418,7 @@ impl App {
         Ok(Refresh::Skip)
     }
 
-    fn draw<B>(&mut self, f: &mut Frame<B>) -> anyhow::Result<()>
-    where
-        B: Backend,
-    {
+    fn draw(&mut self, f: &mut Frame) -> anyhow::Result<()> {
         const HEADER_HEIGHT: u16 = 1;
         const FOOTER_HEIGHT: u16 = 1;
 

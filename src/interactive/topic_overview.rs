@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 
-use ratatui::backend::Backend;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders};
@@ -44,16 +43,14 @@ impl TopicOverview {
         );
     }
 
-    pub fn draw<B>(
+    pub fn draw(
         &mut self,
-        f: &mut Frame<B>,
+        f: &mut Frame,
         area: Rect,
         topic_amount: usize,
         tree_items: Vec<TreeItem>,
         has_focus: bool,
-    ) where
-        B: Backend,
-    {
+    ) {
         let title = format!("Topics ({topic_amount})");
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(tree_items)

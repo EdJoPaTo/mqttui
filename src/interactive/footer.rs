@@ -1,4 +1,3 @@
-use ratatui::backend::Backend;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
@@ -21,10 +20,7 @@ impl Footer {
         }
     }
 
-    pub fn draw<B>(&self, f: &mut Frame<B>, area: Rect, focus: &ElementInFocus)
-    where
-        B: Backend,
-    {
+    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus) {
         const STYLE: Style = Style::new()
             .fg(Color::Black)
             .bg(Color::White)

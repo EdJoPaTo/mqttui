@@ -1,7 +1,6 @@
 use std::cmp::min;
 
 use json::JsonValue;
-use ratatui::backend::Backend;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem};
@@ -21,15 +20,13 @@ pub struct Details {
 }
 
 impl Details {
-    pub fn draw<B>(
+    pub fn draw(
         &mut self,
-        f: &mut Frame<B>,
+        f: &mut Frame,
         area: Rect,
         topic_history: &[HistoryEntry],
         json_payload_has_focus: bool,
-    ) where
-        B: Backend,
-    {
+    ) {
         self.last_json_area = None;
 
         let last = topic_history.last().unwrap();
@@ -70,10 +67,7 @@ impl Details {
 }
 
 /// Returns remaining rect to be used for history
-fn draw_payload_string<B>(f: &mut Frame<B>, area: Rect, payload_bytes: usize, payload: &str) -> Rect
-where
-    B: Backend,
-{
+fn draw_payload_string(f: &mut Frame, area: Rect, payload_bytes: usize, payload: &str) -> Rect {
     let title = format!("Payload (Bytes: {payload_bytes})");
     let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
 
@@ -87,16 +81,14 @@ where
     remaining_area
 }
 
-fn draw_payload_json<B>(
-    f: &mut Frame<B>,
+fn draw_payload_json(
+    f: &mut Frame,
     area: Rect,
     bytes: usize,
     json: &JsonValue,
     has_focus: bool,
     view_state: &mut TreeState,
-) where
-    B: Backend,
-{
+) {
     let title = format!("JSON Payload (Bytes: {bytes})  (TAB to switch)");
     let items = root_tree_items_from_json(json);
     let focus_color = focus_color(has_focus);

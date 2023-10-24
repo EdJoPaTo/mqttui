@@ -35,12 +35,12 @@ crossterm = "0.27"
 ego-tree = "0.6"
 json = "0.12"
 rand = "0.8"
-ratatui = "0.23"
+ratatui = "0.24"
 rumqttc = { version = "0.23", default-features = false }
 rustls = { version = "0.21", features = ["dangerous_configuration"], optional = true }
 rustls-native-certs = { version = "0.6", optional = true }
 rustls-pemfile = { version = "1", optional = true }
-tui-tree-widget = "0.13"
+tui-tree-widget = "0.14"
 url = "2"
 
 # https://crates.io/crates/cargo-deb

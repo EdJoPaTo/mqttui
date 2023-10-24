@@ -1,11 +1,10 @@
-use ratatui::backend::Backend;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
 
-pub fn draw_popup<B: Backend>(f: &mut Frame<B>, topic: &str) {
+pub fn draw_popup(f: &mut Frame, topic: &str) {
     let block = Block::new()
         .border_style(Style::new().fg(Color::Red))
         .borders(Borders::ALL)
