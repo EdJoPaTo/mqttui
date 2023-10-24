@@ -4,23 +4,25 @@ on:
   push:
   pull_request:
 
+env:
+  RUSTFLAGS: --deny warnings
+
 jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Rust
-        shell: bash -eux {0}
-        run: |
-          rm ~/.cargo/bin/{rustfmt,cargo-fmt}
-          rustup toolchain install stable --profile minimal --component rustfmt
-          rustup default stable
-      - uses: actions/checkout@v3
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
+      - uses: actions/checkout@v4
       - run: cargo fmt --check --verbose
 
   test:
     name: Test ${{ matrix.toolchain }} ${{ matrix.os }} ${{ matrix.features }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+    continue-on-error: ${{ (matrix.toolchain == 'beta') || (matrix.toolchain == 'nightly') }}
     strategy:
       fail-fast: false
       matrix:
@@ -31,7 +33,7 @@ jobs:
           - macos-latest
           - windows-latest
         clippyargs:
-          - -D clippy::pedantic -D warnings
+          - -D clippy::pedantic
         features:
           - "" # default features
         include:
@@ -39,11 +41,11 @@ jobs:
           - toolchain: beta
             os: ubuntu-latest
             features: --all-features
-            clippyargs: -W clippy::pedantic -W clippy::nursery -W clippy::cargo
+            clippyargs: -D clippy::pedantic -D clippy::nursery -D clippy::cargo
           - toolchain: nightly
             os: ubuntu-latest
             features: --all-features
-            clippyargs: -W clippy::pedantic
+            clippyargs: -D clippy::pedantic
 
           # Check the minimum supported Rust version (MSRV).
           # Sometimes old rust versions don't yet have the lints (allow unknown) or don't have fixes in lints (false positives -> don't error, just warn).
@@ -54,60 +56,32 @@ jobs:
             features: --all-features
     steps:
       - name: Setup Rust
-        shell: bash -eux {0}
-        run: |
-          rustup toolchain install ${{ matrix.toolchain }} --profile minimal --component clippy
-          rustup default ${{ matrix.toolchain }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Fetch dependencies
-        uses: actions-rs/cargo@v1
-        with:
-          command: fetch
-          args: --verbose --locked
+        run: cargo fetch --verbose --locked
 
       - name: Check clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --verbose --locked --all-targets ${{ matrix.features }} -- ${{ matrix.clippyargs }}
+        run: cargo clippy --verbose --locked --all-targets ${{ matrix.features }} -- ${{ matrix.clippyargs }}
 
       - name: Check docs
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --verbose --locked --no-deps ${{ matrix.features }}
+        run: cargo doc --verbose --locked --no-deps ${{ matrix.features }}
+
+      - name: Build
+        run: cargo build --verbose --locked --all-targets ${{ matrix.features }}
 
       - name: Run tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --verbose --locked ${{ matrix.features }}
-
-  prepare-packaging-tools:
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Setup Rust
-        shell: bash -eux {0}
-        run: |
-          rustup toolchain install stable --profile minimal
-          rustup default stable
-      - name: Cache packaging tools
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-cargo-packaging-tools
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/.crates*
-      - name: Install packaging tools
-        run: cargo install cargo-deb cargo-generate-rpm
+        run: cargo test --verbose --locked ${{ matrix.features }}
 
   github-release:
     name: Release ${{ matrix.triple }}
     runs-on: ${{ matrix.os }}
-    needs: [test, prepare-packaging-tools]
+    needs: test
     permissions:
       contents: write
     strategy:
@@ -139,21 +113,18 @@ jobs:
             os: windows-latest
     steps:
       - name: Setup Rust
-        shell: bash -eux {0}
-        run: |
-          rustup toolchain install stable --profile minimal --target ${{ matrix.triple }}
-          rustup default stable
-
-      - name: Get packaging tools from cache
-        if: runner.os == 'Linux'
-        uses: actions/cache@v3
+        uses: dtolnay/rust-toolchain@master
         with:
-          key: ${{ runner.os }}-cargo-packaging-tools
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/.crates*
+          toolchain: stable
+          targets: ${{ matrix.triple }}
 
-      - uses: actions/checkout@v3
+      - name: Install cargo tools
+        if: runner.os == 'Linux'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross,cargo-deb,cargo-generate-rpm
+
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -172,11 +143,7 @@ jobs:
         run: cargo fetch --verbose --locked
 
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --verbose --locked --target ${{ matrix.triple }}
-          use-cross: ${{ runner.os == 'Linux' }}
+        run: ${{ runner.os == 'Linux' && 'cross' || 'cargo' }} build --release --verbose --locked --target ${{ matrix.triple }}
 
       - name: Package tar.gz (*nix)
         if: runner.os != 'Windows'
