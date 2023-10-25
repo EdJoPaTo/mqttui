@@ -203,7 +203,7 @@ impl MqttHistory {
 
             let meta = match history.last().map(|o| &o.payload) {
                 Some(Payload::String(str)) => format!("= {str}"),
-                Some(Payload::Json(json)) => format!("= {}", json.dump()),
+                Some(Payload::Json(json)) => format!("= {json}"),
                 Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_string(),
                 None => format!("({topics_below} topics, {messages_below} messages)"),
             };

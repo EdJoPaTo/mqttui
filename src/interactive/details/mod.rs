@@ -1,6 +1,5 @@
 use std::cmp::min;
 
-use json::JsonValue;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem};
@@ -85,7 +84,7 @@ fn draw_payload_json(
     f: &mut Frame,
     area: Rect,
     bytes: usize,
-    json: &JsonValue,
+    json: &serde_json::Value,
     has_focus: bool,
     view_state: &mut TreeState,
 ) {

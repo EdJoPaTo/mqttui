@@ -49,7 +49,7 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                         Finished::Successfully
                     }
                     Payload::Json(json) => {
-                        println!("{}", json.dump());
+                        println!("{json}");
                         Finished::Successfully
                     }
                 };

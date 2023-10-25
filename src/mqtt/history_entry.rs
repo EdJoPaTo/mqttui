@@ -1,7 +1,6 @@
 use std::str::Utf8Error;
 
 use chrono::{DateTime, Local};
-use json::JsonValue;
 use rumqttc::{Publish, QoS};
 
 #[derive(Debug, Clone, Copy)]
@@ -34,18 +33,20 @@ impl ToString for Time {
 pub enum Payload {
     NotUtf8(Utf8Error),
     String(Box<str>),
-    Json(JsonValue),
+    Json(serde_json::Value),
 }
 
 impl Payload {
     pub fn new(payload: &bytes::Bytes) -> Self {
         match String::from_utf8(payload.to_vec()) {
-            Ok(str) => json::parse(&str).map_or_else(|_| Self::String(str.into()), Self::Json),
+            Ok(str) => {
+                serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
+            }
             Err(err) => Self::NotUtf8(err.utf8_error()),
         }
     }
 
-    pub const fn as_optional_json(&self) -> Option<&JsonValue> {
+    pub const fn as_optional_json(&self) -> Option<&serde_json::Value> {
         if let Self::Json(json) = self {
             Some(json)
         } else {
@@ -101,7 +102,9 @@ fn time_retained_to_string() {
 #[cfg(test)]
 fn json_macro(json_str: &'static str) -> Option<String> {
     let payload = Payload::new(&json_str.into());
-    payload.as_optional_json().map(JsonValue::dump)
+    payload
+        .as_optional_json()
+        .map(std::string::ToString::to_string)
 }
 
 #[test]

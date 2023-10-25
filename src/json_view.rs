@@ -1,4 +1,4 @@
-use json::JsonValue;
+use serde_json::Value as JsonValue;
 use tui_tree_widget::TreeItem;
 
 fn get_nth_subvalue(root: &JsonValue, select: usize) -> Option<&JsonValue> {
@@ -39,19 +39,16 @@ fn tree_items_from_json<'a>(key: &str, value: &'a JsonValue) -> TreeItem<'a> {
     }
 }
 
-fn tree_items_from_json_object(object: &json::object::Object) -> Vec<TreeItem<'_>> {
+fn tree_items_from_json_object(object: &serde_json::Map<String, JsonValue>) -> Vec<TreeItem<'_>> {
     object
         .iter()
         .map(|(key, value)| tree_items_from_json(key, value))
         .collect::<Vec<_>>()
 }
 
-fn tree_items_from_json_array<'a, I>(array: I) -> Vec<TreeItem<'a>>
-where
-    I: IntoIterator<Item = &'a JsonValue>,
-{
+fn tree_items_from_json_array(array: &[JsonValue]) -> Vec<TreeItem<'_>> {
     array
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(index, value)| {
             let index = index.to_string();
@@ -62,7 +59,7 @@ where
 
 #[test]
 fn can_not_get_nth_other_value() {
-    let root = JsonValue::Boolean(false);
+    let root = JsonValue::Bool(false);
     let result = get_selected_subvalue(&root, &[2]);
     assert_eq!(result, None);
 }
@@ -71,17 +68,17 @@ fn can_not_get_nth_other_value() {
 fn can_get_nth_array_value() {
     let root = JsonValue::Array(vec![
         JsonValue::String("bla".to_string()),
-        JsonValue::Boolean(true),
+        JsonValue::Bool(true),
     ]);
     let result = get_nth_subvalue(&root, 1);
-    assert_eq!(result, Some(&JsonValue::Boolean(true)));
+    assert_eq!(result, Some(&JsonValue::Bool(true)));
 }
 
 #[test]
 fn can_not_get_nth_array_value_out_of_range() {
     let root = JsonValue::Array(vec![
         JsonValue::String("bla".to_string()),
-        JsonValue::Boolean(true),
+        JsonValue::Bool(true),
     ]);
     let result = get_nth_subvalue(&root, 42);
     assert_eq!(result, None);
@@ -89,20 +86,20 @@ fn can_not_get_nth_array_value_out_of_range() {
 
 #[test]
 fn can_get_nth_object_value() {
-    let mut object = json::object::Object::new();
-    object.insert("bla", JsonValue::Boolean(false));
-    object.insert("blubb", JsonValue::Boolean(true));
+    let mut object = serde_json::Map::new();
+    object.insert("bla".to_string(), JsonValue::Bool(false));
+    object.insert("blubb".to_string(), JsonValue::Bool(true));
 
     let root = JsonValue::Object(object);
     let result = get_nth_subvalue(&root, 1);
-    assert_eq!(result, Some(&JsonValue::Boolean(true)));
+    assert_eq!(result, Some(&JsonValue::Bool(true)));
 }
 
 #[test]
 fn can_not_get_nth_object_value_out_of_range() {
-    let mut object = json::object::Object::new();
-    object.insert("bla", JsonValue::Boolean(false));
-    object.insert("blubb", JsonValue::Boolean(true));
+    let mut object = serde_json::Map::new();
+    object.insert("bla".to_string(), JsonValue::Bool(false));
+    object.insert("blubb".to_string(), JsonValue::Bool(true));
 
     let root = JsonValue::Object(object);
     let result = get_nth_subvalue(&root, 42);
@@ -111,16 +108,16 @@ fn can_not_get_nth_object_value_out_of_range() {
 
 #[test]
 fn can_get_selected_value() {
-    let mut inner = json::object::Object::new();
-    inner.insert("bla", JsonValue::Boolean(false));
-    inner.insert("blubb", JsonValue::Boolean(true));
+    let mut inner = serde_json::Map::new();
+    inner.insert("bla".to_string(), JsonValue::Bool(false));
+    inner.insert("blubb".to_string(), JsonValue::Bool(true));
 
     let root = JsonValue::Array(vec![
-        JsonValue::Boolean(false),
+        JsonValue::Bool(false),
         JsonValue::Object(inner),
-        JsonValue::Boolean(false),
+        JsonValue::Bool(false),
     ]);
 
     let result = get_selected_subvalue(&root, &[1, 1]);
-    assert_eq!(result, Some(&JsonValue::Boolean(true)));
+    assert_eq!(result, Some(&JsonValue::Bool(true)));
 }

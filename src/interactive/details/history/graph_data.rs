@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local};
-use json::JsonValue;
+use serde_json::Value as JsonValue;
 
 use crate::json_view;
 use crate::mqtt::{HistoryEntry, Payload};
@@ -22,12 +22,11 @@ impl Point {
             Payload::Json(json) => {
                 let json = json_view::get_selected_subvalue(json, json_selector).unwrap_or(json);
                 match json {
-                    JsonValue::Number(num) => Some((*num).into()),
-                    JsonValue::Boolean(true) => Some(1.0),
-                    JsonValue::Boolean(false) => Some(0.0),
+                    JsonValue::Number(num) => num.as_f64(),
+                    JsonValue::Bool(true) => Some(1.0),
+                    JsonValue::Bool(false) => Some(0.0),
                     #[allow(clippy::cast_precision_loss)]
                     JsonValue::Array(arr) => Some(arr.len() as f64),
-                    JsonValue::Short(str) => str.parse::<f64>().ok(),
                     JsonValue::String(str) => str.parse::<f64>().ok(),
                     JsonValue::Null | JsonValue::Object(_) => None,
                 }

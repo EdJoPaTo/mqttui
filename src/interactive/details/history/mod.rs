@@ -73,7 +73,7 @@ fn draw_table(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_se
             Payload::String(str) => str.to_string(),
             Payload::Json(json) => json_view::get_selected_subvalue(json, json_selector)
                 .unwrap_or(json)
-                .dump(),
+                .to_string(),
         };
         Row::new(vec![time, qos, value])
     });

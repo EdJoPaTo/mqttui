@@ -6,7 +6,7 @@ pub fn payload(payload: &Payload, size: usize) -> String {
     match payload {
         Payload::NotUtf8(err) => format!("Payload({size:>3}) is not valid UTF-8: {err}"),
         Payload::String(str) => format!("Payload({size:>3}): {str}"),
-        Payload::Json(json) => format!("Payload({size:>3}): {}", json.dump()),
+        Payload::Json(json) => format!("Payload({size:>3}): {json}"),
     }
 }
 
@@ -26,7 +26,7 @@ fn payload_string_works() {
 
 #[test]
 fn payload_json_works() {
-    let p = Payload::Json(json::array![42, false]);
+    let p = Payload::Json(serde_json::json!([42, false]));
     assert_eq!(payload(&p, 666), "Payload(666): [42,false]");
 }
 

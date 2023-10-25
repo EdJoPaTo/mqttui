@@ -11,7 +11,6 @@ use crossterm::execute;
 use crossterm::terminal::{
     disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
-use json::JsonValue;
 use ratatui::backend::Backend;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::text::Span;
@@ -192,7 +191,7 @@ impl App {
         }
     }
 
-    fn get_json_of_current_topic(&self) -> anyhow::Result<Option<JsonValue>> {
+    fn get_json_of_current_topic(&self) -> anyhow::Result<Option<serde_json::Value>> {
         if let Some(topic) = self.topic_overview.get_selected() {
             let json = self
                 .mqtt_thread
@@ -326,7 +325,9 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::End => {
-                    let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                    let json = self
+                        .get_json_of_current_topic()?
+                        .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
                     self.details.json_view.select_last(&items);
                     Refresh::Update
@@ -355,7 +356,9 @@ impl App {
                     .change_selected(&visible, CursorMove::OneUp);
             }
             ElementInFocus::JsonPayload => {
-                let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                let json = self
+                    .get_json_of_current_topic()?
+                    .unwrap_or(serde_json::Value::Null);
                 let items = root_tree_items_from_json(&json);
                 self.details.json_view.key_up(&items);
             }
@@ -375,7 +378,9 @@ impl App {
                     .change_selected(&visible, CursorMove::OneDown);
             }
             ElementInFocus::JsonPayload => {
-                let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+                let json = self
+                    .get_json_of_current_topic()?
+                    .unwrap_or(serde_json::Value::Null);
                 let items = root_tree_items_from_json(&json);
                 self.details.json_view.key_down(&items);
             }
@@ -401,7 +406,9 @@ impl App {
         }
 
         if let Some(index) = self.details.json_index_of_click(column, row) {
-            let json = self.get_json_of_current_topic()?.unwrap_or(JsonValue::Null);
+            let json = self
+                .get_json_of_current_topic()?
+                .unwrap_or(serde_json::Value::Null);
             let items = root_tree_items_from_json(&json);
             let opened = self.details.json_view.get_all_opened();
             let flattened = flatten(&opened, &items);
