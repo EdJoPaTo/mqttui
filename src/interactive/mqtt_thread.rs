@@ -2,10 +2,10 @@ use std::sync::{Arc, RwLock, RwLockReadGuard};
 use std::thread::{self, sleep};
 use std::time::Duration;
 
-use chrono::Local;
 use rumqttc::{Client, Connection, ConnectionError, QoS};
 
 use crate::interactive::mqtt_history::MqttHistory;
+use crate::mqtt::HistoryEntry;
 
 type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;
@@ -41,7 +41,7 @@ impl MqttThread {
             let connection_err = Arc::clone(&connection_err);
             let history = Arc::clone(&history);
             thread::Builder::new()
-                .name("mqtt connection".into())
+                .name("mqtt connection".to_string())
                 .spawn(move || {
                     thread_logic(
                         client,
@@ -103,8 +103,10 @@ fn thread_logic(
                         if publish.dup {
                             continue;
                         }
-                        let time = Local::now().naive_local();
-                        history.write().unwrap().add(&publish, time);
+                        history.write().unwrap().add(
+                            &publish.topic,
+                            HistoryEntry::new_now(publish.retain, publish.qos, &publish.payload),
+                        );
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {
                         break;

@@ -1,7 +1,7 @@
 use std::str::Utf8Error;
 
 use chrono::NaiveDateTime;
-use rumqttc::{Publish, QoS};
+use rumqttc::QoS;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Time {
@@ -63,17 +63,17 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    pub fn new(packet: &Publish, time: NaiveDateTime) -> Self {
-        let time = if packet.retain {
+    pub fn new_now(retain: bool, qos: QoS, payload: &bytes::Bytes) -> Self {
+        let time = if retain {
             Time::Retained
         } else {
-            Time::Local(time)
+            Time::Local(chrono::Local::now().naive_local())
         };
         Self {
-            qos: packet.qos,
+            qos,
             time,
-            payload_size: packet.payload.len(),
-            payload: Payload::new(&packet.payload),
+            payload_size: payload.len(),
+            payload: Payload::new(payload),
         }
     }
 }

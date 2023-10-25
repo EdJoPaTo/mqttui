@@ -1,10 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
-use chrono::NaiveDateTime;
 use ego_tree::{NodeId, NodeRef, Tree};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
-use rumqttc::Publish;
 use tui_tree_widget::{TreeIdentifierVec, TreeItem};
 
 use crate::interactive::ui::STYLE_BOLD;
@@ -73,14 +71,14 @@ impl MqttHistory {
         }
     }
 
-    pub fn add(&mut self, packet: &Publish, time: NaiveDateTime) {
-        let id = self.entry(&packet.topic);
+    pub fn add(&mut self, topic: &str, history_entry: HistoryEntry) {
+        let id = self.entry(topic);
         self.tree
             .get_mut(id)
             .unwrap()
             .value()
             .history
-            .push(HistoryEntry::new(packet, time));
+            .push(history_entry);
     }
 
     pub fn get(&self, topic: &str) -> Option<&Vec<HistoryEntry>> {
@@ -240,24 +238,22 @@ impl MqttHistory {
 
     #[cfg(test)]
     pub fn example() -> Self {
-        use chrono::Local;
-
         let mut history = Self::new();
         history.add(
-            &Publish::new("test", rumqttc::QoS::AtLeastOnce, "A"),
-            Local::now().naive_local(),
+            "test",
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"A".into()),
         );
         history.add(
-            &Publish::new("foo/test", rumqttc::QoS::AtLeastOnce, "B"),
-            Local::now().naive_local(),
+            "foo/test",
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"B".into()),
         );
         history.add(
-            &Publish::new("test", rumqttc::QoS::AtLeastOnce, "C"),
-            Local::now().naive_local(),
+            "test",
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"C".into()),
         );
         history.add(
-            &Publish::new("foo/bar", rumqttc::QoS::AtLeastOnce, "D"),
-            Local::now().naive_local(),
+            "foo/bar",
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"D".into()),
         );
         history
     }
