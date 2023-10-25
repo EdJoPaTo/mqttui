@@ -6,11 +6,13 @@ use ratatui::widgets::{Block, Borders, List, ListItem};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
+use crate::interactive::details::json_view::root_tree_items_from_json;
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
-use crate::json_view::root_tree_items_from_json;
 use crate::mqtt::{HistoryEntry, Payload};
 
 mod history;
+mod json_selector;
+pub mod json_view;
 
 #[derive(Default)]
 pub struct Details {

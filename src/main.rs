@@ -10,7 +10,6 @@ mod clean_retained;
 mod cli;
 mod format;
 mod interactive;
-mod json_view;
 mod log;
 mod mqtt;
 mod publish;

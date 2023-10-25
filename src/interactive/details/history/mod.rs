@@ -6,9 +6,10 @@ use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
 use ratatui::{symbols, Frame};
 
+use crate::format;
+use crate::interactive::details::json_selector;
 use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
 use crate::mqtt::{HistoryEntry, Payload, Time};
-use crate::{format, json_view};
 use graph_data::GraphData;
 
 mod graph_data;
@@ -71,7 +72,7 @@ fn draw_table(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_se
         let value = match &entry.payload {
             Payload::NotUtf8(err) => format!("invalid UTF-8: {err}"),
             Payload::String(str) => str.to_string(),
-            Payload::Json(json) => json_view::get_selected_subvalue(json, json_selector)
+            Payload::Json(json) => json_selector::select(json, json_selector)
                 .unwrap_or(json)
                 .to_string(),
         };

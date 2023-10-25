@@ -21,8 +21,8 @@ use rumqttc::{Client, Connection};
 use tui_tree_widget::flatten;
 
 use crate::cli::Broker;
+use crate::interactive::details::json_view::root_tree_items_from_json;
 use crate::interactive::ui::CursorMove;
-use crate::json_view::root_tree_items_from_json;
 
 mod clean_retained;
 mod details;

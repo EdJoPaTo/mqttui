@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use serde_json::Value as JsonValue;
 
-use crate::json_view;
+use crate::interactive::details::json_selector;
 use crate::mqtt::{HistoryEntry, Payload};
 
 #[allow(clippy::cast_precision_loss)]
@@ -20,7 +20,7 @@ impl Point {
             Payload::NotUtf8(_) => None,
             Payload::String(str) => str.parse::<f64>().ok(),
             Payload::Json(json) => {
-                let json = json_view::get_selected_subvalue(json, json_selector).unwrap_or(json);
+                let json = json_selector::select(json, json_selector).unwrap_or(json);
                 match json {
                     JsonValue::Number(num) => num.as_f64(),
                     JsonValue::Bool(true) => Some(1.0),
