@@ -32,7 +32,7 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 let time = if publish.retain {
                     Time::Retained
                 } else {
-                    Time::Local(Local::now())
+                    Time::Local(Local::now().naive_local())
                 };
                 println!(
                     "{:12} QoS:{:11} {:50} {}",

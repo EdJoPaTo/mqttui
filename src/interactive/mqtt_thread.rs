@@ -103,7 +103,7 @@ fn thread_logic(
                         if publish.dup {
                             continue;
                         }
-                        let time = Local::now();
+                        let time = Local::now().naive_local();
                         history.write().unwrap().add(&publish, time);
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {

@@ -1,16 +1,16 @@
 use std::str::Utf8Error;
 
-use chrono::{DateTime, Local};
+use chrono::NaiveDateTime;
 use rumqttc::{Publish, QoS};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Time {
     Retained,
-    Local(DateTime<Local>),
+    Local(NaiveDateTime),
 }
 
 impl Time {
-    pub const fn as_optional(&self) -> Option<DateTime<Local>> {
+    pub const fn as_optional(&self) -> Option<NaiveDateTime> {
         if let Self::Local(time) = self {
             Some(*time)
         } else {
@@ -63,7 +63,7 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    pub fn new(packet: &Publish, time: DateTime<Local>) -> Self {
+    pub fn new(packet: &Publish, time: NaiveDateTime) -> Self {
         let time = if packet.retain {
             Time::Retained
         } else {
@@ -86,9 +86,10 @@ fn time_optional_retained() {
 
 #[test]
 fn time_optional_time() {
-    let date = DateTime::parse_from_rfc3339("1996-12-19T16:39:57+01:00")
+    let date = chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
         .unwrap()
-        .into();
+        .and_hms_opt(16, 39, 57)
+        .unwrap();
     let time = Time::Local(date);
     assert_eq!(time.as_optional(), Some(date));
 }

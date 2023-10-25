@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use chrono::{DateTime, Local};
+use chrono::NaiveDateTime;
 use ego_tree::{NodeId, NodeRef, Tree};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
@@ -73,7 +73,7 @@ impl MqttHistory {
         }
     }
 
-    pub fn add(&mut self, packet: &Publish, time: DateTime<Local>) {
+    pub fn add(&mut self, packet: &Publish, time: NaiveDateTime) {
         let id = self.entry(&packet.topic);
         self.tree
             .get_mut(id)
@@ -240,22 +240,24 @@ impl MqttHistory {
 
     #[cfg(test)]
     pub fn example() -> Self {
+        use chrono::Local;
+
         let mut history = Self::new();
         history.add(
             &Publish::new("test", rumqttc::QoS::AtLeastOnce, "A"),
-            Local::now(),
+            Local::now().naive_local(),
         );
         history.add(
             &Publish::new("foo/test", rumqttc::QoS::AtLeastOnce, "B"),
-            Local::now(),
+            Local::now().naive_local(),
         );
         history.add(
             &Publish::new("test", rumqttc::QoS::AtLeastOnce, "C"),
-            Local::now(),
+            Local::now().naive_local(),
         );
         history.add(
             &Publish::new("foo/bar", rumqttc::QoS::AtLeastOnce, "D"),
-            Local::now(),
+            Local::now().naive_local(),
         );
         history
     }

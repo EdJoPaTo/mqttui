@@ -1,15 +1,15 @@
-use chrono::{DateTime, Local};
+use chrono::NaiveDateTime;
 use serde_json::Value as JsonValue;
 
 use crate::json_view;
 use crate::mqtt::{HistoryEntry, Payload};
 
 #[allow(clippy::cast_precision_loss)]
-fn parse_time_to_chart_x(time: &DateTime<Local>) -> f64 {
+fn parse_time_to_chart_x(time: &NaiveDateTime) -> f64 {
     time.timestamp_millis() as f64
 }
 struct Point {
-    time: DateTime<Local>,
+    time: NaiveDateTime,
     y: f64,
 }
 
@@ -45,8 +45,8 @@ impl Point {
 /// Dataset of Points showable by the graph. Ensures to create a useful graph (has at least 2 points)
 pub struct GraphData {
     pub data: Vec<(f64, f64)>,
-    pub first_time: DateTime<Local>,
-    pub last_time: DateTime<Local>,
+    pub first_time: NaiveDateTime,
+    pub last_time: NaiveDateTime,
     pub x_max: f64,
     pub x_min: f64,
     pub y_max: f64,
