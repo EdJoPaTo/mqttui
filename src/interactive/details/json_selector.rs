@@ -1,25 +1,45 @@
 use serde_json::Value as JsonValue;
 
-fn get_nth(root: &JsonValue, select: usize) -> Option<&JsonValue> {
-    match root {
-        JsonValue::Object(object) => object.iter().nth(select).map(|(_key, value)| value),
-        JsonValue::Array(array) => array.get(select),
-        _ => None,
+#[derive(Default, Clone, PartialEq, Eq, Hash)]
+pub enum JsonSelector {
+    ObjectKey(String),
+    ArrayIndex(usize),
+    #[default]
+    None,
+}
+
+impl JsonSelector {
+    fn apply<'v>(&self, root: &'v JsonValue) -> Option<&'v JsonValue> {
+        match (root, self) {
+            (JsonValue::Object(object), Self::ObjectKey(key)) => object.get(key),
+            (JsonValue::Array(array), Self::ArrayIndex(index)) => array.get(*index),
+            _ => None,
+        }
+    }
+
+    pub fn get_selection<'a>(root: &'a JsonValue, selector: &[Self]) -> Option<&'a JsonValue> {
+        let mut current = root;
+        for select in selector {
+            current = select.apply(current)?;
+        }
+        Some(current)
     }
 }
 
-pub fn select<'a>(root: &'a JsonValue, selector: &[usize]) -> Option<&'a JsonValue> {
-    let mut current = root;
-    for select in selector {
-        current = get_nth(current, *select)?;
+impl ToString for JsonSelector {
+    fn to_string(&self) -> String {
+        match self {
+            Self::ObjectKey(key) => key.to_string(),
+            Self::ArrayIndex(index) => index.to_string(),
+            Self::None => String::new(),
+        }
     }
-    Some(current)
 }
 
 #[test]
 fn can_not_get_other_value() {
     let root = JsonValue::Bool(false);
-    let result = get_nth(&root, 2);
+    let result = JsonSelector::ArrayIndex(2).apply(&root);
     assert_eq!(result, None);
 }
 
@@ -29,7 +49,7 @@ fn can_get_nth_array_value() {
         JsonValue::String("bla".to_string()),
         JsonValue::Bool(true),
     ]);
-    let result = get_nth(&root, 1);
+    let result = JsonSelector::ArrayIndex(1).apply(&root);
     assert_eq!(result, Some(&JsonValue::Bool(true)));
 }
 
@@ -39,7 +59,7 @@ fn can_not_get_array_index_out_of_range() {
         JsonValue::String("bla".to_string()),
         JsonValue::Bool(true),
     ]);
-    let result = get_nth(&root, 42);
+    let result = JsonSelector::ArrayIndex(42).apply(&root);
     assert_eq!(result, None);
 }
 
@@ -49,7 +69,7 @@ fn can_get_object_value() {
     object.insert("bla".to_string(), JsonValue::Bool(false));
     object.insert("blubb".to_string(), JsonValue::Bool(true));
     let root = JsonValue::Object(object);
-    let result = get_nth(&root, 1);
+    let result = JsonSelector::ObjectKey("blubb".to_string()).apply(&root);
     assert_eq!(result, Some(&JsonValue::Bool(true)));
 }
 
@@ -59,7 +79,17 @@ fn can_not_get_object_missing_key() {
     object.insert("bla".to_string(), JsonValue::Bool(false));
     object.insert("blubb".to_string(), JsonValue::Bool(true));
     let root = JsonValue::Object(object);
-    let result = get_nth(&root, 42);
+    let result = JsonSelector::ObjectKey("foo".to_string()).apply(&root);
+    assert_eq!(result, None);
+}
+
+#[test]
+fn can_not_get_object_by_index() {
+    let mut object = serde_json::Map::new();
+    object.insert("bla".to_string(), JsonValue::Bool(false));
+    object.insert("blubb".to_string(), JsonValue::Bool(true));
+    let root = JsonValue::Object(object);
+    let result = JsonSelector::ArrayIndex(42).apply(&root);
     assert_eq!(result, None);
 }
 
@@ -75,6 +105,11 @@ fn can_get_selected_value() {
         JsonValue::Bool(false),
     ]);
 
-    let result = select(&root, &[1, 1]);
+    let selector = vec![
+        JsonSelector::ArrayIndex(1),
+        JsonSelector::ObjectKey("blubb".to_string()),
+    ];
+
+    let result = JsonSelector::get_selection(&root, &selector);
     assert_eq!(result, Some(&JsonValue::Bool(true)));
 }

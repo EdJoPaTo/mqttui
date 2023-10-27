@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use serde_json::Value as JsonValue;
 
-use crate::interactive::details::json_selector;
+use crate::interactive::details::json_selector::JsonSelector;
 use crate::mqtt::{HistoryEntry, Payload};
 
 #[allow(clippy::cast_precision_loss)]
@@ -14,13 +14,13 @@ struct Point {
 }
 
 impl Point {
-    fn parse(entry: &HistoryEntry, json_selector: &[usize]) -> Option<Self> {
+    fn parse(entry: &HistoryEntry, json_selector: &[JsonSelector]) -> Option<Self> {
         let time = entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::NotUtf8(_) => None,
             Payload::String(str) => str.parse::<f64>().ok(),
             Payload::Json(json) => {
-                let json = json_selector::select(json, json_selector).unwrap_or(json);
+                let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
                 match json {
                     JsonValue::Number(num) => num.as_f64(),
                     JsonValue::Bool(true) => Some(1.0),
@@ -54,7 +54,7 @@ pub struct GraphData {
 }
 
 impl GraphData {
-    pub fn parse(entries: &[HistoryEntry], json_selector: &[usize]) -> Option<Self> {
+    pub fn parse(entries: &[HistoryEntry], json_selector: &[JsonSelector]) -> Option<Self> {
         let points = entries
             .iter()
             .filter_map(|o| Point::parse(o, json_selector))

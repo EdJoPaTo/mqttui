@@ -1,15 +1,6 @@
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 
-#[derive(Clone, Copy)]
-pub enum CursorMove {
-    Absolute(usize),
-    OneUp,
-    OneDown,
-    PageUp,
-    PageDown,
-}
-
 pub const STYLE_BOLD: Style = Style::new().add_modifier(Modifier::BOLD);
 
 pub const fn focus_color(has_focus: bool) -> Color {

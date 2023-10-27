@@ -7,14 +7,19 @@ use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Tab
 use ratatui::{symbols, Frame};
 
 use crate::format;
-use crate::interactive::details::json_selector;
+use crate::interactive::details::json_selector::JsonSelector;
 use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
 use crate::mqtt::{HistoryEntry, Payload, Time};
 use graph_data::GraphData;
 
 mod graph_data;
 
-pub fn draw(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_selector: &[usize]) {
+pub fn draw(
+    f: &mut Frame,
+    area: Rect,
+    topic_history: &[HistoryEntry],
+    json_selector: &[JsonSelector],
+) {
     let table_area = GraphData::parse(topic_history, json_selector).map_or(area, |data| {
         let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
         draw_graph(f, graph_area, &data);
@@ -24,7 +29,12 @@ pub fn draw(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_sele
 }
 
 #[allow(clippy::cast_precision_loss)]
-fn draw_table(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_selector: &[usize]) {
+fn draw_table(
+    f: &mut Frame,
+    area: Rect,
+    topic_history: &[HistoryEntry],
+    json_selector: &[JsonSelector],
+) {
     let mut title = format!("History ({}", topic_history.len());
 
     let without_retain = topic_history
@@ -72,7 +82,7 @@ fn draw_table(f: &mut Frame, area: Rect, topic_history: &[HistoryEntry], json_se
         let value = match &entry.payload {
             Payload::NotUtf8(err) => format!("invalid UTF-8: {err}"),
             Payload::String(str) => str.to_string(),
-            Payload::Json(json) => json_selector::select(json, json_selector)
+            Payload::Json(json) => JsonSelector::get_selection(json, json_selector)
                 .unwrap_or(json)
                 .to_string(),
         };
