@@ -18,11 +18,9 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use rumqttc::{Client, Connection};
-use tui_tree_widget::flatten;
 
 use crate::cli::Broker;
 use crate::interactive::details::json_view::root_tree_items_from_json;
-use crate::interactive::ui::CursorMove;
 
 mod clean_retained;
 mod details;
@@ -196,7 +194,7 @@ impl App {
             let json = self
                 .mqtt_thread
                 .get_history()?
-                .get_last(topic)
+                .get_last(&topic)
                 .and_then(|last| last.payload.as_optional_json().cloned());
             Ok(json)
         } else {
@@ -220,76 +218,72 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => {
-                    self.topic_overview.toggle();
+                    self.topic_overview.state.toggle_selected();
                     Refresh::Update
                 }
                 KeyCode::Down | KeyCode::Char('j') => self.on_down()?,
                 KeyCode::Up | KeyCode::Char('k') => self.on_up()?,
                 KeyCode::Left | KeyCode::Char('h') => {
-                    self.topic_overview.close();
+                    self.topic_overview.state.key_left();
                     Refresh::Update
                 }
                 KeyCode::Right | KeyCode::Char('l') => {
-                    self.topic_overview.open();
+                    self.topic_overview.state.key_right();
                     Refresh::Update
                 }
                 KeyCode::Home => {
-                    let visible = self
-                        .mqtt_thread
-                        .get_history()?
-                        .get_visible_topics(self.topic_overview.get_opened());
-                    self.topic_overview
-                        .change_selected(&visible, CursorMove::Absolute(0));
+                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    self.topic_overview.state.select_first(&items);
                     Refresh::Update
                 }
                 KeyCode::End => {
-                    let visible = self
-                        .mqtt_thread
-                        .get_history()?
-                        .get_visible_topics(self.topic_overview.get_opened());
-                    self.topic_overview
-                        .change_selected(&visible, CursorMove::Absolute(usize::MAX));
+                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    self.topic_overview.state.select_last(&items);
                     Refresh::Update
                 }
                 KeyCode::PageUp => {
-                    let visible = self
-                        .mqtt_thread
-                        .get_history()?
-                        .get_visible_topics(self.topic_overview.get_opened());
+                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
+                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
                     self.topic_overview
-                        .change_selected(&visible, CursorMove::PageUp);
+                        .state
+                        .select_visible_relative(&items, |current| {
+                            current.map_or(usize::MAX, |current| current.saturating_sub(page_jump))
+                        });
                     Refresh::Update
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let visible = self
-                        .mqtt_thread
-                        .get_history()?
-                        .get_visible_topics(self.topic_overview.get_opened());
+                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
+                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
                     self.topic_overview
-                        .change_selected(&visible, CursorMove::PageUp);
+                        .state
+                        .select_visible_relative(&items, |current| {
+                            current.map_or(usize::MAX, |current| current.saturating_sub(page_jump))
+                        });
                     Refresh::Update
                 }
                 KeyCode::PageDown => {
-                    let visible = self
-                        .mqtt_thread
-                        .get_history()?
-                        .get_visible_topics(self.topic_overview.get_opened());
+                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
+                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
                     self.topic_overview
-                        .change_selected(&visible, CursorMove::PageDown);
+                        .state
+                        .select_visible_relative(&items, |current| {
+                            current.map_or(0, |current| current.saturating_add(page_jump))
+                        });
                     Refresh::Update
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let visible = self
-                        .mqtt_thread
-                        .get_history()?
-                        .get_visible_topics(self.topic_overview.get_opened());
+                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
+                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
                     self.topic_overview
-                        .change_selected(&visible, CursorMove::PageDown);
+                        .state
+                        .select_visible_relative(&items, |current| {
+                            current.map_or(0, |current| current.saturating_add(page_jump))
+                        });
                     Refresh::Update
                 }
                 KeyCode::Backspace | KeyCode::Delete => {
                     if let Some(topic) = self.topic_overview.get_selected() {
-                        self.focus = ElementInFocus::CleanRetainedPopup(topic.to_string());
+                        self.focus = ElementInFocus::CleanRetainedPopup(topic);
                         Refresh::Update
                     } else {
                         Refresh::Skip
@@ -321,7 +315,11 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::Home => {
-                    self.details.json_view.select_first();
+                    let json = self
+                        .get_json_of_current_topic()?
+                        .unwrap_or(serde_json::Value::Null);
+                    let items = root_tree_items_from_json(&json);
+                    self.details.json_view.select_first(&items);
                     Refresh::Update
                 }
                 KeyCode::End => {
@@ -348,12 +346,8 @@ impl App {
     fn on_up(&mut self) -> anyhow::Result<Refresh> {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let visible = self
-                    .mqtt_thread
-                    .get_history()?
-                    .get_visible_topics(self.topic_overview.get_opened());
-                self.topic_overview
-                    .change_selected(&visible, CursorMove::OneUp);
+                let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                self.topic_overview.state.key_up(&items);
             }
             ElementInFocus::JsonPayload => {
                 let json = self
@@ -370,12 +364,8 @@ impl App {
     fn on_down(&mut self) -> anyhow::Result<Refresh> {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let visible = self
-                    .mqtt_thread
-                    .get_history()?
-                    .get_visible_topics(self.topic_overview.get_opened());
-                self.topic_overview
-                    .change_selected(&visible, CursorMove::OneDown);
+                let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                self.topic_overview.state.key_down(&items);
             }
             ElementInFocus::JsonPayload => {
                 let json = self
@@ -391,15 +381,13 @@ impl App {
 
     fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<Refresh> {
         if let Some(index) = self.topic_overview.index_of_click(column, row) {
-            let visible = self
-                .mqtt_thread
-                .get_history()?
-                .get_visible_topics(self.topic_overview.get_opened());
+            let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
             let changed = self
                 .topic_overview
-                .change_selected(&visible, CursorMove::Absolute(index));
+                .state
+                .select_visible_index(&items, index);
             if !changed {
-                self.topic_overview.toggle();
+                self.topic_overview.state.toggle_selected();
             }
             self.focus = ElementInFocus::TopicOverview;
             return Ok(Refresh::Update);
@@ -410,17 +398,12 @@ impl App {
                 .get_json_of_current_topic()?
                 .unwrap_or(serde_json::Value::Null);
             let items = root_tree_items_from_json(&json);
-            let opened = self.details.json_view.get_all_opened();
-            let flattened = flatten(&opened, &items);
-            if let Some(picked) = flattened.get(index) {
-                if picked.identifier == self.details.json_view.selected() {
-                    self.details.json_view.toggle_selected();
-                } else {
-                    self.details.json_view.select(picked.identifier.clone());
-                }
-                self.focus = ElementInFocus::JsonPayload;
-                return Ok(Refresh::Update);
+            let changed = self.details.json_view.select_visible_index(&items, index);
+            if !changed {
+                self.details.json_view.toggle_selected();
             }
+            self.focus = ElementInFocus::JsonPayload;
+            return Ok(Refresh::Update);
         }
         Ok(Refresh::Skip)
     }
@@ -502,7 +485,6 @@ impl App {
             });
 
         let (topic_amount, tree_items) = history.to_tree_items();
-        self.topic_overview.ensure_state(&history);
         self.topic_overview.draw(
             f,
             overview_area,

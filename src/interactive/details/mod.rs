@@ -6,6 +6,7 @@ use ratatui::widgets::{Block, Borders, List, ListItem};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
+use crate::interactive::details::json_selector::JsonSelector;
 use crate::interactive::details::json_view::root_tree_items_from_json;
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
 use crate::mqtt::{HistoryEntry, Payload};
@@ -16,7 +17,7 @@ pub mod json_view;
 
 #[derive(Default)]
 pub struct Details {
-    pub json_view: TreeState,
+    pub json_view: TreeState<JsonSelector>,
     pub last_json_area: Option<Rect>,
 }
 
@@ -88,12 +89,13 @@ fn draw_payload_json(
     bytes: usize,
     json: &serde_json::Value,
     has_focus: bool,
-    view_state: &mut TreeState,
+    view_state: &mut TreeState<JsonSelector>,
 ) {
     let title = format!("JSON Payload (Bytes: {bytes})  (TAB to switch)");
     let items = root_tree_items_from_json(json);
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(items)
+        .unwrap()
         .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
         .block(
             Block::new()

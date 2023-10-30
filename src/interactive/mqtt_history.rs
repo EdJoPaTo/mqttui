@@ -1,9 +1,9 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use ego_tree::{NodeId, NodeRef, Tree};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
-use tui_tree_widget::{TreeIdentifierVec, TreeItem};
+use tui_tree_widget::TreeItem;
 
 use crate::interactive::ui::STYLE_BOLD;
 use crate::mqtt::{HistoryEntry, Payload};
@@ -25,11 +25,11 @@ impl Topic {
     }
 }
 
-struct RecursiveTreeItemGenerator<'a> {
+struct RecursiveTreeItemGenerator {
     messages_below: usize,
     messages: usize,
     topics_below: usize,
-    tree_item: TreeItem<'a>,
+    tree_item: TreeItem<'static, String>,
 }
 
 pub struct MqttHistory {
@@ -93,20 +93,6 @@ impl MqttHistory {
             .and_then(|node| node.value().history.last())
     }
 
-    pub fn get_tree_identifier(&self, topic: &str) -> Option<TreeIdentifierVec> {
-        let mut identifier = Vec::new();
-        let mut parent = self.tree.root();
-        for part in topic.split('/') {
-            let (index, child) = parent
-                .children()
-                .enumerate()
-                .find(|(_i, o)| &*o.value().leaf == part)?;
-            identifier.push(index);
-            parent = child;
-        }
-        Some(identifier)
-    }
-
     pub fn get_topics_below(&self, topic: &str) -> Vec<String> {
         fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> Vec<String> {
             let mut topic = prefix.to_vec();
@@ -139,42 +125,9 @@ impl MqttHistory {
         build_recursive(&prefix, noderef)
     }
 
-    pub fn get_visible_topics(&self, opened_topics: &HashSet<String>) -> Vec<String> {
-        fn build_recursive(
-            opened_topics: &HashSet<String>,
-            prefix: &[&str],
-            node: NodeRef<Topic>,
-        ) -> Vec<String> {
-            let mut topic = prefix.to_vec();
-            topic.push(&node.value().leaf);
-
-            let topic_string = topic.join("/");
-
-            if opened_topics.contains(&topic_string) {
-                let mut entries_below = node
-                    .children()
-                    .flat_map(|c| build_recursive(opened_topics, &topic, c))
-                    .collect::<Vec<_>>();
-                entries_below.insert(0, topic_string);
-                entries_below
-            } else {
-                vec![topic_string]
-            }
-        }
-
-        self.tree
-            .root()
-            .children()
-            .flat_map(|o| build_recursive(opened_topics, &[], o))
-            .collect::<Vec<_>>()
-    }
-
     /// Returns (`topic_amount`, `TreeItem`s)
-    pub fn to_tree_items(&self) -> (usize, Vec<TreeItem>) {
-        fn build_recursive<'a>(
-            prefix: &[&str],
-            node: NodeRef<'a, Topic>,
-        ) -> RecursiveTreeItemGenerator<'a> {
+    pub fn to_tree_items(&self) -> (usize, Vec<TreeItem<'static, String>>) {
+        fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> RecursiveTreeItemGenerator {
             let Topic { leaf, history } = node.value();
             let mut topic = prefix.to_vec();
             topic.push(leaf);
@@ -206,7 +159,7 @@ impl MqttHistory {
                 None => format!("({topics_below} topics, {messages_below} messages)"),
             };
             let text = Line::from(vec![
-                Span::styled(leaf.as_ref(), STYLE_BOLD),
+                Span::styled(leaf.to_string(), STYLE_BOLD),
                 Span::raw(" "),
                 Span::styled(meta, STYLE_DARKGRAY),
             ]);
@@ -215,7 +168,7 @@ impl MqttHistory {
                 messages_below,
                 messages: history.len(),
                 topics_below,
-                tree_item: TreeItem::new(text, children),
+                tree_item: TreeItem::new(leaf.to_string(), text, children).unwrap(),
             }
         }
 
@@ -260,15 +213,6 @@ impl MqttHistory {
 }
 
 #[test]
-fn tree_identifier_works() {
-    let history = MqttHistory::example();
-    assert_eq!(history.get_tree_identifier("whatever"), None);
-    assert_eq!(history.get_tree_identifier("test").unwrap(), [1]);
-    assert_eq!(history.get_tree_identifier("foo/bar").unwrap(), [0, 0]);
-    assert_eq!(history.get_tree_identifier("foo/test").unwrap(), [0, 1]);
-}
-
-#[test]
 fn topics_below_works() {
     let actual = MqttHistory::example().get_topics_below("foo");
     assert_eq!(actual, ["foo/bar", "foo/test"]);
@@ -278,21 +222,6 @@ fn topics_below_works() {
 fn topics_below_finds_itself_works() {
     let actual = MqttHistory::example().get_topics_below("test");
     assert_eq!(actual, ["test"]);
-}
-
-#[test]
-fn visible_all_closed_works() {
-    let opened_topics = HashSet::new();
-    let actual = MqttHistory::example().get_visible_topics(&opened_topics);
-    assert_eq!(actual, ["foo", "test"]);
-}
-
-#[test]
-fn visible_opened_works() {
-    let mut opened_topics = HashSet::new();
-    opened_topics.insert("foo".into());
-    let actual = MqttHistory::example().get_visible_topics(&opened_topics);
-    assert_eq!(actual, ["foo", "foo/bar", "foo/test", "test"]);
 }
 
 #[test]

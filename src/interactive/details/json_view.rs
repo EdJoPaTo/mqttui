@@ -1,38 +1,46 @@
 use serde_json::Value as JsonValue;
 use tui_tree_widget::TreeItem;
 
-pub fn root_tree_items_from_json(root: &JsonValue) -> Vec<TreeItem<'_>> {
+use crate::interactive::details::json_selector::JsonSelector;
+
+pub fn root_tree_items_from_json(root: &JsonValue) -> Vec<TreeItem<'_, JsonSelector>> {
     match root {
         JsonValue::Object(object) => tree_items_from_json_object(object),
         JsonValue::Array(array) => tree_items_from_json_array(array),
-        _ => vec![TreeItem::new_leaf(root.to_string())],
+        _ => vec![TreeItem::new_leaf(JsonSelector::None, root.to_string())],
     }
 }
 
-fn tree_items_from_json<'a>(key: &str, value: &'a JsonValue) -> TreeItem<'a> {
+fn tree_items_from_json(key: JsonSelector, value: &JsonValue) -> TreeItem<JsonSelector> {
     match value {
         JsonValue::Object(object) => {
-            TreeItem::new(key.to_owned(), tree_items_from_json_object(object))
+            let text = key.to_string();
+            TreeItem::new(key, text, tree_items_from_json_object(object)).unwrap()
         }
-        JsonValue::Array(array) => TreeItem::new(key.to_owned(), tree_items_from_json_array(array)),
-        _ => TreeItem::new_leaf(format!("{key}: {value}")),
+        JsonValue::Array(array) => {
+            let text = key.to_string();
+            TreeItem::new(key, text, tree_items_from_json_array(array)).unwrap()
+        }
+        _ => {
+            let text = format!("{}: {value}", key.to_string());
+            TreeItem::new_leaf(key, text)
+        }
     }
 }
 
-fn tree_items_from_json_object(object: &serde_json::Map<String, JsonValue>) -> Vec<TreeItem<'_>> {
+fn tree_items_from_json_object(
+    object: &serde_json::Map<String, JsonValue>,
+) -> Vec<TreeItem<'_, JsonSelector>> {
     object
         .iter()
-        .map(|(key, value)| tree_items_from_json(key, value))
+        .map(|(key, value)| tree_items_from_json(JsonSelector::ObjectKey(key.to_string()), value))
         .collect::<Vec<_>>()
 }
 
-fn tree_items_from_json_array(array: &[JsonValue]) -> Vec<TreeItem<'_>> {
+fn tree_items_from_json_array(array: &[JsonValue]) -> Vec<TreeItem<'_, JsonSelector>> {
     array
         .iter()
         .enumerate()
-        .map(|(index, value)| {
-            let index = index.to_string();
-            tree_items_from_json(&index, value)
-        })
+        .map(|(index, value)| tree_items_from_json(JsonSelector::ArrayIndex(index), value))
         .collect::<Vec<_>>()
 }
