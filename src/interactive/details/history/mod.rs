@@ -37,6 +37,8 @@ fn draw_table(
 ) {
     let mut title = format!("History ({}", topic_history.len());
 
+    let last_index = topic_history.len().saturating_sub(1);
+
     let without_retain = topic_history
         .iter()
         .filter(|o| !matches!(o.time, Time::Retained))
@@ -76,7 +78,7 @@ fn draw_table(
     }
     title += ")";
 
-    let rows = topic_history.iter().map(|entry| {
+    let rows = topic_history.iter().enumerate().map(|(index, entry)| {
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos).to_string();
         let value = match &entry.payload {
@@ -86,7 +88,12 @@ fn draw_table(
                 .unwrap_or(json)
                 .to_string(),
         };
-        Row::new(vec![time, qos, value])
+        let row = Row::new(vec![time, qos, value]);
+        if index == last_index {
+            row.style(STYLE_BOLD)
+        } else {
+            row
+        }
     });
 
     let t = Table::new(rows)
