@@ -21,6 +21,7 @@ use rumqttc::{Client, Connection};
 
 use crate::cli::Broker;
 use crate::interactive::details::json_view::root_tree_items_from_json;
+use crate::interactive::ui::ElementInFocus;
 
 mod clean_retained;
 mod details;
@@ -30,12 +31,6 @@ mod mqtt_history;
 mod mqtt_thread;
 mod topic_overview;
 mod ui;
-
-pub enum ElementInFocus {
-    TopicOverview,
-    JsonPayload,
-    CleanRetainedPopup(String),
-}
 
 enum Event {
     Key(KeyEvent),

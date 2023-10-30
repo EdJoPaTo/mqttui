@@ -3,6 +3,12 @@ use ratatui::style::{Color, Modifier, Style};
 
 pub const STYLE_BOLD: Style = Style::new().add_modifier(Modifier::BOLD);
 
+pub enum ElementInFocus {
+    TopicOverview,
+    JsonPayload,
+    CleanRetainedPopup(String),
+}
+
 pub const fn focus_color(has_focus: bool) -> Color {
     if has_focus {
         Color::LightGreen
