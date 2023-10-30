@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build: always build with TLS support
 - Performance: Dont keep Timezone information of each message
 
+### Fixed
+
+- Keep selected JSON object keys selected (by key, not by index as before)
+
 ## [0.19.0] - 2023-05-17
 
 ### Added
