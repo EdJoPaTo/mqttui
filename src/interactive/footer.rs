@@ -20,7 +20,7 @@ impl Footer {
         }
     }
 
-    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus) {
+    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus, topic_filter: &str) {
         const STYLE: Style = Style::new()
             .fg(Color::Black)
             .bg(Color::White)
@@ -31,8 +31,18 @@ impl Footer {
                 Span::raw(" Quit  "),
                 Span::styled("Tab", STYLE),
                 Span::raw(" Switch to JSON Payload  "),
+                Span::styled("/", STYLE),
+                Span::raw(" Filter  "),
                 Span::styled("Del", STYLE),
                 Span::raw(" Clean retained  "),
+            ],
+            ElementInFocus::TopicFilter => vec![
+                Span::styled("Enter", STYLE),
+                Span::raw(" Done  "),
+                Span::styled("Esc", STYLE),
+                Span::raw(" Clear  "),
+                Span::raw("Filter: "),
+                Span::raw(topic_filter),
             ],
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", STYLE),

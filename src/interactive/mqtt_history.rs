@@ -126,16 +126,27 @@ impl MqttHistory {
     }
 
     /// Returns (`topic_amount`, `TreeItem`s)
-    pub fn to_tree_items(&self) -> (usize, Vec<TreeItem<'static, String>>) {
-        fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> RecursiveTreeItemGenerator {
+    pub fn to_tree_items(&self, filter: &str) -> (usize, Vec<TreeItem<'static, String>>) {
+        fn build_recursive(
+            prefix: &[&str],
+            node: NodeRef<Topic>,
+            filter: &str,
+        ) -> Option<RecursiveTreeItemGenerator> {
             let Topic { leaf, history } = node.value();
             let mut topic = prefix.to_vec();
             topic.push(leaf);
 
             let entries_below = node
                 .children()
-                .map(|c| build_recursive(&topic, c))
+                .filter_map(|c| build_recursive(&topic, c, filter))
                 .collect::<Vec<_>>();
+
+            let is_filter_match = topic.join("/").contains(filter);
+
+            if !is_filter_match && entries_below.is_empty() {
+                return None;
+            }
+
             let messages_below = entries_below
                 .iter()
                 .map(|below| below.messages + below.messages_below)
@@ -164,19 +175,19 @@ impl MqttHistory {
                 Span::styled(meta, STYLE_DARKGRAY),
             ]);
 
-            RecursiveTreeItemGenerator {
+            Some(RecursiveTreeItemGenerator {
                 messages_below,
                 messages: history.len(),
                 topics_below,
                 tree_item: TreeItem::new(leaf.to_string(), text, children).unwrap(),
-            }
+            })
         }
 
         let children = self
             .tree
             .root()
             .children()
-            .map(|o| build_recursive(&[], o))
+            .filter_map(|o| build_recursive(&[], o, filter))
             .collect::<Vec<_>>();
         let topics = children
             .iter()
@@ -227,7 +238,7 @@ fn topics_below_finds_itself_works() {
 #[test]
 fn tree_items_works() {
     let example = MqttHistory::example();
-    let (topics, items) = example.to_tree_items();
+    let (topics, items) = example.to_tree_items("");
     assert_eq!(topics, 3);
     dbg!(&items);
     assert_eq!(items.len(), 2);

@@ -175,7 +175,10 @@ impl App {
     }
 
     fn get_topic_tree_items(&self) -> Vec<TreeItem<'static, String>> {
-        let (_amount, items) = self.mqtt_thread.get_history().to_tree_items();
+        let (_amount, items) = self
+            .mqtt_thread
+            .get_history()
+            .to_tree_items(&self.topic_overview.filter);
         items
     }
 
@@ -200,6 +203,10 @@ impl App {
                     if is_json_on_topic {
                         self.focus = ElementInFocus::JsonPayload;
                     }
+                    Refresh::Update
+                }
+                KeyCode::Char('/') => {
+                    self.focus = ElementInFocus::TopicFilter;
                     Refresh::Update
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => {
@@ -276,6 +283,26 @@ impl App {
                 }
                 _ => Refresh::Skip,
             },
+            ElementInFocus::TopicFilter => match key.code {
+                KeyCode::Char(char) => {
+                    self.topic_overview.filter.push(char);
+                    Refresh::Update
+                }
+                KeyCode::Backspace => {
+                    self.topic_overview.filter.pop();
+                    Refresh::Update
+                }
+                KeyCode::Esc => {
+                    self.topic_overview.filter = String::new();
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                KeyCode::Enter | KeyCode::Tab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                _ => Refresh::Skip,
+            },
             ElementInFocus::JsonPayload => match key.code {
                 KeyCode::Char('q') => Refresh::Quit,
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -334,6 +361,7 @@ impl App {
                 let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_up(&items);
             }
+            ElementInFocus::TopicFilter => {}
             ElementInFocus::JsonPayload => {
                 let json = self
                     .get_json_of_current_topic()
@@ -352,6 +380,7 @@ impl App {
                 let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_down(&items);
             }
+            ElementInFocus::TopicFilter => {}
             ElementInFocus::JsonPayload => {
                 let json = self
                     .get_json_of_current_topic()
@@ -435,7 +464,8 @@ impl App {
             f.render_widget(paragraph.alignment(Alignment::Center), header_area);
         }
 
-        self.footer.draw(f, footer_area, &self.focus);
+        self.footer
+            .draw(f, footer_area, &self.focus, &self.topic_overview.filter);
         if let Some(connection_error) = connection_error {
             mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
         }
@@ -469,7 +499,7 @@ impl App {
                 }
             });
 
-        let (topic_amount, tree_items) = history.to_tree_items();
+        let (topic_amount, tree_items) = history.to_tree_items(&self.topic_overview.filter);
         self.topic_overview.draw(
             f,
             overview_area,

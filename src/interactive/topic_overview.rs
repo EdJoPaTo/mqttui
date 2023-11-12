@@ -8,6 +8,7 @@ use crate::interactive::ui::{focus_color, get_row_inside};
 
 #[derive(Default)]
 pub struct TopicOverview {
+    pub filter: String,
     pub last_area: Rect,
     pub state: TreeState<String>,
 }
