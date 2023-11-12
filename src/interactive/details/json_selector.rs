@@ -29,7 +29,7 @@ impl JsonSelector {
 impl ToString for JsonSelector {
     fn to_string(&self) -> String {
         match self {
-            Self::ObjectKey(key) => key.to_string(),
+            Self::ObjectKey(key) => key.clone(),
             Self::ArrayIndex(index) => index.to_string(),
             Self::None => String::new(),
         }
@@ -46,7 +46,7 @@ fn can_not_get_other_value() {
 #[test]
 fn can_get_nth_array_value() {
     let root = JsonValue::Array(vec![
-        JsonValue::String("bla".to_string()),
+        JsonValue::String("bla".to_owned()),
         JsonValue::Bool(true),
     ]);
     let result = JsonSelector::ArrayIndex(1).apply(&root);
@@ -56,7 +56,7 @@ fn can_get_nth_array_value() {
 #[test]
 fn can_not_get_array_index_out_of_range() {
     let root = JsonValue::Array(vec![
-        JsonValue::String("bla".to_string()),
+        JsonValue::String("bla".to_owned()),
         JsonValue::Bool(true),
     ]);
     let result = JsonSelector::ArrayIndex(42).apply(&root);
@@ -66,28 +66,28 @@ fn can_not_get_array_index_out_of_range() {
 #[test]
 fn can_get_object_value() {
     let mut object = serde_json::Map::new();
-    object.insert("bla".to_string(), JsonValue::Bool(false));
-    object.insert("blubb".to_string(), JsonValue::Bool(true));
+    object.insert("bla".to_owned(), JsonValue::Bool(false));
+    object.insert("blubb".to_owned(), JsonValue::Bool(true));
     let root = JsonValue::Object(object);
-    let result = JsonSelector::ObjectKey("blubb".to_string()).apply(&root);
+    let result = JsonSelector::ObjectKey("blubb".to_owned()).apply(&root);
     assert_eq!(result, Some(&JsonValue::Bool(true)));
 }
 
 #[test]
 fn can_not_get_object_missing_key() {
     let mut object = serde_json::Map::new();
-    object.insert("bla".to_string(), JsonValue::Bool(false));
-    object.insert("blubb".to_string(), JsonValue::Bool(true));
+    object.insert("bla".to_owned(), JsonValue::Bool(false));
+    object.insert("blubb".to_owned(), JsonValue::Bool(true));
     let root = JsonValue::Object(object);
-    let result = JsonSelector::ObjectKey("foo".to_string()).apply(&root);
+    let result = JsonSelector::ObjectKey("foo".to_owned()).apply(&root);
     assert_eq!(result, None);
 }
 
 #[test]
 fn can_not_get_object_by_index() {
     let mut object = serde_json::Map::new();
-    object.insert("bla".to_string(), JsonValue::Bool(false));
-    object.insert("blubb".to_string(), JsonValue::Bool(true));
+    object.insert("bla".to_owned(), JsonValue::Bool(false));
+    object.insert("blubb".to_owned(), JsonValue::Bool(true));
     let root = JsonValue::Object(object);
     let result = JsonSelector::ArrayIndex(42).apply(&root);
     assert_eq!(result, None);
@@ -96,8 +96,8 @@ fn can_not_get_object_by_index() {
 #[test]
 fn can_get_selected_value() {
     let mut inner = serde_json::Map::new();
-    inner.insert("bla".to_string(), JsonValue::Bool(false));
-    inner.insert("blubb".to_string(), JsonValue::Bool(true));
+    inner.insert("bla".to_owned(), JsonValue::Bool(false));
+    inner.insert("blubb".to_owned(), JsonValue::Bool(true));
 
     let root = JsonValue::Array(vec![
         JsonValue::Bool(false),
@@ -107,7 +107,7 @@ fn can_get_selected_value() {
 
     let selector = vec![
         JsonSelector::ArrayIndex(1),
-        JsonSelector::ObjectKey("blubb".to_string()),
+        JsonSelector::ObjectKey("blubb".to_owned()),
     ];
 
     let result = JsonSelector::get_selection(&root, &selector);

@@ -117,11 +117,11 @@ fn payload_pretty_json_ignores_plain() {
 fn payload_pretty_json_object_works() {
     assert_eq!(
         json_macro(r#"{"a": "alpha", "b": "beta"}"#),
-        Some(r#"{"a":"alpha","b":"beta"}"#.to_string())
+        Some(r#"{"a":"alpha","b":"beta"}"#.to_owned())
     );
 }
 
 #[test]
 fn payload_pretty_json_number_works() {
-    assert_eq!(json_macro("42"), Some("42".to_string()));
+    assert_eq!(json_macro("42"), Some("42".to_owned()));
 }

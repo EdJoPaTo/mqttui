@@ -41,7 +41,7 @@ impl MqttThread {
             let connection_err = Arc::clone(&connection_err);
             let history = Arc::clone(&history);
             thread::Builder::new()
-                .name("mqtt connection".to_string())
+                .name("mqtt connection".to_owned())
                 .spawn(move || {
                     thread_logic(
                         client,

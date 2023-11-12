@@ -33,7 +33,7 @@ fn tree_items_from_json_object(
 ) -> Vec<TreeItem<'_, JsonSelector>> {
     object
         .iter()
-        .map(|(key, value)| tree_items_from_json(JsonSelector::ObjectKey(key.to_string()), value))
+        .map(|(key, value)| tree_items_from_json(JsonSelector::ObjectKey(key.clone()), value))
         .collect::<Vec<_>>()
 }
 

@@ -238,14 +238,14 @@ impl core::str::FromStr for Broker {
                 host: url
                     .host_str()
                     .ok_or_else(|| anyhow::anyhow!("Broker requires a Host"))?
-                    .to_string(),
+                    .to_owned(),
                 port: url.port().unwrap_or(1883),
             },
             "mqtts" => Self::Ssl {
                 host: url
                     .host_str()
                     .ok_or_else(|| anyhow::anyhow!("Broker requires a Host"))?
-                    .to_string(),
+                    .to_owned(),
                 port: url.port().unwrap_or(8883),
             },
             "ws" => Self::WebSocket(url),

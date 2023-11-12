@@ -66,7 +66,7 @@ impl MqttHistory {
                     parent = nodemut.append(Topic::new(part.into())).id();
                 }
             }
-            self.ids.insert(topic.to_string(), parent);
+            self.ids.insert(topic.to_owned(), parent);
             parent
         }
     }
@@ -155,7 +155,7 @@ impl MqttHistory {
             let meta = match history.last().map(|o| &o.payload) {
                 Some(Payload::String(str)) => format!("= {str}"),
                 Some(Payload::Json(json)) => format!("= {json}"),
-                Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_string(),
+                Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_owned(),
                 None => format!("({topics_below} topics, {messages_below} messages)"),
             };
             let text = Line::from(vec![
