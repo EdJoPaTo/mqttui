@@ -126,19 +126,6 @@ pub fn show(
     main_loop_result
 }
 
-fn terminal_draw<B>(app: &mut App, terminal: &mut Terminal<B>) -> anyhow::Result<()>
-where
-    B: Backend,
-{
-    let mut draw_error = None;
-    terminal.draw(|f| {
-        if let Err(error) = app.draw(f) {
-            draw_error = Some(error);
-        }
-    })?;
-    draw_error.map_or(Ok(()), Err)
-}
-
 fn main_loop<B>(
     app: &mut App,
     rx: &Receiver<Event>,
@@ -147,17 +134,19 @@ fn main_loop<B>(
 where
     B: Backend,
 {
-    terminal_draw(app, terminal)?;
+    terminal.draw(|f| app.draw(f))?;
     loop {
         let refresh = match rx.recv()? {
             Event::Key(event) => app.on_key(event)?,
-            Event::MouseClick { column, row } => app.on_click(column, row)?,
-            Event::MouseScrollDown => app.on_down()?,
-            Event::MouseScrollUp => app.on_up()?,
+            Event::MouseClick { column, row } => app.on_click(column, row),
+            Event::MouseScrollDown => app.on_down(),
+            Event::MouseScrollUp => app.on_up(),
             Event::Tick => Refresh::Update,
         };
         match refresh {
-            Refresh::Update => terminal_draw(app, terminal)?,
+            Refresh::Update => {
+                terminal.draw(|f| app.draw(f))?;
+            }
             Refresh::Skip => {}
             Refresh::Quit => break,
         }
@@ -184,17 +173,12 @@ impl App {
         }
     }
 
-    fn get_json_of_current_topic(&self) -> anyhow::Result<Option<serde_json::Value>> {
-        if let Some(topic) = self.topic_overview.get_selected() {
-            let json = self
-                .mqtt_thread
-                .get_history()?
-                .get_last(&topic)
-                .and_then(|last| last.payload.as_optional_json().cloned());
-            Ok(json)
-        } else {
-            Ok(None)
-        }
+    fn get_json_of_current_topic(&self) -> Option<serde_json::Value> {
+        let topic = self.topic_overview.get_selected()?;
+        self.mqtt_thread
+            .get_history()
+            .get_last(&topic)
+            .and_then(|last| last.payload.as_optional_json().cloned())
     }
 
     #[allow(clippy::too_many_lines)]
@@ -206,7 +190,7 @@ impl App {
                     Refresh::Quit
                 }
                 KeyCode::Tab | KeyCode::BackTab => {
-                    let is_json_on_topic = self.get_json_of_current_topic()?.is_some();
+                    let is_json_on_topic = self.get_json_of_current_topic().is_some();
                     if is_json_on_topic {
                         self.focus = ElementInFocus::JsonPayload;
                     }
@@ -216,8 +200,8 @@ impl App {
                     self.topic_overview.state.toggle_selected();
                     Refresh::Update
                 }
-                KeyCode::Down | KeyCode::Char('j') => self.on_down()?,
-                KeyCode::Up | KeyCode::Char('k') => self.on_up()?,
+                KeyCode::Down | KeyCode::Char('j') => self.on_down(),
+                KeyCode::Up | KeyCode::Char('k') => self.on_up(),
                 KeyCode::Left | KeyCode::Char('h') => {
                     self.topic_overview.state.key_left();
                     Refresh::Update
@@ -227,18 +211,18 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::Home => {
-                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                     self.topic_overview.state.select_first(&items);
                     Refresh::Update
                 }
                 KeyCode::End => {
-                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                     self.topic_overview.state.select_last(&items);
                     Refresh::Update
                 }
                 KeyCode::PageUp => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -248,7 +232,7 @@ impl App {
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -258,7 +242,7 @@ impl App {
                 }
                 KeyCode::PageDown => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -268,7 +252,7 @@ impl App {
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -299,8 +283,8 @@ impl App {
                     self.details.json_view.toggle_selected();
                     Refresh::Update
                 }
-                KeyCode::Down | KeyCode::Char('j') => self.on_down()?,
-                KeyCode::Up | KeyCode::Char('k') => self.on_up()?,
+                KeyCode::Down | KeyCode::Char('j') => self.on_down(),
+                KeyCode::Up | KeyCode::Char('k') => self.on_up(),
                 KeyCode::Left | KeyCode::Char('h') => {
                     self.details.json_view.key_left();
                     Refresh::Update
@@ -311,7 +295,7 @@ impl App {
                 }
                 KeyCode::Home => {
                     let json = self
-                        .get_json_of_current_topic()?
+                        .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
                     self.details.json_view.select_first(&items);
@@ -319,7 +303,7 @@ impl App {
                 }
                 KeyCode::End => {
                     let json = self
-                        .get_json_of_current_topic()?
+                        .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
                     self.details.json_view.select_last(&items);
@@ -338,45 +322,45 @@ impl App {
         Ok(refresh)
     }
 
-    fn on_up(&mut self) -> anyhow::Result<Refresh> {
+    fn on_up(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                 self.topic_overview.state.key_up(&items);
             }
             ElementInFocus::JsonPayload => {
                 let json = self
-                    .get_json_of_current_topic()?
+                    .get_json_of_current_topic()
                     .unwrap_or(serde_json::Value::Null);
                 let items = root_tree_items_from_json(&json);
                 self.details.json_view.key_up(&items);
             }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
-        Ok(Refresh::Update)
+        Refresh::Update
     }
 
-    fn on_down(&mut self) -> anyhow::Result<Refresh> {
+    fn on_down(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+                let (_, items) = self.mqtt_thread.get_history().to_tree_items();
                 self.topic_overview.state.key_down(&items);
             }
             ElementInFocus::JsonPayload => {
                 let json = self
-                    .get_json_of_current_topic()?
+                    .get_json_of_current_topic()
                     .unwrap_or(serde_json::Value::Null);
                 let items = root_tree_items_from_json(&json);
                 self.details.json_view.key_down(&items);
             }
             ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
         }
-        Ok(Refresh::Update)
+        Refresh::Update
     }
 
-    fn on_click(&mut self, column: u16, row: u16) -> anyhow::Result<Refresh> {
+    fn on_click(&mut self, column: u16, row: u16) -> Refresh {
         if let Some(index) = self.topic_overview.index_of_click(column, row) {
-            let (_, items) = self.mqtt_thread.get_history()?.to_tree_items();
+            let (_, items) = self.mqtt_thread.get_history().to_tree_items();
             let changed = self
                 .topic_overview
                 .state
@@ -385,12 +369,12 @@ impl App {
                 self.topic_overview.state.toggle_selected();
             }
             self.focus = ElementInFocus::TopicOverview;
-            return Ok(Refresh::Update);
+            return Refresh::Update;
         }
 
         if let Some(index) = self.details.json_index_of_click(column, row) {
             let json = self
-                .get_json_of_current_topic()?
+                .get_json_of_current_topic()
                 .unwrap_or(serde_json::Value::Null);
             let items = root_tree_items_from_json(&json);
             let changed = self.details.json_view.select_visible_index(&items, index);
@@ -398,16 +382,16 @@ impl App {
                 self.details.json_view.toggle_selected();
             }
             self.focus = ElementInFocus::JsonPayload;
-            return Ok(Refresh::Update);
+            return Refresh::Update;
         }
-        Ok(Refresh::Skip)
+        Refresh::Skip
     }
 
-    fn draw(&mut self, f: &mut Frame) -> anyhow::Result<()> {
+    fn draw(&mut self, f: &mut Frame) {
         const HEADER_HEIGHT: u16 = 1;
         const FOOTER_HEIGHT: u16 = 1;
 
-        let connection_error = self.mqtt_thread.has_connection_err().unwrap();
+        let connection_error = self.mqtt_thread.has_connection_err();
 
         let area = f.size();
         let Rect { width, height, .. } = area;
@@ -450,7 +434,7 @@ impl App {
             mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
         }
 
-        let history = self.mqtt_thread.get_history()?;
+        let history = self.mqtt_thread.get_history();
 
         let overview_area = self
             .topic_overview
@@ -492,6 +476,5 @@ impl App {
         if let ElementInFocus::CleanRetainedPopup(topic) = &self.focus {
             clean_retained::draw_popup(f, topic);
         }
-        Ok(())
     }
 }

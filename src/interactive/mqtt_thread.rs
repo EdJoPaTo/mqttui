@@ -50,7 +50,8 @@ impl MqttThread {
                         &connection_err,
                         &history,
                     );
-                })?;
+                })
+                .expect("should be able to spawn a thread");
         }
 
         Ok(Self {
@@ -60,21 +61,20 @@ impl MqttThread {
         })
     }
 
-    pub fn has_connection_err(&self) -> anyhow::Result<Option<String>> {
-        match self.connection_err.read() {
-            Ok(err) => Ok(err.as_ref().map(std::string::ToString::to_string)),
-            Err(err) => Err(anyhow::anyhow!("mqtt history thread paniced {err}")),
-        }
+    pub fn has_connection_err(&self) -> Option<String> {
+        self.connection_err
+            .read()
+            .expect("mqtt history thread paniced")
+            .as_ref()
+            .map(std::string::ToString::to_string)
     }
 
-    pub fn get_history(&self) -> anyhow::Result<RwLockReadGuard<MqttHistory>> {
-        self.history
-            .read()
-            .map_err(|err| anyhow::anyhow!("failed to aquire lock of mqtt history: {err}"))
+    pub fn get_history(&self) -> RwLockReadGuard<MqttHistory> {
+        self.history.read().expect("mqtt history thread paniced")
     }
 
     pub fn clean_below(&mut self, topic: &str) -> anyhow::Result<()> {
-        let topics = self.get_history()?.get_topics_below(topic);
+        let topics = self.get_history().get_topics_below(topic);
         for topic in topics {
             self.client.publish(topic, QoS::ExactlyOnce, true, [])?;
         }
@@ -96,7 +96,9 @@ fn thread_logic(
                 match e {
                     rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) => {
                         for t in subscribe_topic {
-                            client.subscribe(t, QoS::ExactlyOnce).unwrap();
+                            client
+                                .subscribe(t, QoS::ExactlyOnce)
+                                .expect("should be able to subscribe");
                         }
                     }
                     rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish)) => {
