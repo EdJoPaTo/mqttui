@@ -401,8 +401,8 @@ impl App {
 
         let area = f.size();
         let Rect { width, height, .. } = area;
-        debug_assert_eq!(area.x, 0);
-        debug_assert_eq!(area.y, 0);
+        debug_assert_eq!(area.x, 0, "area should fill the whole space");
+        debug_assert_eq!(area.y, 0, "area should fill the whole space");
 
         let header_area = Rect {
             height: HEADER_HEIGHT,
