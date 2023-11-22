@@ -18,6 +18,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use rumqttc::{Client, Connection};
+use tui_tree_widget::TreeItem;
 
 use crate::cli::Broker;
 use crate::interactive::details::json_view::root_tree_items_from_json;
@@ -173,6 +174,11 @@ impl App {
         }
     }
 
+    fn get_topic_tree_items(&self) -> Vec<TreeItem<'static, String>> {
+        let (_amount, items) = self.mqtt_thread.get_history().to_tree_items();
+        items
+    }
+
     fn get_json_of_current_topic(&self) -> Option<serde_json::Value> {
         let topic = self.topic_overview.get_selected()?;
         self.mqtt_thread
@@ -211,18 +217,18 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::Home => {
-                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                    let items = self.get_topic_tree_items();
                     self.topic_overview.state.select_first(&items);
                     Refresh::Update
                 }
                 KeyCode::End => {
-                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                    let items = self.get_topic_tree_items();
                     self.topic_overview.state.select_last(&items);
                     Refresh::Update
                 }
                 KeyCode::PageUp => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                    let items = self.get_topic_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -232,7 +238,7 @@ impl App {
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                    let items = self.get_topic_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -242,7 +248,7 @@ impl App {
                 }
                 KeyCode::PageDown => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                    let items = self.get_topic_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -252,7 +258,7 @@ impl App {
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                    let items = self.get_topic_tree_items();
                     self.topic_overview
                         .state
                         .select_visible_relative(&items, |current| {
@@ -325,7 +331,7 @@ impl App {
     fn on_up(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_up(&items);
             }
             ElementInFocus::JsonPayload => {
@@ -343,7 +349,7 @@ impl App {
     fn on_down(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
-                let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+                let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_down(&items);
             }
             ElementInFocus::JsonPayload => {
@@ -360,7 +366,7 @@ impl App {
 
     fn on_click(&mut self, column: u16, row: u16) -> Refresh {
         if let Some(index) = self.topic_overview.index_of_click(column, row) {
-            let (_, items) = self.mqtt_thread.get_history().to_tree_items();
+            let items = self.get_topic_tree_items();
             let changed = self
                 .topic_overview
                 .state
