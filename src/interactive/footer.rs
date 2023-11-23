@@ -58,6 +58,8 @@ impl Footer {
         } else if remaining > VERSION_TEXT.len() {
             let paragraph = Paragraph::new(VERSION_TEXT);
             f.render_widget(paragraph.alignment(Alignment::Right), area);
+        } else {
+            // Not enough space -> show nothing
         }
         f.render_widget(Paragraph::new(line), area);
     }
