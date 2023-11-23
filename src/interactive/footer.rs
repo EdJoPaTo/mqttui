@@ -10,13 +10,15 @@ use crate::interactive::ElementInFocus;
 const VERSION_TEXT: &str = concat!("mqttui ", env!("CARGO_PKG_VERSION"));
 
 pub struct Footer {
-    broker: String,
+    broker: Box<str>,
+    full_info: Box<str>,
 }
 
 impl Footer {
     pub fn new(broker: &Broker) -> Self {
         Self {
-            broker: format!("{broker}"),
+            broker: format!("{broker}").into(),
+            full_info: format!("{VERSION_TEXT} @ {broker}").into(),
         }
     }
 
@@ -48,9 +50,8 @@ impl Footer {
             ],
         });
         let remaining = area.width as usize - line.width();
-        let full_info = format!("{VERSION_TEXT} @ {}", self.broker);
-        if remaining > full_info.len() {
-            let paragraph = Paragraph::new(full_info);
+        if remaining > self.full_info.len() {
+            let paragraph = Paragraph::new(&*self.full_info);
             f.render_widget(paragraph.alignment(Alignment::Right), area);
         } else if remaining > self.broker.len() {
             let paragraph = Paragraph::new(&*self.broker);
