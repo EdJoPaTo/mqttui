@@ -22,7 +22,7 @@ impl Footer {
         }
     }
 
-    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus) {
+    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus, topic_search: &str) {
         const STYLE: Style = Style::new()
             .fg(Color::Black)
             .bg(Color::White)
@@ -33,8 +33,18 @@ impl Footer {
                 Span::raw(" Quit  "),
                 Span::styled("Tab", STYLE),
                 Span::raw(" Switch to JSON Payload  "),
+                Span::styled("/", STYLE),
+                Span::raw(" Search  "),
                 Span::styled("Del", STYLE),
                 Span::raw(" Clean retained  "),
+            ],
+            ElementInFocus::TopicSearch => vec![
+                Span::styled("Enter", STYLE),
+                Span::raw(" Next  "),
+                Span::styled("Esc", STYLE),
+                Span::raw(" Clear  "),
+                Span::raw("Search: "),
+                Span::raw(topic_search),
             ],
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", STYLE),

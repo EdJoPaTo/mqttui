@@ -93,6 +93,12 @@ impl MqttHistory {
             .and_then(|node| node.value().history.last())
     }
 
+    pub fn get_all_topics(&self) -> Vec<&String> {
+        let mut topics = self.ids.keys().collect::<Vec<_>>();
+        topics.sort();
+        topics
+    }
+
     pub fn get_topics_below(&self, topic: &str) -> Vec<String> {
         fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> Vec<String> {
             let mut topic = prefix.to_vec();

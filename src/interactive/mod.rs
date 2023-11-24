@@ -202,6 +202,10 @@ impl App {
                     }
                     Refresh::Update
                 }
+                KeyCode::Char('/') => {
+                    self.focus = ElementInFocus::TopicSearch;
+                    Refresh::Update
+                }
                 KeyCode::Enter | KeyCode::Char(' ') => {
                     self.topic_overview.state.toggle_selected();
                     Refresh::Update
@@ -276,6 +280,69 @@ impl App {
                 }
                 _ => Refresh::Skip,
             },
+            ElementInFocus::TopicSearch => match key.code {
+                KeyCode::Char(char) => {
+                    self.topic_overview.search += &char.to_lowercase().to_string();
+                    Refresh::Update
+                }
+                KeyCode::Backspace => {
+                    self.topic_overview.search.pop();
+                    Refresh::Update
+                }
+                KeyCode::Esc => {
+                    self.topic_overview.search = String::new();
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                KeyCode::Tab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                KeyCode::Enter => {
+                    let selection = self.topic_overview.get_selected();
+                    let history = self.mqtt_thread.get_history();
+                    let mut topics = history
+                        .get_all_topics()
+                        .into_iter()
+                        .enumerate()
+                        .collect::<Vec<_>>();
+
+                    let begin_index = selection
+                        .and_then(|selection| {
+                            topics
+                                .iter()
+                                .find(|(_, topic)| *topic == &selection)
+                                .map(|(index, _)| *index)
+                        })
+                        .unwrap_or(0);
+
+                    // Filter out topics not matching the search
+                    topics.retain(|(_, topic)| {
+                        topic.to_lowercase().contains(&self.topic_overview.search)
+                    });
+
+                    let select = topics
+                        .iter()
+                        .find(|(index, _)| *index > begin_index)
+                        .or_else(|| topics.first())
+                        .map(|(_, topic)| topic)
+                        .map_or(vec![], |o| {
+                            o.split('/')
+                                .map(std::borrow::ToOwned::to_owned)
+                                .collect::<Vec<_>>()
+                        });
+                    drop(history);
+
+                    for i in 0..select.len() {
+                        self.topic_overview.state.open(select[0..i].to_vec());
+                    }
+
+                    self.topic_overview.state.select(select);
+
+                    Refresh::Update
+                }
+                _ => Refresh::Skip,
+            },
             ElementInFocus::JsonPayload => match key.code {
                 KeyCode::Char('q') => Refresh::Quit,
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -328,12 +395,14 @@ impl App {
         Ok(refresh)
     }
 
+    /// Handle mouse and keyboard up movement
     fn on_up(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_up(&items);
             }
+            ElementInFocus::TopicSearch => {}
             ElementInFocus::JsonPayload => {
                 let json = self
                     .get_json_of_current_topic()
@@ -346,12 +415,14 @@ impl App {
         Refresh::Update
     }
 
+    /// Handle mouse and keyboard down movement
     fn on_down(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_down(&items);
             }
+            ElementInFocus::TopicSearch => {}
             ElementInFocus::JsonPayload => {
                 let json = self
                     .get_json_of_current_topic()
@@ -435,7 +506,8 @@ impl App {
             f.render_widget(paragraph.alignment(Alignment::Center), header_area);
         }
 
-        self.footer.draw(f, footer_area, &self.focus);
+        self.footer
+            .draw(f, footer_area, &self.focus, &self.topic_overview.search);
         if let Some(connection_error) = connection_error {
             mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
         }
