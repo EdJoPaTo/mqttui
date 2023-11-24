@@ -91,7 +91,7 @@ fn draw_payload_json(
     has_focus: bool,
     view_state: &mut TreeState<JsonSelector>,
 ) {
-    let title = format!("JSON Payload (Bytes: {bytes})  (TAB to switch)");
+    let title = format!("JSON Payload (Bytes: {bytes})");
     let items = root_tree_items_from_json(json);
     let focus_color = focus_color(has_focus);
     let widget = Tree::new(items)
