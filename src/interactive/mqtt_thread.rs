@@ -106,8 +106,8 @@ fn thread_logic(
                             continue;
                         }
                         history.write().unwrap().add(
-                            &publish.topic,
-                            HistoryEntry::new_now(publish.retain, publish.qos, &publish.payload),
+                            publish.topic,
+                            HistoryEntry::new_now(publish.retain, publish.qos, publish.payload),
                         );
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {

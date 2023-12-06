@@ -45,8 +45,8 @@ impl MqttHistory {
         }
     }
 
-    fn entry(&mut self, topic: &str) -> NodeId {
-        if let Some(id) = self.ids.get(topic) {
+    fn entry(&mut self, topic: String) -> NodeId {
+        if let Some(id) = self.ids.get(&topic) {
             *id
         } else {
             let mut parent = self.tree.root().id();
@@ -66,12 +66,12 @@ impl MqttHistory {
                     parent = nodemut.append(Topic::new(part.into())).id();
                 }
             }
-            self.ids.insert(topic.to_owned(), parent);
+            self.ids.insert(topic, parent);
             parent
         }
     }
 
-    pub fn add(&mut self, topic: &str, history_entry: HistoryEntry) {
+    pub fn add(&mut self, topic: String, history_entry: HistoryEntry) {
         let id = self.entry(topic);
         self.tree
             .get_mut(id)
@@ -193,20 +193,20 @@ impl MqttHistory {
     pub fn example() -> Self {
         let mut history = Self::new();
         history.add(
-            "test",
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"A".into()),
+            "test".to_owned(),
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "A".into()),
         );
         history.add(
-            "foo/test",
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"B".into()),
+            "foo/test".to_owned(),
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "B".into()),
         );
         history.add(
-            "test",
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"C".into()),
+            "test".to_owned(),
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "C".into()),
         );
         history.add(
-            "foo/bar",
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, &"D".into()),
+            "foo/bar".to_owned(),
+            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "D".into()),
         );
         history
     }

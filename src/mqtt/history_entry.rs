@@ -37,8 +37,8 @@ pub enum Payload {
 }
 
 impl Payload {
-    pub fn new(payload: &bytes::Bytes) -> Self {
-        match String::from_utf8(payload.to_vec()) {
+    pub fn new(payload: bytes::Bytes) -> Self {
+        match String::from_utf8(payload.into()) {
             Ok(str) => {
                 serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
             }
@@ -63,7 +63,7 @@ pub struct HistoryEntry {
 }
 
 impl HistoryEntry {
-    pub fn new_now(retain: bool, qos: QoS, payload: &bytes::Bytes) -> Self {
+    pub fn new_now(retain: bool, qos: QoS, payload: bytes::Bytes) -> Self {
         let time = if retain {
             Time::Retained
         } else {
@@ -102,7 +102,7 @@ fn time_retained_to_string() {
 
 #[cfg(test)]
 fn json_macro(json_str: &'static str) -> Option<String> {
-    let payload = Payload::new(&json_str.into());
+    let payload = Payload::new(json_str.into());
     payload
         .as_optional_json()
         .map(std::string::ToString::to_string)

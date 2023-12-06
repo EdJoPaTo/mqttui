@@ -36,12 +36,10 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                     continue;
                 }
                 eprintln!("{}", publish.topic);
-                done = match Payload::new(&publish.payload) {
+                let size = publish.payload.len();
+                done = match Payload::new(publish.payload) {
                     Payload::NotUtf8(err) => {
-                        eprintln!(
-                            "Payload ({}) is not valid UTF-8: {err}",
-                            publish.payload.len()
-                        );
+                        eprintln!("Payload ({size}) is not valid UTF-8: {err}");
                         Finished::NonUtf8
                     }
                     Payload::String(str) => {

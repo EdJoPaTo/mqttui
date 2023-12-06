@@ -33,14 +33,13 @@ pub fn show(mut connection: Connection, verbose: bool) {
                     Time::Retained
                 } else {
                     Time::Local(Local::now().naive_local())
-                };
-                println!(
-                    "{:12} QoS:{:11} {:50} {}",
-                    time.to_string(),
-                    format::qos(publish.qos),
-                    publish.topic,
-                    format::payload(&Payload::new(&publish.payload), publish.payload.len())
-                );
+                }
+                .to_string();
+                let qos = format::qos(publish.qos);
+                let topic = publish.topic;
+                let size = publish.payload.len();
+                let payload = format::payload(&Payload::new(publish.payload), size);
+                println!("{time:12} QoS:{qos:11} {topic:50} {payload}");
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {
