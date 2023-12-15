@@ -18,7 +18,7 @@ impl Point {
         let time = entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::NotUtf8(_) => None,
-            Payload::String(str) => str.parse::<f64>().ok(),
+            Payload::String(str) => str.splitn(2, char::is_whitespace).next().unwrap().parse::<f64>().ok(),
             Payload::Json(json) => {
                 let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
                 match json {
