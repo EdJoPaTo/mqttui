@@ -18,11 +18,7 @@ impl Point {
         let time = entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::NotUtf8(_) => None,
-            Payload::String(str) => str
-                .split(char::is_whitespace)
-                .find(|o| !o.is_empty())? // lazy trim
-                .parse::<f64>()
-                .ok(),
+            Payload::String(str) => payload_string_as_f64(str),
             Payload::Json(json) => {
                 let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
                 match json {
@@ -44,6 +40,34 @@ impl Point {
         let x = parse_time_to_chart_x(&self.time);
         (x, self.y)
     }
+}
+
+fn payload_string_as_f64(payload: &str) -> Option<f64> {
+    payload
+        .split(char::is_whitespace)
+        .find(|o| !o.is_empty())? // lazy trim
+        .parse::<f64>()
+        .ok()
+}
+
+#[test]
+fn payload_string_as_f64_works() {
+    fn t(input: &str, expected: Option<f64>) {
+        let actual = payload_string_as_f64(input);
+        match (actual, expected) {
+            (None, None) => {} // All fine
+            (Some(actual), Some(expected)) => assert!(
+                (actual - expected).abs() < 0.01,
+                "Assertion failed:\n{actual} is not\n{expected}"
+            ),
+            _ => panic!("Assertion failed:\n{actual:?} is not\n{expected:?}"),
+        }
+    }
+
+    t("", None);
+    t("42", Some(42.0));
+    t("12.3 °C", Some(12.3));
+    t(" 2.4 °C", Some(2.4));
 }
 
 /// Dataset of Points showable by the graph. Ensures to create a useful graph (has at least 2 points)
