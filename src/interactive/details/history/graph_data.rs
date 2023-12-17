@@ -21,7 +21,7 @@ impl Point {
             Payload::String(str) => str
                 .split(char::is_whitespace)
                 .next()
-                .unwrap()
+                .expect("split should always return at least one entry")
                 .parse::<f64>()
                 .ok(),
             Payload::Json(json) => {
