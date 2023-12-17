@@ -20,8 +20,7 @@ impl Point {
             Payload::NotUtf8(_) => None,
             Payload::String(str) => str
                 .split(char::is_whitespace)
-                .next()
-                .expect("split should always return at least one entry")
+                .find(|o| !o.is_empty())? // lazy trim
                 .parse::<f64>()
                 .ok(),
             Payload::Json(json) => {
