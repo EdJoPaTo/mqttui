@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Interactive graph plots values with units (`20.0 °C` will ignore everything after the whitespace → `20.0`)
+
 ### Changed
 
 - Borderless Topic view for more characters of topic names
