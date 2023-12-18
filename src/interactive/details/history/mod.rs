@@ -96,15 +96,16 @@ fn draw_table(
         }
     });
 
-    let t = Table::new(rows)
-        .highlight_style(STYLE_BOLD)
-        .widths(&[
+    let t = Table::new(
+        rows,
+        [
             Constraint::Length(12),
             Constraint::Length(11),
             Constraint::Percentage(100),
-        ])
-        .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
-        .block(Block::new().borders(Borders::ALL).title(title));
+        ],
+    )
+    .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
+    .block(Block::new().borders(Borders::ALL).title(title));
 
     let mut state = TableState::default();
     state.select(Some(topic_history.len() - 1));
