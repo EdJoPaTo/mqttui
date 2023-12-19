@@ -18,7 +18,7 @@ impl Point {
         let time = entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::NotUtf8(_) => None,
-            Payload::String(str) => str.parse::<f64>().ok(),
+            Payload::String(str) => f64_from_string(str),
             Payload::Json(json) => {
                 let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
                 match json {
@@ -27,7 +27,7 @@ impl Point {
                     JsonValue::Bool(false) => Some(0.0),
                     #[allow(clippy::cast_precision_loss)]
                     JsonValue::Array(arr) => Some(arr.len() as f64),
-                    JsonValue::String(str) => str.parse::<f64>().ok(),
+                    JsonValue::String(str) => f64_from_string(str),
                     JsonValue::Null | JsonValue::Object(_) => None,
                 }
             }
@@ -40,6 +40,34 @@ impl Point {
         let x = parse_time_to_chart_x(&self.time);
         (x, self.y)
     }
+}
+
+fn f64_from_string(payload: &str) -> Option<f64> {
+    payload
+        .split(char::is_whitespace)
+        .find(|o| !o.is_empty())? // lazy trim
+        .parse::<f64>()
+        .ok()
+}
+
+#[test]
+fn f64_from_string_works() {
+    fn t(input: &str, expected: Option<f64>) {
+        let actual = f64_from_string(input);
+        match (actual, expected) {
+            (None, None) => {} // All fine
+            (Some(actual), Some(expected)) => assert!(
+                (actual - expected).abs() < 0.01,
+                "Assertion failed:\n{actual} is not\n{expected}"
+            ),
+            _ => panic!("Assertion failed:\n{actual:?} is not\n{expected:?}"),
+        }
+    }
+
+    t("", None);
+    t("42", Some(42.0));
+    t("12.3 °C", Some(12.3));
+    t(" 2.4 °C", Some(2.4));
 }
 
 /// Dataset of Points showable by the graph. Ensures to create a useful graph (has at least 2 points)
