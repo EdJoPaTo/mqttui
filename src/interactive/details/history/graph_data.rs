@@ -18,7 +18,7 @@ impl Point {
         let time = entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::NotUtf8(_) => None,
-            Payload::String(str) => payload_string_as_f64(str),
+            Payload::String(str) => f64_from_string(str),
             Payload::Json(json) => {
                 let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
                 match json {
@@ -27,7 +27,7 @@ impl Point {
                     JsonValue::Bool(false) => Some(0.0),
                     #[allow(clippy::cast_precision_loss)]
                     JsonValue::Array(arr) => Some(arr.len() as f64),
-                    JsonValue::String(str) => str.parse::<f64>().ok(),
+                    JsonValue::String(str) => f64_from_string(str),
                     JsonValue::Null | JsonValue::Object(_) => None,
                 }
             }
@@ -42,7 +42,7 @@ impl Point {
     }
 }
 
-fn payload_string_as_f64(payload: &str) -> Option<f64> {
+fn f64_from_string(payload: &str) -> Option<f64> {
     payload
         .split(char::is_whitespace)
         .find(|o| !o.is_empty())? // lazy trim
@@ -51,9 +51,9 @@ fn payload_string_as_f64(payload: &str) -> Option<f64> {
 }
 
 #[test]
-fn payload_string_as_f64_works() {
+fn f64_from_string_works() {
     fn t(input: &str, expected: Option<f64>) {
-        let actual = payload_string_as_f64(input);
+        let actual = f64_from_string(input);
         match (actual, expected) {
             (None, None) => {} // All fine
             (Some(actual), Some(expected)) => assert!(
