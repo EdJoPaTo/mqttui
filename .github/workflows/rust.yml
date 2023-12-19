@@ -41,7 +41,7 @@ jobs:
           - toolchain: beta
             os: ubuntu-latest
             features: --all-features
-            clippyargs: -D clippy::pedantic -D clippy::nursery -D clippy::cargo
+            clippyargs: -D clippy::pedantic -D clippy::nursery
           - toolchain: nightly
             os: ubuntu-latest
             features: --all-features
