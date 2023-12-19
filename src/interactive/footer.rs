@@ -31,12 +31,12 @@ impl Footer {
             ElementInFocus::TopicOverview => vec![
                 Span::styled("q", STYLE),
                 Span::raw(" Quit  "),
-                Span::styled("Tab", STYLE),
-                Span::raw(" Switch to JSON Payload  "),
                 Span::styled("/", STYLE),
                 Span::raw(" Search  "),
                 Span::styled("Del", STYLE),
                 Span::raw(" Clean retained  "),
+                Span::styled("Tab", STYLE),
+                Span::raw(" Switch to JSON Payload  "),
             ],
             ElementInFocus::TopicSearch => vec![
                 Span::styled("Enter", STYLE),
