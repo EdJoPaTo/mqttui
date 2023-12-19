@@ -283,10 +283,12 @@ impl App {
             ElementInFocus::TopicSearch => match key.code {
                 KeyCode::Char(char) => {
                     self.topic_overview.search += &char.to_lowercase().to_string();
+                    self.search_select(false);
                     Refresh::Update
                 }
                 KeyCode::Backspace => {
                     self.topic_overview.search.pop();
+                    self.search_select(false);
                     Refresh::Update
                 }
                 KeyCode::Esc => {
@@ -299,46 +301,7 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::Enter => {
-                    let selection = self.topic_overview.get_selected();
-                    let history = self.mqtt_thread.get_history();
-                    let mut topics = history
-                        .get_all_topics()
-                        .into_iter()
-                        .enumerate()
-                        .collect::<Vec<_>>();
-
-                    let begin_index = selection
-                        .and_then(|selection| {
-                            topics
-                                .iter()
-                                .find(|(_, topic)| *topic == &selection)
-                                .map(|(index, _)| *index)
-                        })
-                        .unwrap_or(0);
-
-                    // Filter out topics not matching the search
-                    topics.retain(|(_, topic)| {
-                        topic.to_lowercase().contains(&self.topic_overview.search)
-                    });
-
-                    let select = topics
-                        .iter()
-                        .find(|(index, _)| *index > begin_index)
-                        .or_else(|| topics.first())
-                        .map(|(_, topic)| topic)
-                        .map_or(vec![], |o| {
-                            o.split('/')
-                                .map(std::borrow::ToOwned::to_owned)
-                                .collect::<Vec<_>>()
-                        });
-                    drop(history);
-
-                    for i in 0..select.len() {
-                        self.topic_overview.state.open(select[0..i].to_vec());
-                    }
-
-                    self.topic_overview.state.select(select);
-
+                    self.search_select(true);
                     Refresh::Update
                 }
                 _ => Refresh::Skip,
@@ -462,6 +425,52 @@ impl App {
             return Refresh::Update;
         }
         Refresh::Skip
+    }
+
+    fn search_select(&mut self, advance: bool) {
+        let selection = self.topic_overview.get_selected();
+        let history = self.mqtt_thread.get_history();
+        let mut topics = history
+            .get_all_topics()
+            .into_iter()
+            .enumerate()
+            .collect::<Vec<_>>();
+
+        let begin_index = selection
+            .and_then(|selection| {
+                topics
+                    .iter()
+                    .find(|(_, topic)| *topic == &selection)
+                    .map(|(index, _)| *index)
+            })
+            .unwrap_or(0);
+
+        // Filter out topics not matching the search
+        topics.retain(|(_, topic)| topic.to_lowercase().contains(&self.topic_overview.search));
+
+        let select = topics
+            .iter()
+            .find(|(index, _)| {
+                if advance {
+                    *index > begin_index
+                } else {
+                    *index >= begin_index
+                }
+            })
+            .or_else(|| topics.first())
+            .map(|(_, topic)| topic)
+            .map_or(vec![], |o| {
+                o.split('/')
+                    .map(std::borrow::ToOwned::to_owned)
+                    .collect::<Vec<_>>()
+            });
+        drop(history);
+
+        for i in 0..select.len() {
+            self.topic_overview.state.open(select[0..i].to_vec());
+        }
+
+        self.topic_overview.state.select(select);
     }
 
     fn draw(&mut self, f: &mut Frame) {
