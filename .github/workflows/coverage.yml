@@ -34,7 +34,7 @@ jobs:
         run: cargo llvm-cov --all-features --html
 
       - name: Upload Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: target/llvm-cov/html
