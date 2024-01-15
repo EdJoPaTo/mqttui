@@ -39,8 +39,12 @@ impl Footer {
                 Span::raw(" Switch to JSON Payload  "),
             ],
             ElementInFocus::TopicSearch => vec![
-                Span::styled("Enter", STYLE),
+                Span::styled("↑", STYLE),
+                Span::raw(" Before  "),
+                Span::styled("↓", STYLE),
                 Span::raw(" Next  "),
+                Span::styled("Enter", STYLE),
+                Span::raw(" Open All  "),
                 Span::styled("Esc", STYLE),
                 Span::raw(" Clear  "),
                 Span::raw("Search: "),

@@ -50,6 +50,13 @@ enum Refresh {
     Quit,
 }
 
+#[derive(Clone, Copy)]
+enum SearchSelection {
+    Before,
+    Stay,
+    After,
+}
+
 pub fn show(
     client: Client,
     connection: Connection,
@@ -283,12 +290,25 @@ impl App {
             ElementInFocus::TopicSearch => match key.code {
                 KeyCode::Char(char) => {
                     self.topic_overview.search += &char.to_lowercase().to_string();
-                    self.search_select(false);
+                    self.search_select(SearchSelection::Stay);
                     Refresh::Update
                 }
                 KeyCode::Backspace => {
                     self.topic_overview.search.pop();
-                    self.search_select(false);
+                    self.search_select(SearchSelection::Stay);
+                    Refresh::Update
+                }
+                KeyCode::Up => {
+                    self.search_select(SearchSelection::Before);
+                    Refresh::Update
+                }
+                KeyCode::Down => {
+                    self.search_select(SearchSelection::After);
+                    Refresh::Update
+                }
+                KeyCode::Enter => {
+                    self.search_select(SearchSelection::After);
+                    self.search_open_all_matches();
                     Refresh::Update
                 }
                 KeyCode::Esc => {
@@ -298,10 +318,6 @@ impl App {
                 }
                 KeyCode::Tab => {
                     self.focus = ElementInFocus::TopicOverview;
-                    Refresh::Update
-                }
-                KeyCode::Enter => {
-                    self.search_select(true);
                     Refresh::Update
                 }
                 _ => Refresh::Skip,
@@ -427,7 +443,7 @@ impl App {
         Refresh::Skip
     }
 
-    fn search_select(&mut self, advance: bool) {
+    fn search_select(&mut self, advance: SearchSelection) {
         let selection = self.topic_overview.get_selected();
         let history = self.mqtt_thread.get_history();
         let mut topics = history
@@ -448,22 +464,27 @@ impl App {
         // Filter out topics not matching the search
         topics.retain(|(_, topic)| topic.to_lowercase().contains(&self.topic_overview.search));
 
-        let select = topics
-            .iter()
-            .find(|(index, _)| {
-                if advance {
-                    *index > begin_index
-                } else {
-                    *index >= begin_index
-                }
-            })
-            .or_else(|| topics.first())
-            .map(|(_, topic)| topic)
-            .map_or(vec![], |o| {
-                o.split('/')
-                    .map(std::borrow::ToOwned::to_owned)
-                    .collect::<Vec<_>>()
-            });
+        let select = match advance {
+            SearchSelection::Before => topics
+                .iter()
+                .rev()
+                .find(|(index, _)| *index < begin_index)
+                .or_else(|| topics.last()),
+            SearchSelection::Stay => topics
+                .iter()
+                .find(|(index, _)| *index >= begin_index)
+                .or_else(|| topics.first()),
+            SearchSelection::After => topics
+                .iter()
+                .find(|(index, _)| *index > begin_index)
+                .or_else(|| topics.first()),
+        };
+        let select = select.map_or(vec![], |(_, topic)| {
+            topic
+                .split('/')
+                .map(std::borrow::ToOwned::to_owned)
+                .collect::<Vec<_>>()
+        });
         drop(history);
 
         for i in 0..select.len() {
@@ -471,6 +492,29 @@ impl App {
         }
 
         self.topic_overview.state.select(select);
+    }
+
+    fn search_open_all_matches(&mut self) {
+        let topics = self
+            .mqtt_thread
+            .get_history()
+            .get_all_topics()
+            .into_iter()
+            .filter(|topic| topic.to_lowercase().contains(&self.topic_overview.search))
+            .map(|topic| {
+                topic
+                    .split('/')
+                    .map(std::borrow::ToOwned::to_owned)
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        self.topic_overview.state.close_all();
+        for splitted in topics {
+            for i in 0..splitted.len() {
+                self.topic_overview.state.open(splitted[0..i].to_vec());
+            }
+        }
     }
 
     fn draw(&mut self, f: &mut Frame) {
