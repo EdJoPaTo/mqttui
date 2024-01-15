@@ -162,7 +162,7 @@ where
     Ok(())
 }
 
-struct App {
+pub struct App {
     details: details::Details,
     focus: ElementInFocus,
     footer: footer::Footer,
