@@ -515,8 +515,7 @@ impl App {
             f.render_widget(paragraph.alignment(Alignment::Center), header_area);
         }
 
-        self.footer
-            .draw(f, footer_area, &self.focus, &self.topic_overview.search);
+        self.footer.draw(f, footer_area, self);
         if let Some(connection_error) = connection_error {
             mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
         }

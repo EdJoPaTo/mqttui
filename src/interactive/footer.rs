@@ -5,7 +5,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::cli::Broker;
-use crate::interactive::ElementInFocus;
+use crate::interactive::{App, ElementInFocus};
 
 const VERSION_TEXT: &str = concat!("mqttui ", env!("CARGO_PKG_VERSION"));
 
@@ -22,12 +22,12 @@ impl Footer {
         }
     }
 
-    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus, topic_search: &str) {
+    pub fn draw(&self, f: &mut Frame, area: Rect, app: &App) {
         const STYLE: Style = Style::new()
             .fg(Color::Black)
             .bg(Color::White)
             .add_modifier(Modifier::BOLD);
-        let line = Line::from(match focus {
+        let line = Line::from(match app.focus {
             ElementInFocus::TopicOverview => vec![
                 Span::styled("q", STYLE),
                 Span::raw(" Quit  "),
@@ -44,7 +44,7 @@ impl Footer {
                 Span::styled("Esc", STYLE),
                 Span::raw(" Clear  "),
                 Span::raw("Search: "),
-                Span::raw(topic_search),
+                Span::raw(&app.topic_overview.search),
             ],
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", STYLE),
