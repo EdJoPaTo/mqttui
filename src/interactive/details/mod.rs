@@ -35,17 +35,7 @@ impl Details {
         let size = last.payload_size;
         let history_area = match &last.payload {
             Payload::Json(json) => {
-                let (payload_area, remaining_area) = split_area_vertically(area, area.height / 4);
-                self.last_json_area = Some(payload_area);
-                draw_payload_json(
-                    f,
-                    payload_area,
-                    size,
-                    json,
-                    json_payload_has_focus,
-                    &mut self.json_view,
-                );
-                remaining_area
+                self.draw_payload_json(f, area, size, json, json_payload_has_focus)
             }
             Payload::NotUtf8(err) => draw_payload_string(f, area, size, &err.to_string()),
             Payload::String(str) => draw_payload_string(f, area, size, str),
@@ -66,6 +56,39 @@ impl Details {
             None
         }
     }
+
+    fn draw_payload_json(
+        &mut self,
+        f: &mut Frame,
+        area: Rect,
+        bytes: usize,
+        json: &serde_json::Value,
+        has_focus: bool,
+    ) -> Rect {
+        let title = format!("JSON Payload (Bytes: {bytes})");
+        let items = root_tree_items_from_json(json);
+
+        let visible = tui_tree_widget::flatten(&self.json_view.get_all_opened(), &items);
+        let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
+        let max_payload_height = area.height / 3;
+        #[allow(clippy::cast_possible_truncation)]
+        let payload_height = min(max_payload_height as usize, 2 + content_height) as u16;
+        let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
+        self.last_json_area = Some(payload_area);
+
+        let focus_color = focus_color(has_focus);
+        let widget = Tree::new(items)
+            .unwrap()
+            .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
+            .block(
+                Block::new()
+                    .borders(Borders::ALL)
+                    .border_style(Style::new().fg(focus_color))
+                    .title(title),
+            );
+        f.render_stateful_widget(widget, payload_area, &mut self.json_view);
+        remaining_area
+    }
 }
 
 /// Returns remaining rect to be used for history
@@ -81,27 +104,4 @@ fn draw_payload_string(f: &mut Frame, area: Rect, payload_bytes: usize, payload:
     let widget = List::new(items).block(Block::new().borders(Borders::ALL).title(title));
     f.render_widget(widget, payload_area);
     remaining_area
-}
-
-fn draw_payload_json(
-    f: &mut Frame,
-    area: Rect,
-    bytes: usize,
-    json: &serde_json::Value,
-    has_focus: bool,
-    view_state: &mut TreeState<JsonSelector>,
-) {
-    let title = format!("JSON Payload (Bytes: {bytes})");
-    let items = root_tree_items_from_json(json);
-    let focus_color = focus_color(has_focus);
-    let widget = Tree::new(items)
-        .unwrap()
-        .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
-        .block(
-            Block::new()
-                .borders(Borders::ALL)
-                .border_style(Style::new().fg(focus_color))
-                .title(title),
-        );
-    f.render_stateful_widget(widget, area, view_state);
 }

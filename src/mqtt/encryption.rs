@@ -5,11 +5,11 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use rumqttc::TlsConfiguration;
-use rustls::client::{ServerCertVerified, ServerCertVerifier, WantsTransparencyPolicyOrClientCert};
+use rustls::client::{ServerCertVerified, WantsTransparencyPolicyOrClientCert};
 use rustls::{Certificate, ClientConfig, ConfigBuilder, PrivateKey};
 
 struct NoVerifier;
-impl ServerCertVerifier for NoVerifier {
+impl rustls::client::ServerCertVerifier for NoVerifier {
     fn verify_server_cert(
         &self,
         _end_entity: &rustls::Certificate,
