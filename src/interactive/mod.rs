@@ -23,6 +23,7 @@ use tui_tree_widget::TreeItem;
 use crate::cli::Broker;
 use crate::interactive::details::json_view::root_tree_items_from_json;
 use crate::interactive::ui::ElementInFocus;
+use crate::mqtt::Payload;
 
 mod clean_retained;
 mod details;
@@ -186,6 +187,19 @@ impl App {
         items
     }
 
+    fn can_switch_to_payload(&self) -> bool {
+        let Some(topic) = self.topic_overview.get_selected() else {
+            return false;
+        };
+        let history = self.mqtt_thread.get_history();
+        let Some(history_entry) = &history.get_last(&topic) else {
+            return false;
+        };
+        let result = matches!(history_entry.payload, Payload::Json(_));
+        drop(history);
+        result
+    }
+
     fn get_json_of_current_topic(&self) -> Option<serde_json::Value> {
         let topic = self.topic_overview.get_selected()?;
         self.mqtt_thread
@@ -203,8 +217,7 @@ impl App {
                     Refresh::Quit
                 }
                 KeyCode::Tab | KeyCode::BackTab => {
-                    let is_json_on_topic = self.get_json_of_current_topic().is_some();
-                    if is_json_on_topic {
+                    if self.can_switch_to_payload() {
                         self.focus = ElementInFocus::JsonPayload;
                     }
                     Refresh::Update

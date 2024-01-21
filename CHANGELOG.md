@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Display broker text easier to read
 - Display version & broker in the lower right corner
 - Display MQTT connection error in its own area
+- Only display delete / tab footer keys when useful
 - Prevent JSON Payload empty space for bigger history/graph view
 - Build: always build with TLS support
 - Performance: Less clones on interactive draw

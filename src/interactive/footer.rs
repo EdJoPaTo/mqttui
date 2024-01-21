@@ -28,16 +28,23 @@ impl Footer {
             .bg(Color::White)
             .add_modifier(Modifier::BOLD);
         let line = Line::from(match app.focus {
-            ElementInFocus::TopicOverview => vec![
-                Span::styled("q", STYLE),
-                Span::raw(" Quit  "),
-                Span::styled("/", STYLE),
-                Span::raw(" Search  "),
-                Span::styled("Del", STYLE),
-                Span::raw(" Clean retained  "),
-                Span::styled("Tab", STYLE),
-                Span::raw(" Switch to JSON Payload  "),
-            ],
+            ElementInFocus::TopicOverview => {
+                let mut result = vec![
+                    Span::styled("q", STYLE),
+                    Span::raw(" Quit  "),
+                    Span::styled("/", STYLE),
+                    Span::raw(" Search  "),
+                ];
+                if app.topic_overview.get_selected().is_some() {
+                    result.push(Span::styled("Del", STYLE));
+                    result.push(Span::raw(" Clean retained  "));
+                }
+                if app.can_switch_to_payload() {
+                    result.push(Span::styled("Tab", STYLE));
+                    result.push(Span::raw(" Switch to Payload  "));
+                }
+                result
+            }
             ElementInFocus::TopicSearch => vec![
                 Span::styled("↑", STYLE),
                 Span::raw(" Before  "),
