@@ -9,6 +9,7 @@ use crate::interactive::ui::{focus_color, get_row_inside};
 #[derive(Default)]
 pub struct TopicOverview {
     pub last_area: Rect,
+    pub search: String,
     pub state: TreeState<String>,
 }
 

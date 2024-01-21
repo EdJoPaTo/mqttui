@@ -5,7 +5,7 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::cli::Broker;
-use crate::interactive::ElementInFocus;
+use crate::interactive::{App, ElementInFocus};
 
 const VERSION_TEXT: &str = concat!("mqttui ", env!("CARGO_PKG_VERSION"));
 
@@ -22,19 +22,33 @@ impl Footer {
         }
     }
 
-    pub fn draw(&self, f: &mut Frame, area: Rect, focus: &ElementInFocus) {
+    pub fn draw(&self, f: &mut Frame, area: Rect, app: &App) {
         const STYLE: Style = Style::new()
             .fg(Color::Black)
             .bg(Color::White)
             .add_modifier(Modifier::BOLD);
-        let line = Line::from(match focus {
+        let line = Line::from(match app.focus {
             ElementInFocus::TopicOverview => vec![
                 Span::styled("q", STYLE),
                 Span::raw(" Quit  "),
-                Span::styled("Tab", STYLE),
-                Span::raw(" Switch to JSON Payload  "),
+                Span::styled("/", STYLE),
+                Span::raw(" Search  "),
                 Span::styled("Del", STYLE),
                 Span::raw(" Clean retained  "),
+                Span::styled("Tab", STYLE),
+                Span::raw(" Switch to JSON Payload  "),
+            ],
+            ElementInFocus::TopicSearch => vec![
+                Span::styled("↑", STYLE),
+                Span::raw(" Before  "),
+                Span::styled("↓", STYLE),
+                Span::raw(" Next  "),
+                Span::styled("Enter", STYLE),
+                Span::raw(" Open All  "),
+                Span::styled("Esc", STYLE),
+                Span::raw(" Clear  "),
+                Span::raw("Search: "),
+                Span::raw(&app.topic_overview.search),
             ],
             ElementInFocus::JsonPayload => vec![
                 Span::styled("q", STYLE),

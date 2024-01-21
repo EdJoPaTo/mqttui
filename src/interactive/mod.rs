@@ -50,6 +50,13 @@ enum Refresh {
     Quit,
 }
 
+#[derive(Clone, Copy)]
+enum SearchSelection {
+    Before,
+    Stay,
+    After,
+}
+
 pub fn show(
     client: Client,
     connection: Connection,
@@ -155,7 +162,7 @@ where
     Ok(())
 }
 
-struct App {
+pub struct App {
     details: details::Details,
     focus: ElementInFocus,
     footer: footer::Footer,
@@ -200,6 +207,10 @@ impl App {
                     if is_json_on_topic {
                         self.focus = ElementInFocus::JsonPayload;
                     }
+                    Refresh::Update
+                }
+                KeyCode::Char('/') => {
+                    self.focus = ElementInFocus::TopicSearch;
                     Refresh::Update
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => {
@@ -276,6 +287,41 @@ impl App {
                 }
                 _ => Refresh::Skip,
             },
+            ElementInFocus::TopicSearch => match key.code {
+                KeyCode::Char(char) => {
+                    self.topic_overview.search += &char.to_lowercase().to_string();
+                    self.search_select(SearchSelection::Stay);
+                    Refresh::Update
+                }
+                KeyCode::Backspace => {
+                    self.topic_overview.search.pop();
+                    self.search_select(SearchSelection::Stay);
+                    Refresh::Update
+                }
+                KeyCode::Up => {
+                    self.search_select(SearchSelection::Before);
+                    Refresh::Update
+                }
+                KeyCode::Down => {
+                    self.search_select(SearchSelection::After);
+                    Refresh::Update
+                }
+                KeyCode::Enter => {
+                    self.search_select(SearchSelection::After);
+                    self.search_open_all_matches();
+                    Refresh::Update
+                }
+                KeyCode::Esc => {
+                    self.topic_overview.search = String::new();
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                KeyCode::Tab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                    Refresh::Update
+                }
+                _ => Refresh::Skip,
+            },
             ElementInFocus::JsonPayload => match key.code {
                 KeyCode::Char('q') => Refresh::Quit,
                 KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -328,12 +374,14 @@ impl App {
         Ok(refresh)
     }
 
+    /// Handle mouse and keyboard up movement
     fn on_up(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_up(&items);
             }
+            ElementInFocus::TopicSearch => {}
             ElementInFocus::JsonPayload => {
                 let json = self
                     .get_json_of_current_topic()
@@ -346,12 +394,14 @@ impl App {
         Refresh::Update
     }
 
+    /// Handle mouse and keyboard down movement
     fn on_down(&mut self) -> Refresh {
         match self.focus {
             ElementInFocus::TopicOverview => {
                 let items = self.get_topic_tree_items();
                 self.topic_overview.state.key_down(&items);
             }
+            ElementInFocus::TopicSearch => {}
             ElementInFocus::JsonPayload => {
                 let json = self
                     .get_json_of_current_topic()
@@ -391,6 +441,80 @@ impl App {
             return Refresh::Update;
         }
         Refresh::Skip
+    }
+
+    fn search_select(&mut self, advance: SearchSelection) {
+        let selection = self.topic_overview.get_selected();
+        let history = self.mqtt_thread.get_history();
+        let mut topics = history
+            .get_all_topics()
+            .into_iter()
+            .enumerate()
+            .collect::<Vec<_>>();
+
+        let begin_index = selection
+            .and_then(|selection| {
+                topics
+                    .iter()
+                    .find(|(_, topic)| *topic == &selection)
+                    .map(|(index, _)| *index)
+            })
+            .unwrap_or(0);
+
+        // Filter out topics not matching the search
+        topics.retain(|(_, topic)| topic.to_lowercase().contains(&self.topic_overview.search));
+
+        let select = match advance {
+            SearchSelection::Before => topics
+                .iter()
+                .rev()
+                .find(|(index, _)| *index < begin_index)
+                .or_else(|| topics.last()),
+            SearchSelection::Stay => topics
+                .iter()
+                .find(|(index, _)| *index >= begin_index)
+                .or_else(|| topics.first()),
+            SearchSelection::After => topics
+                .iter()
+                .find(|(index, _)| *index > begin_index)
+                .or_else(|| topics.first()),
+        };
+        let select = select.map_or(vec![], |(_, topic)| {
+            topic
+                .split('/')
+                .map(std::borrow::ToOwned::to_owned)
+                .collect::<Vec<_>>()
+        });
+        drop(history);
+
+        for i in 0..select.len() {
+            self.topic_overview.state.open(select[0..i].to_vec());
+        }
+
+        self.topic_overview.state.select(select);
+    }
+
+    fn search_open_all_matches(&mut self) {
+        let topics = self
+            .mqtt_thread
+            .get_history()
+            .get_all_topics()
+            .into_iter()
+            .filter(|topic| topic.to_lowercase().contains(&self.topic_overview.search))
+            .map(|topic| {
+                topic
+                    .split('/')
+                    .map(std::borrow::ToOwned::to_owned)
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+
+        self.topic_overview.state.close_all();
+        for splitted in topics {
+            for i in 0..splitted.len() {
+                self.topic_overview.state.open(splitted[0..i].to_vec());
+            }
+        }
     }
 
     fn draw(&mut self, f: &mut Frame) {
@@ -435,7 +559,7 @@ impl App {
             f.render_widget(paragraph.alignment(Alignment::Center), header_area);
         }
 
-        self.footer.draw(f, footer_area, &self.focus);
+        self.footer.draw(f, footer_area, self);
         if let Some(connection_error) = connection_error {
             mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
         }
