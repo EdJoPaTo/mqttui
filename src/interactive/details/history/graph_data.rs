@@ -5,7 +5,7 @@ use crate::interactive::details::json_selector::JsonSelector;
 use crate::mqtt::{HistoryEntry, Payload};
 
 #[allow(clippy::cast_precision_loss)]
-fn parse_time_to_chart_x(time: &NaiveDateTime) -> f64 {
+const fn parse_time_to_chart_x(time: &NaiveDateTime) -> f64 {
     time.timestamp_millis() as f64
 }
 struct Point {
@@ -36,7 +36,7 @@ impl Point {
         Some(Self { time, y })
     }
 
-    fn as_graph_point(&self) -> (f64, f64) {
+    const fn as_graph_point(&self) -> (f64, f64) {
         let x = parse_time_to_chart_x(&self.time);
         (x, self.y)
     }
