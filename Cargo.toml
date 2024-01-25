@@ -12,9 +12,10 @@ rust-version = "1.70.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile.release]
-# See https://doc.rust-lang.org/rustc/codegen-options/index.html
+# See https://doc.rust-lang.org/cargo/reference/profiles.html
 codegen-units = 1
 lto = true
+strip = "debuginfo"
 
 [build-dependencies]
 anyhow = "1"
