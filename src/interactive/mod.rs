@@ -321,7 +321,8 @@ impl App {
                 }
                 KeyCode::Enter => {
                     self.search_select(SearchSelection::After);
-                    self.search_open_all_matches();
+                    self.topic_overview.state.close_all();
+                    self.open_all_search_matches();
                     Refresh::Update
                 }
                 KeyCode::Esc => {
@@ -507,7 +508,7 @@ impl App {
         self.topic_overview.state.select(select);
     }
 
-    fn search_open_all_matches(&mut self) {
+    fn open_all_search_matches(&mut self) {
         let topics = self
             .mqtt_thread
             .get_history()
@@ -521,8 +522,6 @@ impl App {
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
-
-        self.topic_overview.state.close_all();
         for splitted in topics {
             for i in 0..splitted.len() {
                 self.topic_overview.state.open(splitted[0..i].to_vec());
