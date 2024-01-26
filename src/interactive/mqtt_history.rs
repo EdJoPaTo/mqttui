@@ -122,7 +122,7 @@ impl MqttHistory {
                 noderef = node;
             } else {
                 // Node not found -> there are no topics below
-                return vec![];
+                return Vec::new();
             }
         }
 
@@ -138,25 +138,19 @@ impl MqttHistory {
             let mut topic = prefix.to_vec();
             topic.push(leaf);
 
-            let entries_below = node
-                .children()
-                .map(|c| build_recursive(&topic, c))
-                .collect::<Vec<_>>();
-            let messages_below = entries_below
-                .iter()
-                .map(|below| below.messages + below.messages_below)
-                .sum();
-            let topics_below = entries_below
-                .iter()
-                .map(|below| {
-                    let has_messages = usize::from(below.messages > 0);
-                    has_messages + below.topics_below
-                })
-                .sum();
-            let children = entries_below
-                .into_iter()
-                .map(|o| o.tree_item)
-                .collect::<Vec<_>>();
+            let entries_below = node.children().map(|c| build_recursive(&topic, c));
+            let mut messages_below: usize = 0;
+            let mut topics_below: usize = 0;
+            let mut children = Vec::new();
+            for below in entries_below {
+                messages_below = messages_below
+                    .saturating_add(below.messages)
+                    .saturating_add(below.messages_below);
+                topics_below = topics_below
+                    .saturating_add(usize::from(below.messages > 0))
+                    .saturating_add(below.topics_below);
+                children.push(below.tree_item);
+            }
 
             let meta = match history.last().map(|o| &o.payload) {
                 Some(Payload::String(str)) => format!("= {str}"),
@@ -178,20 +172,15 @@ impl MqttHistory {
             }
         }
 
-        let children = self
-            .tree
-            .root()
-            .children()
-            .map(|o| build_recursive(&[], o))
-            .collect::<Vec<_>>();
-        let topics = children
-            .iter()
-            .map(|o| o.topics_below + usize::from(o.messages > 0))
-            .sum();
-        let items = children
-            .into_iter()
-            .map(|o| o.tree_item)
-            .collect::<Vec<_>>();
+        let children = self.tree.root().children().map(|o| build_recursive(&[], o));
+        let mut topics: usize = 0;
+        let mut items = Vec::new();
+        for child in children {
+            topics = topics
+                .saturating_add(usize::from(child.messages > 0))
+                .saturating_add(child.topics_below);
+            items.push(child.tree_item);
+        }
         (topics, items)
     }
 

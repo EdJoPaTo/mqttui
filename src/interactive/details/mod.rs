@@ -2,7 +2,7 @@ use std::cmp::min;
 
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders, List, ListItem};
+use ratatui::widgets::{Block, Borders, List};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
@@ -94,7 +94,7 @@ impl Details {
 /// Returns remaining rect to be used for history
 fn draw_payload_string(f: &mut Frame, area: Rect, payload_bytes: usize, payload: &str) -> Rect {
     let title = format!("Payload (Bytes: {payload_bytes})");
-    let items = payload.lines().map(ListItem::new).collect::<Vec<_>>();
+    let items = payload.lines().collect::<Vec<_>>();
 
     let max_payload_height = area.height / 3;
     #[allow(clippy::cast_possible_truncation)]

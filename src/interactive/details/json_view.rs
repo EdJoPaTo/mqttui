@@ -34,7 +34,7 @@ fn tree_items_from_json_object(
     object
         .iter()
         .map(|(key, value)| tree_items_from_json(JsonSelector::ObjectKey(key.clone()), value))
-        .collect::<Vec<_>>()
+        .collect()
 }
 
 fn tree_items_from_json_array(array: &[JsonValue]) -> Vec<TreeItem<'_, JsonSelector>> {
@@ -42,5 +42,5 @@ fn tree_items_from_json_array(array: &[JsonValue]) -> Vec<TreeItem<'_, JsonSelec
         .iter()
         .enumerate()
         .map(|(index, value)| tree_items_from_json(JsonSelector::ArrayIndex(index), value))
-        .collect::<Vec<_>>()
+        .collect()
 }

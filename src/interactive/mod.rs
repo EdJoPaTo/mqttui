@@ -492,11 +492,11 @@ impl App {
                 .find(|(index, _)| *index > begin_index)
                 .or_else(|| topics.first()),
         };
-        let select = select.map_or(vec![], |(_, topic)| {
+        let select = select.map_or(Vec::new(), |(_, topic)| {
             topic
                 .split('/')
                 .map(std::borrow::ToOwned::to_owned)
-                .collect::<Vec<_>>()
+                .collect()
         });
         drop(history);
 
