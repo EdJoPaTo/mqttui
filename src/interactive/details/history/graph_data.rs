@@ -15,7 +15,7 @@ struct Point {
 
 impl Point {
     fn parse(entry: &HistoryEntry, json_selector: &[JsonSelector]) -> Option<Self> {
-        let time = entry.time.as_optional()?;
+        let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::NotUtf8(_) => None,
             Payload::String(str) => f64_from_string(str),
@@ -86,21 +86,21 @@ impl GraphData {
         let points = entries
             .iter()
             .filter_map(|o| Point::parse(o, json_selector))
-            .collect::<Vec<_>>();
+            .collect::<Box<[_]>>();
 
-        if points.len() < 2 {
+        let [ref first, .., ref last] = *points else {
             return None;
-        }
+        };
 
-        let first_time = points.first().unwrap().time;
-        let last_time = points.last().unwrap().time;
+        let first_time = first.time;
+        let last_time = last.time;
         let x_min = parse_time_to_chart_x(&first_time);
         let x_max = parse_time_to_chart_x(&last_time);
 
         let mut data = Vec::with_capacity(points.len());
-        let mut y_min = points.first().unwrap().y;
+        let mut y_min = first.y;
         let mut y_max = y_min;
-        for point in points {
+        for point in points.iter() {
             y_min = y_min.min(point.y);
             y_max = y_max.max(point.y);
             data.push(point.as_graph_point());

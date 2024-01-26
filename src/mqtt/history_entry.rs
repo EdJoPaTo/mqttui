@@ -10,9 +10,9 @@ pub enum Time {
 }
 
 impl Time {
-    pub const fn as_optional(&self) -> Option<NaiveDateTime> {
+    pub const fn as_optional(&self) -> Option<&NaiveDateTime> {
         if let Self::Local(time) = self {
-            Some(*time)
+            Some(time)
         } else {
             None
         }
@@ -91,7 +91,7 @@ fn time_optional_time() {
         .and_hms_opt(16, 39, 57)
         .unwrap();
     let time = Time::Local(date);
-    assert_eq!(time.as_optional(), Some(date));
+    assert_eq!(time.as_optional(), Some(&date));
 }
 
 #[test]

@@ -9,7 +9,7 @@ use ratatui::{symbols, Frame};
 use crate::format;
 use crate::interactive::details::json_selector::JsonSelector;
 use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
-use crate::mqtt::{HistoryEntry, Payload, Time};
+use crate::mqtt::{HistoryEntry, Payload};
 use graph_data::GraphData;
 
 mod graph_data;
@@ -37,47 +37,32 @@ fn draw_table(
 ) {
     let mut title = format!("History ({}", topic_history.len());
 
-    let last_index = topic_history.len().saturating_sub(1);
-
-    let without_retain = topic_history
-        .iter()
-        .filter(|o| !matches!(o.time, Time::Retained))
-        .collect::<Vec<_>>();
-    let amount_without_retain = without_retain.len().saturating_sub(1);
-    if amount_without_retain > 0 {
-        let first = without_retain
-            .first()
-            .expect("is not empty")
-            .time
-            .as_optional()
-            .expect("only not retained")
-            .timestamp();
-        let last = without_retain
-            .last()
-            .expect("is not empty")
-            .time
-            .as_optional()
-            .expect("only not retained")
-            .timestamp();
-
-        let seconds_since_start = last - first;
-        let message_every_n_seconds = seconds_since_start as f64 / amount_without_retain as f64;
-        if message_every_n_seconds < 1.0 {
-            let messages_per_second = 1.0 / message_every_n_seconds;
-            write!(title, ", ~{messages_per_second:.1} per second")
-        } else if message_every_n_seconds < 100.0 {
-            write!(title, ", every ~{message_every_n_seconds:.1} seconds")
-        } else {
-            write!(
-                title,
-                ", every ~{:.1} minutes",
-                message_every_n_seconds / 60.0
-            )
+    {
+        let without_retain = topic_history
+            .iter()
+            .filter_map(|o| o.time.as_optional())
+            .collect::<Box<[_]>>();
+        if let [first, .., last] = *without_retain {
+            let seconds = (*last - *first)
+                .to_std()
+                .expect("later message should be after earlier message")
+                .as_secs_f64();
+            let every_n_seconds = seconds / without_retain.len().saturating_sub(1) as f64;
+            if every_n_seconds < 1.0 {
+                let messages_per_second = 1.0 / every_n_seconds;
+                write!(title, ", ~{messages_per_second:.1} per second")
+            } else if every_n_seconds < 100.0 {
+                write!(title, ", every ~{every_n_seconds:.1} seconds")
+            } else {
+                let every_n_minutes = every_n_seconds / 60.0;
+                write!(title, ", every ~{every_n_minutes:.1} minutes")
+            }
+            .expect("write to string should never fail");
         }
-        .expect("write to string should never fail");
     }
     title += ")";
 
+    let last_index = topic_history.len().saturating_sub(1);
     let rows = topic_history.iter().enumerate().map(|(index, entry)| {
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos).to_owned();
