@@ -21,7 +21,7 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           key: coverage-${{ hashFiles('**/Cargo.lock') }}
           path: |
