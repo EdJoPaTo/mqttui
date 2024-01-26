@@ -31,7 +31,9 @@ impl Details {
     ) {
         self.last_json_area = None;
 
-        let last = topic_history.last().unwrap();
+        let last = topic_history
+            .last()
+            .expect("when Details are drawn they should always have at least one HistoryEntry");
         let size = last.payload_size;
         let history_area = match &last.payload {
             Payload::Json(json) => {
