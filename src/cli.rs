@@ -233,6 +233,8 @@ impl core::str::FromStr for Broker {
             anyhow::ensure!(url.password().is_none(), "Use --password instead");
         }
 
+        anyhow::ensure!(url.port() != Some(0), "Port can not be 0");
+
         let broker = match url.scheme() {
             "mqtt" => Self::Tcp {
                 host: url
