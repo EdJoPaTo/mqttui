@@ -1,8 +1,8 @@
-use clap::{Parser, ValueHint};
+use clap::{Parser, Subcommand, ValueHint};
 use url::Url;
 
-#[derive(Debug, Parser)]
-pub enum SubCommands {
+#[derive(Debug, Subcommand)]
+pub enum Subcommands {
     /// Clean retained messages from the broker.
     ///
     /// This works by subscribing to the topic and waiting for messages with the retained flag.
@@ -98,7 +98,7 @@ pub enum SubCommands {
 #[command(about, version)]
 pub struct Cli {
     #[clap(subcommand)]
-    pub subcommands: Option<SubCommands>,
+    pub subcommands: Option<Subcommands>,
 
     /// URL which represents how to connect to the MQTT broker.
     ///

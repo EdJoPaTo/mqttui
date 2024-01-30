@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use clap::Parser;
-use cli::SubCommands;
+use cli::Subcommands;
 use rumqttc::{self, Client, MqttOptions, QoS, Transport};
 
 mod clean_retained;
@@ -56,7 +56,7 @@ fn main() -> anyhow::Result<()> {
             mqttoptions.set_credentials(username, password);
         }
 
-        if let Some(SubCommands::CleanRetained { timeout, .. }) = matches.subcommands {
+        if let Some(Subcommands::CleanRetained { timeout, .. }) = matches.subcommands {
             mqttoptions.set_keep_alive(Duration::from_secs_f32(timeout));
         }
 
@@ -64,17 +64,17 @@ fn main() -> anyhow::Result<()> {
     };
 
     match matches.subcommands {
-        Some(SubCommands::CleanRetained { topic, dry_run, .. }) => {
+        Some(Subcommands::CleanRetained { topic, dry_run, .. }) => {
             client.subscribe(topic, QoS::AtLeastOnce)?;
             clean_retained::clean_retained(client, connection, dry_run);
         }
-        Some(SubCommands::Log { topic, verbose }) => {
+        Some(Subcommands::Log { topic, verbose }) => {
             for topic in topic {
                 client.subscribe(topic, QoS::AtLeastOnce)?;
             }
             log::show(connection, verbose);
         }
-        Some(SubCommands::ReadOne {
+        Some(Subcommands::ReadOne {
             topic,
             ignore_retained,
         }) => {
@@ -83,7 +83,7 @@ fn main() -> anyhow::Result<()> {
             }
             read_one::show(client, connection, ignore_retained);
         }
-        Some(SubCommands::Publish {
+        Some(Subcommands::Publish {
             topic,
             payload,
             retain,
