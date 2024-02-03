@@ -2,7 +2,7 @@ use std::cmp::min;
 
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders, List};
+use ratatui::widgets::{Block, List};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
@@ -70,7 +70,7 @@ impl Details {
         let title = format!("JSON Payload (Bytes: {bytes})");
         let items = root_tree_items_from_json(json);
 
-        let visible = tui_tree_widget::flatten(&self.json_view.get_all_opened(), &items);
+        let visible = self.json_view.flatten(&items);
         let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
         let max_payload_height = area.height / 3;
         #[allow(clippy::cast_possible_truncation)]
@@ -83,8 +83,7 @@ impl Details {
             .unwrap()
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
-                Block::new()
-                    .borders(Borders::ALL)
+                Block::bordered()
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
@@ -103,7 +102,7 @@ fn draw_payload_string(f: &mut Frame, area: Rect, payload_bytes: usize, payload:
     let payload_height = min(max_payload_height as usize, 2 + items.len()) as u16;
     let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
 
-    let widget = List::new(items).block(Block::new().borders(Borders::ALL).title(title));
+    let widget = List::new(items).block(Block::bordered().title(title));
     f.render_widget(widget, payload_area);
     remaining_area
 }

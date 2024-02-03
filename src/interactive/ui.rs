@@ -1,4 +1,4 @@
-use ratatui::layout::Rect;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 
 pub const STYLE_BOLD: Style = Style::new().add_modifier(Modifier::BOLD);
@@ -21,8 +21,9 @@ pub const fn focus_color(has_focus: bool) -> Color {
 /// When the column/row is inside the area, return the row relative to the area.
 /// Otherwise `None` is returned.
 pub const fn get_row_inside(area: Rect, column: u16, row: u16) -> Option<u16> {
-    if row > area.top() && row < area.bottom() && column > area.left() && column < area.right() {
-        Some(row - area.top() - 1)
+    #[allow(clippy::if_then_some_else_none)]
+    if area.contains(Position { x: column, y: row }) {
+        Some(row.saturating_sub(area.top()).saturating_sub(1))
     } else {
         None
     }

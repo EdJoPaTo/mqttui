@@ -148,8 +148,8 @@ where
         let refresh = match rx.recv()? {
             Event::Key(event) => app.on_key(event)?,
             Event::MouseClick { column, row } => app.on_click(column, row),
-            Event::MouseScrollDown => app.on_down(),
-            Event::MouseScrollUp => app.on_up(),
+            Event::MouseScrollDown => app.on_scroll_down(),
+            Event::MouseScrollUp => app.on_scroll_up(),
             Event::Tick => Refresh::Update,
         };
         match refresh {
@@ -230,8 +230,16 @@ impl App {
                     self.topic_overview.state.toggle_selected();
                     Refresh::Update
                 }
-                KeyCode::Down | KeyCode::Char('j') => self.on_down(),
-                KeyCode::Up | KeyCode::Char('k') => self.on_up(),
+                KeyCode::Down | KeyCode::Char('j') => {
+                    let items = self.get_topic_tree_items();
+                    self.topic_overview.state.key_down(&items);
+                    Refresh::Update
+                }
+                KeyCode::Up | KeyCode::Char('k') => {
+                    let items = self.get_topic_tree_items();
+                    self.topic_overview.state.key_up(&items);
+                    Refresh::Update
+                }
                 KeyCode::Left | KeyCode::Char('h') => {
                     self.topic_overview.state.key_left();
                     Refresh::Update
@@ -251,43 +259,23 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::PageUp => {
-                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview
-                        .state
-                        .select_visible_relative(&items, |current| {
-                            current.map_or(usize::MAX, |current| current.saturating_sub(page_jump))
-                        });
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_up(page_jump);
                     Refresh::Update
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview
-                        .state
-                        .select_visible_relative(&items, |current| {
-                            current.map_or(usize::MAX, |current| current.saturating_sub(page_jump))
-                        });
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_up(page_jump);
                     Refresh::Update
                 }
                 KeyCode::PageDown => {
-                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview
-                        .state
-                        .select_visible_relative(&items, |current| {
-                            current.map_or(0, |current| current.saturating_add(page_jump))
-                        });
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_down(page_jump);
                     Refresh::Update
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let page_jump = (self.topic_overview.last_area.height / 2) as usize;
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview
-                        .state
-                        .select_visible_relative(&items, |current| {
-                            current.map_or(0, |current| current.saturating_add(page_jump))
-                        });
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_down(page_jump);
                     Refresh::Update
                 }
                 KeyCode::Backspace | KeyCode::Delete => {
@@ -330,6 +318,16 @@ impl App {
                     self.focus = ElementInFocus::TopicOverview;
                     Refresh::Update
                 }
+                KeyCode::PageUp => {
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_up(page_jump);
+                    Refresh::Update
+                }
+                KeyCode::PageDown => {
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_down(page_jump);
+                    Refresh::Update
+                }
                 KeyCode::Tab => {
                     self.focus = ElementInFocus::TopicOverview;
                     Refresh::Update
@@ -349,8 +347,22 @@ impl App {
                     self.details.json_view.toggle_selected();
                     Refresh::Update
                 }
-                KeyCode::Down | KeyCode::Char('j') => self.on_down(),
-                KeyCode::Up | KeyCode::Char('k') => self.on_up(),
+                KeyCode::Down | KeyCode::Char('j') => {
+                    let json = self
+                        .get_json_of_current_topic()
+                        .unwrap_or(serde_json::Value::Null);
+                    let items = root_tree_items_from_json(&json);
+                    self.details.json_view.key_down(&items);
+                    Refresh::Update
+                }
+                KeyCode::Up | KeyCode::Char('k') => {
+                    let json = self
+                        .get_json_of_current_topic()
+                        .unwrap_or(serde_json::Value::Null);
+                    let items = root_tree_items_from_json(&json);
+                    self.details.json_view.key_up(&items);
+                    Refresh::Update
+                }
                 KeyCode::Left | KeyCode::Char('h') => {
                     self.details.json_view.key_left();
                     Refresh::Update
@@ -375,6 +387,22 @@ impl App {
                     self.details.json_view.select_last(&items);
                     Refresh::Update
                 }
+                KeyCode::PageUp => {
+                    self.details.json_view.scroll_up(3);
+                    Refresh::Update
+                }
+                KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.details.json_view.scroll_up(3);
+                    Refresh::Update
+                }
+                KeyCode::PageDown => {
+                    self.details.json_view.scroll_down(3);
+                    Refresh::Update
+                }
+                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.details.json_view.scroll_down(3);
+                    Refresh::Update
+                }
                 _ => Refresh::Skip,
             },
             ElementInFocus::CleanRetainedPopup(topic) => {
@@ -388,42 +416,24 @@ impl App {
         Ok(refresh)
     }
 
-    /// Handle mouse and keyboard up movement
-    fn on_up(&mut self) -> Refresh {
-        match self.focus {
-            ElementInFocus::TopicOverview => {
-                let items = self.get_topic_tree_items();
-                self.topic_overview.state.key_up(&items);
+    fn on_scroll_up(&mut self) -> Refresh {
+        match &self.focus {
+            ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
+                self.topic_overview.state.scroll_up(1);
             }
-            ElementInFocus::TopicSearch => {}
-            ElementInFocus::JsonPayload => {
-                let json = self
-                    .get_json_of_current_topic()
-                    .unwrap_or(serde_json::Value::Null);
-                let items = root_tree_items_from_json(&json);
-                self.details.json_view.key_up(&items);
-            }
-            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
+            ElementInFocus::JsonPayload => self.details.json_view.scroll_up(1),
+            ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
     }
 
-    /// Handle mouse and keyboard down movement
-    fn on_down(&mut self) -> Refresh {
-        match self.focus {
-            ElementInFocus::TopicOverview => {
-                let items = self.get_topic_tree_items();
-                self.topic_overview.state.key_down(&items);
+    fn on_scroll_down(&mut self) -> Refresh {
+        match &self.focus {
+            ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
+                self.topic_overview.state.scroll_down(1);
             }
-            ElementInFocus::TopicSearch => {}
-            ElementInFocus::JsonPayload => {
-                let json = self
-                    .get_json_of_current_topic()
-                    .unwrap_or(serde_json::Value::Null);
-                let items = root_tree_items_from_json(&json);
-                self.details.json_view.key_down(&items);
-            }
-            ElementInFocus::CleanRetainedPopup(_) => self.focus = ElementInFocus::TopicOverview,
+            ElementInFocus::JsonPayload => self.details.json_view.scroll_down(1),
+            ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
     }

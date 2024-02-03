@@ -3,7 +3,7 @@ use std::fmt::Write;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
-use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
+use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, Row, Table, TableState};
 use ratatui::{symbols, Frame};
 
 use crate::format;
@@ -90,7 +90,7 @@ fn draw_table(
         ],
     )
     .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
-    .block(Block::new().borders(Borders::ALL).title(title));
+    .block(Block::bordered().title(title));
 
     let mut state = TableState::default();
     state.select(Some(topic_history.len() - 1));
@@ -107,7 +107,7 @@ fn draw_graph(f: &mut Frame, area: Rect, points: &GraphData) {
         .data(&points.data)];
 
     let chart = Chart::new(datasets)
-        .block(Block::new().borders(Borders::ALL).title("Graph"))
+        .block(Block::bordered().title("Graph"))
         .x_axis(
             Axis::default()
                 .bounds([points.x_min, points.x_max])

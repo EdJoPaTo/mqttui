@@ -1,13 +1,12 @@
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Line;
-use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use ratatui::widgets::{Block, Clear, Paragraph};
 use ratatui::Frame;
 
 pub fn draw_popup(f: &mut Frame, topic: &str) {
-    let block = Block::new()
+    let block = Block::bordered()
         .border_style(Style::new().fg(Color::Red))
-        .borders(Borders::ALL)
         .title_alignment(Alignment::Center)
         .title("Clean retained topics");
     let text = vec![
