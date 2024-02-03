@@ -17,7 +17,7 @@ pub mod json_view;
 
 #[derive(Default)]
 pub struct Details {
-    pub json_view: TreeState<JsonSelector>,
+    pub json_state: TreeState<JsonSelector>,
     pub last_json_area: Option<Rect>,
 }
 
@@ -43,7 +43,7 @@ impl Details {
             Payload::String(str) => draw_payload_string(f, area, size, str),
         };
 
-        history::draw(f, history_area, topic_history, &self.json_view.selected());
+        history::draw(f, history_area, topic_history, &self.json_state.selected());
     }
 
     pub fn json_index_of_click(&mut self, column: u16, row: u16) -> Option<usize> {
@@ -51,7 +51,7 @@ impl Details {
             .last_json_area
             .and_then(|area| get_row_inside(area, column, row))
         {
-            let offset = self.json_view.get_offset();
+            let offset = self.json_state.get_offset();
             let new_index = (index as usize) + offset;
             Some(new_index)
         } else {
@@ -70,7 +70,7 @@ impl Details {
         let title = format!("JSON Payload (Bytes: {bytes})");
         let items = root_tree_items_from_json(json);
 
-        let visible = self.json_view.flatten(&items);
+        let visible = self.json_state.flatten(&items);
         let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
         let max_payload_height = area.height / 3;
         #[allow(clippy::cast_possible_truncation)]
@@ -87,7 +87,7 @@ impl Details {
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
-        f.render_stateful_widget(widget, payload_area, &mut self.json_view);
+        f.render_stateful_widget(widget, payload_area, &mut self.json_state);
         remaining_area
     }
 }

@@ -344,7 +344,7 @@ impl App {
                     Refresh::Update
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => {
-                    self.details.json_view.toggle_selected();
+                    self.details.json_state.toggle_selected();
                     Refresh::Update
                 }
                 KeyCode::Down | KeyCode::Char('j') => {
@@ -352,7 +352,7 @@ impl App {
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
-                    self.details.json_view.key_down(&items);
+                    self.details.json_state.key_down(&items);
                     Refresh::Update
                 }
                 KeyCode::Up | KeyCode::Char('k') => {
@@ -360,15 +360,15 @@ impl App {
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
-                    self.details.json_view.key_up(&items);
+                    self.details.json_state.key_up(&items);
                     Refresh::Update
                 }
                 KeyCode::Left | KeyCode::Char('h') => {
-                    self.details.json_view.key_left();
+                    self.details.json_state.key_left();
                     Refresh::Update
                 }
                 KeyCode::Right | KeyCode::Char('l') => {
-                    self.details.json_view.key_right();
+                    self.details.json_state.key_right();
                     Refresh::Update
                 }
                 KeyCode::Home => {
@@ -376,7 +376,7 @@ impl App {
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
-                    self.details.json_view.select_first(&items);
+                    self.details.json_state.select_first(&items);
                     Refresh::Update
                 }
                 KeyCode::End => {
@@ -384,23 +384,23 @@ impl App {
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
                     let items = root_tree_items_from_json(&json);
-                    self.details.json_view.select_last(&items);
+                    self.details.json_state.select_last(&items);
                     Refresh::Update
                 }
                 KeyCode::PageUp => {
-                    self.details.json_view.scroll_up(3);
+                    self.details.json_state.scroll_up(3);
                     Refresh::Update
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.details.json_view.scroll_up(3);
+                    self.details.json_state.scroll_up(3);
                     Refresh::Update
                 }
                 KeyCode::PageDown => {
-                    self.details.json_view.scroll_down(3);
+                    self.details.json_state.scroll_down(3);
                     Refresh::Update
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.details.json_view.scroll_down(3);
+                    self.details.json_state.scroll_down(3);
                     Refresh::Update
                 }
                 _ => Refresh::Skip,
@@ -421,7 +421,7 @@ impl App {
             ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
                 self.topic_overview.state.scroll_up(1);
             }
-            ElementInFocus::JsonPayload => self.details.json_view.scroll_up(1),
+            ElementInFocus::JsonPayload => self.details.json_state.scroll_up(1),
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
@@ -432,7 +432,7 @@ impl App {
             ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
                 self.topic_overview.state.scroll_down(1);
             }
-            ElementInFocus::JsonPayload => self.details.json_view.scroll_down(1),
+            ElementInFocus::JsonPayload => self.details.json_state.scroll_down(1),
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
@@ -457,9 +457,9 @@ impl App {
                 .get_json_of_current_topic()
                 .unwrap_or(serde_json::Value::Null);
             let items = root_tree_items_from_json(&json);
-            let changed = self.details.json_view.select_visible_index(&items, index);
+            let changed = self.details.json_state.select_visible_index(&items, index);
             if !changed {
-                self.details.json_view.toggle_selected();
+                self.details.json_state.toggle_selected();
             }
             self.focus = ElementInFocus::JsonPayload;
             return Refresh::Update;
