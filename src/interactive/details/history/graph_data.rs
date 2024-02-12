@@ -30,7 +30,7 @@ impl Point {
                     JsonValue::String(str) => f64_from_string(str),
                     JsonValue::Null | JsonValue::Object(_) => None,
                 }
-            },
+            }
             Payload::MsgPack(_, json) => {
                 let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
                 match json {

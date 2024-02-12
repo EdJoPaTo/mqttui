@@ -53,29 +53,25 @@ impl Eq for Payload {}
 
 impl Payload {
     pub fn new(payload: bytes::Bytes) -> Self {
-        
-
-
         let payload_clone = payload.clone();
-                match String::from_utf8(payload_clone.into()) {
-                    Ok(str) => {
-                        serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
-                    },
-                    Err(err) => {
-                        let payload_clone = payload.clone();
-                        match rmpv::decode::read_value(&mut payload_clone.reader()) {
-                            Ok(value) => {
-                                let string = value.to_string();
-                                serde_json::from_str(&string).map_or_else(|_| Self::String(string.into()), |json| Self::MsgPack(value, json))
-                            },
-                            Err(_) =>  Self::NotUtf8(err.utf8_error())
-                        }    
-                    },
+        match String::from_utf8(payload_clone.into()) {
+            Ok(str) => {
+                serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
+            }
+            Err(err) => {
+                let payload_clone = payload.clone();
+                match rmpv::decode::read_value(&mut payload_clone.reader()) {
+                    Ok(value) => {
+                        let string = value.to_string();
+                        serde_json::from_str(&string).map_or_else(
+                            |_| Self::String(string.into()),
+                            |json| Self::MsgPack(value, json),
+                        )
+                    }
+                    Err(_) => Self::NotUtf8(err.utf8_error()),
                 }
-
-                
-
-        
+            }
+        }
     }
 
     pub const fn as_optional_json(&self) -> Option<&serde_json::Value> {

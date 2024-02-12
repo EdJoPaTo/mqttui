@@ -72,7 +72,7 @@ fn draw_table(
             Payload::Json(json) => JsonSelector::get_selection(json, json_selector)
                 .unwrap_or(json)
                 .to_string(),
-            Payload::MsgPack(msgpack, json) => msgpack.to_string()
+            Payload::MsgPack(msgpack, _json) => msgpack.to_string(),
         };
         let row = Row::new(vec![time, qos, value]);
         if index == last_index {

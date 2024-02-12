@@ -38,7 +38,7 @@ impl Details {
         let history_area = match &last.payload {
             Payload::Json(json) => {
                 self.draw_payload_json(f, area, size, json, json_payload_has_focus)
-            },
+            }
             Payload::MsgPack(_, json) => {
                 self.draw_payload_msgpack(f, area, size, json, json_payload_has_focus)
             }
