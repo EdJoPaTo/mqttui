@@ -30,6 +30,18 @@ impl Point {
                     JsonValue::String(str) => f64_from_string(str),
                     JsonValue::Null | JsonValue::Object(_) => None,
                 }
+            },
+            Payload::MsgPack(_, json) => {
+                let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
+                match json {
+                    JsonValue::Number(num) => num.as_f64(),
+                    JsonValue::Bool(true) => Some(1.0),
+                    JsonValue::Bool(false) => Some(0.0),
+                    #[allow(clippy::cast_precision_loss)]
+                    JsonValue::Array(arr) => Some(arr.len() as f64),
+                    JsonValue::String(str) => f64_from_string(str),
+                    JsonValue::Null | JsonValue::Object(_) => None,
+                }
             }
         }
         .filter(|y| y.is_finite())?;

@@ -50,6 +50,10 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                         println!("{json}");
                         Finished::Successfully
                     }
+                    Payload::MsgPack(msgpack, _) => {
+                        println!("{msgpack}");
+                        Finished::Successfully
+                    }
                 };
                 client.disconnect().unwrap();
             }

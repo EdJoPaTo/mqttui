@@ -7,6 +7,7 @@ pub fn payload(payload: &Payload, size: usize) -> String {
         Payload::NotUtf8(err) => format!("Payload({size:>3}) is not valid UTF-8: {err}"),
         Payload::String(str) => format!("Payload({size:>3}): {str}"),
         Payload::Json(json) => format!("Payload({size:>3}): {json}"),
+        Payload::MsgPack(msgpack, _) => format!("Payload({size:>3}): {msgpack}"),
     }
 }
 

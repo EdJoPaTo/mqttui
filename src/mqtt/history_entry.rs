@@ -1,5 +1,6 @@
 use std::str::Utf8Error;
 
+use bytes::Buf;
 use chrono::NaiveDateTime;
 use rumqttc::QoS;
 
@@ -29,21 +30,52 @@ impl ToString for Time {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Payload {
     NotUtf8(Utf8Error),
     String(Box<str>),
     Json(serde_json::Value),
+    MsgPack(rmpv::Value, serde_json::Value),
 }
+
+impl PartialEq for Payload {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::NotUtf8(_), Self::NotUtf8(_)) => true,
+            (Self::String(s1), Self::String(s2)) => s1 == s2,
+            (Self::Json(j1), Self::Json(j2)) => j1 == j2,
+            (Self::MsgPack(m1, _), Self::MsgPack(m2, _)) => m1 == m2,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for Payload {}
 
 impl Payload {
     pub fn new(payload: bytes::Bytes) -> Self {
-        match String::from_utf8(payload.into()) {
-            Ok(str) => {
-                serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
-            }
-            Err(err) => Self::NotUtf8(err.utf8_error()),
-        }
+        
+
+
+        let payload_clone = payload.clone();
+                match String::from_utf8(payload_clone.into()) {
+                    Ok(str) => {
+                        serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
+                    },
+                    Err(err) => {
+                        let payload_clone = payload.clone();
+                        match rmpv::decode::read_value(&mut payload_clone.reader()) {
+                            Ok(value) => {
+                                let string = value.to_string();
+                                serde_json::from_str(&string).map_or_else(|_| Self::String(string.into()), |json| Self::MsgPack(value, json))
+                            },
+                            Err(_) =>  Self::NotUtf8(err.utf8_error())
+                        }    
+                    },
+                }
+
+                
+
+        
     }
 
     pub const fn as_optional_json(&self) -> Option<&serde_json::Value> {
