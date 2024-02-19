@@ -154,7 +154,7 @@ impl MqttHistory {
 
             let meta = match history.last().map(|o| &o.payload) {
                 Some(Payload::Json(json)) => format!("= {json}"),
-                Some(Payload::MsgPack(msgpack, _)) => format!("= {msgpack}"),
+                Some(Payload::MessagePack(messagepack)) => format!("= {messagepack}"),
                 Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_owned(),
                 Some(Payload::String(str)) => format!("= {str}"),
                 None => format!("({topics_below} topics, {messages_below} messages)"),

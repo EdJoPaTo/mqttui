@@ -42,8 +42,8 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                         println!("{json}");
                         Finished::Successfully
                     }
-                    Payload::MsgPack(msgpack, _) => {
-                        println!("{msgpack}");
+                    Payload::MessagePack(messagepack) => {
+                        println!("{messagepack}");
                         Finished::Successfully
                     }
                     Payload::NotUtf8(err) => {

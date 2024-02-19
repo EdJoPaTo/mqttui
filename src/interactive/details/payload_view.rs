@@ -31,7 +31,9 @@ impl PayloadView {
         let size = last.payload_size;
         match &last.payload {
             Payload::Json(json) => self.draw_json(f, area, size, json, has_focus),
-            Payload::MsgPack(_, json) => self.draw_msgpack(f, area, size, json, has_focus),
+            Payload::MessagePack(messagepack) => {
+                self.draw_messagepack(f, area, size, messagepack, has_focus)
+            }
             Payload::NotUtf8(err) => self.draw_string(f, area, size, &err.to_string()),
             Payload::String(str) => self.draw_string(f, area, size, str),
         }
@@ -84,16 +86,23 @@ impl PayloadView {
         remaining_area
     }
 
-    fn draw_msgpack(
+    fn draw_messagepack(
         &mut self,
         f: &mut Frame,
         area: Rect,
-        bytes: usize,
-        json: &serde_json::Value,
+        payload_bytes: usize,
+        messagepack: &rmpv::Value,
         has_focus: bool,
     ) -> Rect {
-        let title = format!("MessagePack Payload (Bytes: {bytes})");
-        let items = root_tree_items_from_json(json);
+        let title = format!("MessagePack Payload (Bytes: {payload_bytes})");
+
+        let messagepack_string = messagepack.to_string();
+        let Ok(json) = serde_json::from_str::<serde_json::Value>(&messagepack_string) else {
+            // TODO: use raw messagepack implementation?
+            return self.draw_string(f, area, payload_bytes, &messagepack_string);
+        };
+
+        let items = root_tree_items_from_json(&json);
 
         let visible = self.json_state.flatten(&items);
         let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
