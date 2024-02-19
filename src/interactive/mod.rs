@@ -210,12 +210,13 @@ impl App {
 
     #[allow(clippy::too_many_lines)]
     fn on_key(&mut self, key: KeyEvent) -> anyhow::Result<Refresh> {
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            return Ok(Refresh::Quit);
+        }
+
         let refresh = match &self.focus {
             ElementInFocus::TopicOverview => match key.code {
                 KeyCode::Char('q') => Refresh::Quit,
-                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    Refresh::Quit
-                }
                 KeyCode::Tab | KeyCode::BackTab => {
                     if self.can_switch_to_payload() {
                         self.focus = ElementInFocus::JsonPayload;
@@ -336,9 +337,6 @@ impl App {
             },
             ElementInFocus::JsonPayload => match key.code {
                 KeyCode::Char('q') => Refresh::Quit,
-                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    Refresh::Quit
-                }
                 KeyCode::Tab | KeyCode::BackTab => {
                     self.focus = ElementInFocus::TopicOverview;
                     Refresh::Update
