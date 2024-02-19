@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use clap::Parser;
 use cli::Subcommands;
-use rumqttc::{self, Client, MqttOptions, QoS, Transport};
+use rumqttc::{Client, MqttOptions, QoS, Transport};
 
 mod clean_retained;
 mod cli;

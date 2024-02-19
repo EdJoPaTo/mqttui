@@ -1,4 +1,4 @@
-use rumqttc::{self, Client, Connection};
+use rumqttc::{Client, Connection};
 
 pub fn eventloop(mut client: Client, mut connection: Connection, verbose: bool) {
     for notification in connection.iter() {
