@@ -33,8 +33,7 @@ pub fn show(mut connection: Connection, verbose: bool) {
                     Time::Retained
                 } else {
                     Time::Local(Local::now().naive_local())
-                }
-                .to_string();
+                };
                 let qos = format::qos(publish.qos);
                 let topic = publish.topic;
                 let size = publish.payload.len();

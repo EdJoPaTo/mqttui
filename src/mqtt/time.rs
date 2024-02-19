@@ -24,11 +24,11 @@ impl Time {
     }
 }
 
-impl ToString for Time {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for Time {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Retained => String::from("RETAINED"),
-            Self::Local(time) => time.format("%_H:%M:%S.%3f").to_string(),
+            Self::Retained => f.pad("RETAINED"),
+            Self::Local(time) => f.write_fmt(format_args!("{}", time.format("%_H:%M:%S.%3f"))),
         }
     }
 }
@@ -53,4 +53,11 @@ fn optional_time() {
 fn retained_to_string() {
     let time = Time::Retained;
     assert_eq!(time.to_string(), "RETAINED");
+}
+
+#[test]
+fn retained_fmt_width() {
+    let time = Time::Retained;
+    let time = format!("{time:12}");
+    assert_eq!(time, "RETAINED    ");
 }
