@@ -5,7 +5,7 @@ use std::time::Duration;
 use rumqttc::{Client, Connection, ConnectionError, QoS};
 
 use crate::interactive::mqtt_history::MqttHistory;
-use crate::mqtt::HistoryEntry;
+use crate::mqtt::{HistoryEntry, Payload, Time};
 
 type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;
@@ -107,7 +107,12 @@ fn thread_logic(
                         }
                         history.write().unwrap().add(
                             publish.topic,
-                            HistoryEntry::new_now(publish.retain, publish.qos, publish.payload),
+                            HistoryEntry {
+                                qos: publish.qos,
+                                time: Time::new_now(publish.retain),
+                                payload_size: publish.payload.len(),
+                                payload: Payload::new(publish.payload.into()),
+                            },
                         );
                     }
                     rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect) => {

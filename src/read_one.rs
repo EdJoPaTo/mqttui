@@ -37,17 +37,17 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                 }
                 eprintln!("{}", publish.topic);
                 let size = publish.payload.len();
-                done = match Payload::new(publish.payload) {
+                done = match Payload::new(publish.payload.into()) {
+                    Payload::Json(json) => {
+                        println!("{json}");
+                        Finished::Successfully
+                    }
                     Payload::NotUtf8(err) => {
                         eprintln!("Payload ({size}) is not valid UTF-8: {err}");
                         Finished::NonUtf8
                     }
                     Payload::String(str) => {
                         println!("{str}");
-                        Finished::Successfully
-                    }
-                    Payload::Json(json) => {
-                        println!("{json}");
                         Finished::Successfully
                     }
                 };
