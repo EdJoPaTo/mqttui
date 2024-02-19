@@ -43,6 +43,18 @@ impl PayloadView {
         })
     }
 
+    fn areas(&mut self, area: Rect, content_height: usize) -> (Rect, Rect) {
+        let max_payload_height = area.height / 3;
+        #[allow(clippy::cast_possible_truncation)]
+        let payload_height = min(
+            max_payload_height as usize,
+            content_height.saturating_add(2),
+        ) as u16;
+        let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
+        self.last_area = payload_area;
+        (payload_area, remaining_area)
+    }
+
     fn draw_json(
         &mut self,
         f: &mut Frame,
@@ -56,11 +68,7 @@ impl PayloadView {
 
         let visible = self.json_state.flatten(&items);
         let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
-        let max_payload_height = area.height / 3;
-        #[allow(clippy::cast_possible_truncation)]
-        let payload_height = min(max_payload_height as usize, 2 + content_height) as u16;
-        let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
-        self.last_area = payload_area;
+        let (payload_area, remaining_area) = self.areas(area, content_height);
 
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(items)
@@ -85,11 +93,7 @@ impl PayloadView {
         let title = format!("Payload (Bytes: {payload_bytes})");
         let items = payload.lines().collect::<Vec<_>>();
 
-        let max_payload_height = area.height / 3;
-        #[allow(clippy::cast_possible_truncation)]
-        let payload_height = min(max_payload_height as usize, 2 + items.len()) as u16;
-        let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
-        self.last_area = payload_area;
+        let (payload_area, remaining_area) = self.areas(area, items.len());
 
         let widget = List::new(items).block(Block::bordered().title(title));
         f.render_widget(widget, payload_area);
