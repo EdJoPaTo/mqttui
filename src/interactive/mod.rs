@@ -21,7 +21,7 @@ use rumqttc::{Client, Connection};
 use tui_tree_widget::TreeItem;
 
 use crate::cli::Broker;
-use crate::interactive::details::json_view::root_tree_items_from_json;
+use crate::interactive::details::json_view::tree_items_from_json;
 use crate::interactive::ui::ElementInFocus;
 use crate::mqtt::Payload;
 
@@ -351,7 +351,7 @@ impl App {
                     let json = self
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
-                    let items = root_tree_items_from_json(&json);
+                    let items = tree_items_from_json(&json);
                     self.details.payload.json_state.key_down(&items);
                     Refresh::Update
                 }
@@ -359,7 +359,7 @@ impl App {
                     let json = self
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
-                    let items = root_tree_items_from_json(&json);
+                    let items = tree_items_from_json(&json);
                     self.details.payload.json_state.key_up(&items);
                     Refresh::Update
                 }
@@ -375,7 +375,7 @@ impl App {
                     let json = self
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
-                    let items = root_tree_items_from_json(&json);
+                    let items = tree_items_from_json(&json);
                     self.details.payload.json_state.select_first(&items);
                     Refresh::Update
                 }
@@ -383,7 +383,7 @@ impl App {
                     let json = self
                         .get_json_of_current_topic()
                         .unwrap_or(serde_json::Value::Null);
-                    let items = root_tree_items_from_json(&json);
+                    let items = tree_items_from_json(&json);
                     self.details.payload.json_state.select_last(&items);
                     Refresh::Update
                 }
@@ -456,7 +456,7 @@ impl App {
             let json = self
                 .get_json_of_current_topic()
                 .unwrap_or(serde_json::Value::Null);
-            let items = root_tree_items_from_json(&json);
+            let items = tree_items_from_json(&json);
             let changed = self
                 .details
                 .payload
