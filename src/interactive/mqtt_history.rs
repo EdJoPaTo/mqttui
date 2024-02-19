@@ -153,10 +153,10 @@ impl MqttHistory {
             }
 
             let meta = match history.last().map(|o| &o.payload) {
-                Some(Payload::String(str)) => format!("= {str}"),
                 Some(Payload::Json(json)) => format!("= {json}"),
                 Some(Payload::MsgPack(msgpack, _)) => format!("= {msgpack}"),
                 Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_owned(),
+                Some(Payload::String(str)) => format!("= {str}"),
                 None => format!("({topics_below} topics, {messages_below} messages)"),
             };
             let text = Line::from(vec![
@@ -187,23 +187,20 @@ impl MqttHistory {
 
     #[cfg(test)]
     pub fn example() -> Self {
+        fn e(payload: &str) -> HistoryEntry {
+            HistoryEntry {
+                qos: rumqttc::QoS::AtLeastOnce,
+                time: crate::mqtt::Time::new_now(false),
+                payload_size: payload.len(),
+                payload: crate::mqtt::Payload::new(payload.into()),
+            }
+        }
+
         let mut history = Self::new();
-        history.add(
-            "test".to_owned(),
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "A".into()),
-        );
-        history.add(
-            "foo/test".to_owned(),
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "B".into()),
-        );
-        history.add(
-            "test".to_owned(),
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "C".into()),
-        );
-        history.add(
-            "foo/bar".to_owned(),
-            HistoryEntry::new_now(false, rumqttc::QoS::AtLeastOnce, "D".into()),
-        );
+        history.add("test".to_owned(), e("A"));
+        history.add("foo/test".to_owned(), e("B"));
+        history.add("test".to_owned(), e("C"));
+        history.add("foo/bar".to_owned(), e("D"));
         history
     }
 }

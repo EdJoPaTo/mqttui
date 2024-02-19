@@ -17,32 +17,14 @@ impl Point {
     fn parse(entry: &HistoryEntry, json_selector: &[JsonSelector]) -> Option<Self> {
         let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
-            Payload::NotUtf8(_) => None,
-            Payload::String(str) => f64_from_string(str),
             Payload::Json(json) => {
-                let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
-                match json {
-                    JsonValue::Number(num) => num.as_f64(),
-                    JsonValue::Bool(true) => Some(1.0),
-                    JsonValue::Bool(false) => Some(0.0),
-                    #[allow(clippy::cast_precision_loss)]
-                    JsonValue::Array(arr) => Some(arr.len() as f64),
-                    JsonValue::String(str) => f64_from_string(str),
-                    JsonValue::Null | JsonValue::Object(_) => None,
-                }
+                f64_from_json(JsonSelector::get_selection(json, json_selector).unwrap_or(json))
             }
             Payload::MsgPack(_, json) => {
-                let json = JsonSelector::get_selection(json, json_selector).unwrap_or(json);
-                match json {
-                    JsonValue::Number(num) => num.as_f64(),
-                    JsonValue::Bool(true) => Some(1.0),
-                    JsonValue::Bool(false) => Some(0.0),
-                    #[allow(clippy::cast_precision_loss)]
-                    JsonValue::Array(arr) => Some(arr.len() as f64),
-                    JsonValue::String(str) => f64_from_string(str),
-                    JsonValue::Null | JsonValue::Object(_) => None,
-                }
+                f64_from_json(JsonSelector::get_selection(json, json_selector).unwrap_or(json))
             }
+            Payload::NotUtf8(_) => None,
+            Payload::String(str) => f64_from_string(str),
         }
         .filter(|y| y.is_finite())?;
         Some(Self { time, y })
@@ -51,6 +33,18 @@ impl Point {
     const fn as_graph_point(&self) -> (f64, f64) {
         let x = parse_time_to_chart_x(&self.time);
         (x, self.y)
+    }
+}
+
+fn f64_from_json(json: &JsonValue) -> Option<f64> {
+    match json {
+        JsonValue::Number(num) => num.as_f64(),
+        JsonValue::Bool(true) => Some(1.0),
+        JsonValue::Bool(false) => Some(0.0),
+        #[allow(clippy::cast_precision_loss)]
+        JsonValue::Array(arr) => Some(arr.len() as f64),
+        JsonValue::String(str) => f64_from_string(str),
+        JsonValue::Null | JsonValue::Object(_) => None,
     }
 }
 

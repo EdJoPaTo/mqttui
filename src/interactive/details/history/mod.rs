@@ -67,12 +67,12 @@ fn draw_table(
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos).to_owned();
         let value = match &entry.payload {
-            Payload::NotUtf8(err) => format!("invalid UTF-8: {err}"),
-            Payload::String(str) => str.to_string(),
             Payload::Json(json) => JsonSelector::get_selection(json, json_selector)
                 .unwrap_or(json)
                 .to_string(),
             Payload::MsgPack(msgpack, _json) => msgpack.to_string(),
+            Payload::NotUtf8(err) => format!("invalid UTF-8: {err}"),
+            Payload::String(str) => str.to_string(),
         };
         let row = Row::new(vec![time, qos, value]);
         if index == last_index {

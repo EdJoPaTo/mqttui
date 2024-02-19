@@ -22,7 +22,7 @@ fn tree_items_from_json(key: JsonSelector, value: &JsonValue) -> TreeItem<JsonSe
             TreeItem::new(key, text, tree_items_from_json_array(array)).unwrap()
         }
         _ => {
-            let text = format!("{}: {value}", key.to_string());
+            let text = format!("{key}: {value}");
             TreeItem::new_leaf(key, text)
         }
     }

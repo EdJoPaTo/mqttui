@@ -26,12 +26,12 @@ impl JsonSelector {
     }
 }
 
-impl ToString for JsonSelector {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for JsonSelector {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::ObjectKey(key) => key.clone(),
-            Self::ArrayIndex(index) => index.to_string(),
-            Self::None => String::new(),
+            Self::ObjectKey(key) => f.write_str(key),
+            Self::ArrayIndex(index) => f.write_str(&index.to_string()),
+            Self::None => Ok(()),
         }
     }
 }
