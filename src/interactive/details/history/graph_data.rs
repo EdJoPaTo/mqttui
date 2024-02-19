@@ -33,14 +33,14 @@ impl Point {
     }
 }
 
+#[allow(clippy::cast_precision_loss)]
 fn f64_from_json(json: &JsonValue) -> Option<f64> {
     match json {
-        JsonValue::Number(num) => num.as_f64(),
         JsonValue::Bool(true) => Some(1.0),
         JsonValue::Bool(false) => Some(0.0),
-        #[allow(clippy::cast_precision_loss)]
-        JsonValue::Array(arr) => Some(arr.len() as f64),
+        JsonValue::Number(num) => num.as_f64(),
         JsonValue::String(str) => f64_from_string(str),
+        JsonValue::Array(arr) => Some(arr.len() as f64),
         JsonValue::Null | JsonValue::Object(_) => None,
     }
 }
