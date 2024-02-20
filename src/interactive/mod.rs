@@ -480,10 +480,7 @@ impl App {
                 .or_else(|| topics.first()),
         };
         let select = select.map_or(Vec::new(), |(_, topic)| {
-            topic
-                .split('/')
-                .map(std::borrow::ToOwned::to_owned)
-                .collect()
+            topic.split('/').map(ToOwned::to_owned).collect()
         });
         drop(history);
 
@@ -501,12 +498,7 @@ impl App {
             .get_all_topics()
             .into_iter()
             .filter(|topic| topic.to_lowercase().contains(&self.topic_overview.search))
-            .map(|topic| {
-                topic
-                    .split('/')
-                    .map(std::borrow::ToOwned::to_owned)
-                    .collect::<Vec<_>>()
-            })
+            .map(|topic| topic.split('/').map(ToOwned::to_owned).collect::<Vec<_>>())
             .collect::<Vec<_>>();
         for splitted in topics {
             for i in 0..splitted.len() {
