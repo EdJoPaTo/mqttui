@@ -80,9 +80,16 @@ pub enum Subcommands {
         #[arg(value_hint = ValueHint::Other)]
         topic: String,
 
-        /// Payload to be published
+        /// Payload to be published.
+        ///
+        /// Reads from stdin when not specified.
+        /// This allows file content to be sent via pipes like this (bash):
+        ///
+        /// `mqttui publish some/topic </etc/hostname`
+        ///
+        /// `cowsay "I was here" | mqttui publish some/topic`
         #[arg(value_hint = ValueHint::Unknown)]
-        payload: String,
+        payload: Option<String>,
 
         /// Publish the MQTT message retained
         #[arg(short, long, env = "MQTTUI_RETAIN")]
