@@ -34,7 +34,7 @@ fn from_map(object: &[(Value, Value)]) -> Vec<TreeItem<'_, JsonSelector>> {
         .map(|(key, value)| {
             let key = key
                 .as_str()
-                .map_or_else(|| key.to_string(), std::borrow::ToOwned::to_owned);
+                .map_or_else(|| key.to_string(), ToOwned::to_owned);
             recurse(JsonSelector::ObjectKey(key), value)
         })
         .collect()
