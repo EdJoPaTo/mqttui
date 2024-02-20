@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Keep selected JSON object keys selected (by key, not by index as before)
 - Always quit on `Ctrl` + `C` (`q` still only quits when not typing anything)
+- Catch panics on interactive and clean up terminal correctly before displaying them
 
 ## [0.19.0] - 2023-05-17
 
