@@ -13,6 +13,7 @@ mod format;
 mod interactive;
 mod log;
 mod mqtt;
+mod payload;
 mod publish;
 mod read_one;
 

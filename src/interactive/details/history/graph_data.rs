@@ -1,8 +1,8 @@
 use chrono::NaiveDateTime;
 use serde_json::Value as JsonValue;
 
-use crate::interactive::details::json_selector::JsonSelector;
-use crate::mqtt::{HistoryEntry, Payload};
+use crate::mqtt::HistoryEntry;
+use crate::payload::{JsonSelector, Payload};
 
 #[allow(clippy::cast_precision_loss)]
 const fn parse_time_to_chart_x(time: &NaiveDateTime) -> f64 {

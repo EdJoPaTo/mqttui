@@ -5,7 +5,8 @@ use std::time::Duration;
 use rumqttc::{Client, Connection, ConnectionError, QoS};
 
 use crate::interactive::mqtt_history::MqttHistory;
-use crate::mqtt::{HistoryEntry, Payload, Time};
+use crate::mqtt::{HistoryEntry, Time};
+use crate::payload::Payload;
 
 type ConnectionErrorArc = Arc<RwLock<Option<ConnectionError>>>;
 type HistoryArc = Arc<RwLock<MqttHistory>>;

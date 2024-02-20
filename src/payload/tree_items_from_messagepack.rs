@@ -1,11 +1,11 @@
-use serde_json::Value;
+use rmpv::Value;
 use tui_tree_widget::TreeItem;
 
-use crate::interactive::details::json_selector::JsonSelector;
+use crate::payload::JsonSelector;
 
-pub fn tree_items_from_json(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
+pub fn tree_items_from_messagepack(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
     match root {
-        Value::Object(object) => from_object(object),
+        Value::Map(object) => from_map(object),
         Value::Array(array) => from_array(array),
         _ => vec![TreeItem::new_leaf(JsonSelector::None, root.to_string())],
     }
@@ -13,9 +13,9 @@ pub fn tree_items_from_json(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
 
 fn recurse(key: JsonSelector, value: &Value) -> TreeItem<JsonSelector> {
     match value {
-        Value::Object(object) => {
+        Value::Map(object) => {
             let text = key.to_string();
-            TreeItem::new(key, text, from_object(object)).unwrap()
+            TreeItem::new(key, text, from_map(object)).unwrap()
         }
         Value::Array(array) => {
             let text = key.to_string();
@@ -28,10 +28,15 @@ fn recurse(key: JsonSelector, value: &Value) -> TreeItem<JsonSelector> {
     }
 }
 
-fn from_object(object: &serde_json::Map<String, Value>) -> Vec<TreeItem<'_, JsonSelector>> {
+fn from_map(object: &[(Value, Value)]) -> Vec<TreeItem<'_, JsonSelector>> {
     object
         .iter()
-        .map(|(key, value)| recurse(JsonSelector::ObjectKey(key.clone()), value))
+        .map(|(key, value)| {
+            let key = key
+                .as_str()
+                .map_or_else(|| key.to_string(), ToOwned::to_owned);
+            recurse(JsonSelector::ObjectKey(key), value)
+        })
         .collect()
 }
 
@@ -41,4 +46,13 @@ fn from_array(array: &[Value]) -> Vec<TreeItem<'_, JsonSelector>> {
         .enumerate()
         .map(|(index, value)| recurse(JsonSelector::ArrayIndex(index), value))
         .collect()
+}
+
+#[test]
+fn value_to_string_is_same_as_variant_to_string() {
+    let int: rmpv::Integer = 42.into();
+    assert_eq!(int.to_string(), Value::Integer(int).to_string());
+
+    let float = 13.37;
+    assert_eq!(float.to_string(), Value::F64(float).to_string());
 }
