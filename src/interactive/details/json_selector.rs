@@ -57,10 +57,10 @@ impl JsonSelector {
 }
 
 impl std::fmt::Display for JsonSelector {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::ObjectKey(key) => f.write_str(key),
-            Self::ArrayIndex(index) => f.write_str(&index.to_string()),
+            Self::ObjectKey(key) => fmt.write_str(key),
+            Self::ArrayIndex(index) => fmt.write_str(&index.to_string()),
             Self::None => Ok(()),
         }
     }

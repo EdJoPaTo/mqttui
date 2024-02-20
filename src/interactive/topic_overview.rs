@@ -24,7 +24,7 @@ impl TopicOverview {
 
     pub fn draw(
         &mut self,
-        f: &mut Frame,
+        frame: &mut Frame,
         area: Rect,
         topic_amount: usize,
         tree_items: Vec<TreeItem<String>>,
@@ -42,7 +42,7 @@ impl TopicOverview {
                     .title_alignment(Alignment::Center)
                     .title(title),
             );
-        f.render_stateful_widget(widget, area, &mut self.state);
+        frame.render_stateful_widget(widget, area, &mut self.state);
         self.last_area = area;
     }
 

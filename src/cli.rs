@@ -216,8 +216,8 @@ pub enum Broker {
 
 impl core::str::FromStr for Broker {
     type Err = anyhow::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let url = Url::parse(s)?;
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        let url = Url::parse(input)?;
         anyhow::ensure!(url.has_host(), "Broker requires a Host");
 
         if matches!(url.scheme(), "mqtt" | "mqtts") {
@@ -260,25 +260,25 @@ impl core::str::FromStr for Broker {
 }
 
 impl core::fmt::Display for Broker {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Tcp { host, port } => {
                 if *port == 1883 {
-                    f.write_str("mqtt://")?;
-                    f.write_str(host)
+                    fmt.write_str("mqtt://")?;
+                    fmt.write_str(host)
                 } else {
-                    f.write_fmt(format_args!("mqtt://{host}@{port}"))
+                    fmt.write_fmt(format_args!("mqtt://{host}@{port}"))
                 }
             }
             Self::Ssl { host, port } => {
                 if *port == 8883 {
-                    f.write_str("mqtts://")?;
-                    f.write_str(host)
+                    fmt.write_str("mqtts://")?;
+                    fmt.write_str(host)
                 } else {
-                    f.write_fmt(format_args!("mqtts://{host}@{port}"))
+                    fmt.write_fmt(format_args!("mqtts://{host}@{port}"))
                 }
             }
-            Self::WebSocket(url) | Self::WebSocketSsl(url) => f.write_str(url.as_str()),
+            Self::WebSocket(url) | Self::WebSocketSsl(url) => fmt.write_str(url.as_str()),
         }
     }
 }

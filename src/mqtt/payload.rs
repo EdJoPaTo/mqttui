@@ -35,14 +35,14 @@ impl Payload {
 
 #[test]
 fn oneline_json_works() {
-    let p = Payload::Json(serde_json::json!([42, false]));
-    assert_eq!(p.format_oneline(666), "Payload(666): [42,false]");
+    let payload = Payload::Json(serde_json::json!([42, false]));
+    assert_eq!(payload.format_oneline(666), "Payload(666): [42,false]");
 }
 
 #[test]
 fn oneline_string_works() {
-    let p = Payload::String("bar".into());
-    assert_eq!(p.format_oneline(3), "Payload(  3): bar");
+    let payload = Payload::String("bar".into());
+    assert_eq!(payload.format_oneline(3), "Payload(  3): bar");
 }
 
 #[cfg(test)]

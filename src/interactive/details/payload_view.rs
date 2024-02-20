@@ -20,7 +20,7 @@ pub struct PayloadView {
 impl PayloadView {
     pub fn draw(
         &mut self,
-        f: &mut Frame,
+        frame: &mut Frame,
         area: Rect,
         topic_history: &[HistoryEntry],
         has_focus: bool,
@@ -30,12 +30,12 @@ impl PayloadView {
             .expect("when Details are drawn they should always have at least one HistoryEntry");
         let size = last.payload_size;
         match &last.payload {
-            Payload::Json(json) => self.draw_json(f, area, size, json, has_focus),
+            Payload::Json(json) => self.draw_json(frame, area, size, json, has_focus),
             Payload::MessagePack(messagepack) => {
-                self.draw_messagepack(f, area, size, messagepack, has_focus)
+                self.draw_messagepack(frame, area, size, messagepack, has_focus)
             }
-            Payload::NotUtf8(err) => self.draw_string(f, area, size, &err.to_string()),
-            Payload::String(str) => self.draw_string(f, area, size, str),
+            Payload::NotUtf8(err) => self.draw_string(frame, area, size, &err.to_string()),
+            Payload::String(str) => self.draw_string(frame, area, size, str),
         }
     }
 
@@ -60,7 +60,7 @@ impl PayloadView {
 
     fn draw_json(
         &mut self,
-        f: &mut Frame,
+        frame: &mut Frame,
         area: Rect,
         payload_bytes: usize,
         json: &serde_json::Value,
@@ -70,7 +70,10 @@ impl PayloadView {
         let items = tree_items_from_json(json);
 
         let visible = self.json_state.flatten(&items);
-        let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
+        let content_height = visible
+            .into_iter()
+            .map(|flattened| flattened.item.height())
+            .sum::<usize>();
         let (payload_area, remaining_area) = self.areas(area, content_height);
 
         let focus_color = focus_color(has_focus);
@@ -82,13 +85,13 @@ impl PayloadView {
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
-        f.render_stateful_widget(widget, payload_area, &mut self.json_state);
+        frame.render_stateful_widget(widget, payload_area, &mut self.json_state);
         remaining_area
     }
 
     fn draw_messagepack(
         &mut self,
-        f: &mut Frame,
+        frame: &mut Frame,
         area: Rect,
         payload_bytes: usize,
         messagepack: &rmpv::Value,
@@ -98,7 +101,10 @@ impl PayloadView {
         let items = tree_items_from_messagepack(messagepack);
 
         let visible = self.json_state.flatten(&items);
-        let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();
+        let content_height = visible
+            .into_iter()
+            .map(|flattened| flattened.item.height())
+            .sum::<usize>();
         let (payload_area, remaining_area) = self.areas(area, content_height);
 
         let focus_color = focus_color(has_focus);
@@ -110,13 +116,13 @@ impl PayloadView {
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
-        f.render_stateful_widget(widget, payload_area, &mut self.json_state);
+        frame.render_stateful_widget(widget, payload_area, &mut self.json_state);
         remaining_area
     }
 
     fn draw_string(
         &mut self,
-        f: &mut Frame,
+        frame: &mut Frame,
         area: Rect,
         payload_bytes: usize,
         payload: &str,
@@ -127,7 +133,7 @@ impl PayloadView {
         let (payload_area, remaining_area) = self.areas(area, items.len());
 
         let widget = List::new(items).block(Block::bordered().title(title));
-        f.render_widget(widget, payload_area);
+        frame.render_widget(widget, payload_area);
         remaining_area
     }
 }

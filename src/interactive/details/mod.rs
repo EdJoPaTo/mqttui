@@ -20,13 +20,15 @@ pub struct Details {
 impl Details {
     pub fn draw(
         &mut self,
-        f: &mut Frame,
+        frame: &mut Frame,
         area: Rect,
         topic_history: &[HistoryEntry],
         payload_has_focus: bool,
     ) {
-        let history_area = self.payload.draw(f, area, topic_history, payload_has_focus);
+        let history_area = self
+            .payload
+            .draw(frame, area, topic_history, payload_has_focus);
         let json_selector = self.payload.json_state.selected();
-        history::draw(f, history_area, topic_history, &json_selector);
+        history::draw(frame, history_area, topic_history, &json_selector);
     }
 }

@@ -53,10 +53,10 @@ fn f64_from_messagepack(messagepack: &rmpv::Value) -> Option<f64> {
     match messagepack {
         rmpv::Value::Boolean(true) => Some(1.0),
         rmpv::Value::Boolean(false) => Some(0.0),
-        rmpv::Value::Integer(i) => i.as_f64(),
+        rmpv::Value::Integer(int) => int.as_f64(),
         rmpv::Value::F32(float) => Some(f64::from(*float)),
         rmpv::Value::F64(float) => Some(*float),
-        rmpv::Value::String(s) => s.as_str().and_then(f64_from_string),
+        rmpv::Value::String(str) => str.as_str().and_then(f64_from_string),
         rmpv::Value::Array(arr) => Some(arr.len() as f64),
         rmpv::Value::Map(map) => Some(map.len() as f64),
         rmpv::Value::Binary(_) | rmpv::Value::Ext(_, _) | rmpv::Value::Nil => None,
@@ -66,14 +66,14 @@ fn f64_from_messagepack(messagepack: &rmpv::Value) -> Option<f64> {
 fn f64_from_string(payload: &str) -> Option<f64> {
     payload
         .split(char::is_whitespace)
-        .find(|o| !o.is_empty())? // lazy trim
+        .find(|str| !str.is_empty())? // lazy trim
         .parse::<f64>()
         .ok()
 }
 
 #[test]
 fn f64_from_string_works() {
-    fn t(input: &str, expected: Option<f64>) {
+    fn test(input: &str, expected: Option<f64>) {
         let actual = f64_from_string(input);
         match (actual, expected) {
             (None, None) => {} // All fine
@@ -85,10 +85,10 @@ fn f64_from_string_works() {
         }
     }
 
-    t("", None);
-    t("42", Some(42.0));
-    t("12.3 °C", Some(12.3));
-    t(" 2.4 °C", Some(2.4));
+    test("", None);
+    test("42", Some(42.0));
+    test("12.3 °C", Some(12.3));
+    test(" 2.4 °C", Some(2.4));
 }
 
 /// Dataset of Points showable by the graph. Ensures to create a useful graph (has at least 2 points)
@@ -106,7 +106,7 @@ impl GraphData {
     pub fn parse(entries: &[HistoryEntry], json_selector: &[JsonSelector]) -> Option<Self> {
         let points = entries
             .iter()
-            .filter_map(|o| Point::parse(o, json_selector))
+            .filter_map(|entry| Point::parse(entry, json_selector))
             .collect::<Box<[_]>>();
 
         let [ref first, .., ref last] = *points else {

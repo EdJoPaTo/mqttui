@@ -15,22 +15,22 @@ use graph_data::GraphData;
 mod graph_data;
 
 pub fn draw(
-    f: &mut Frame,
+    frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
     json_selector: &[JsonSelector],
 ) {
     let table_area = GraphData::parse(topic_history, json_selector).map_or(area, |data| {
         let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
-        draw_graph(f, graph_area, &data);
+        draw_graph(frame, graph_area, &data);
         table_area
     });
-    draw_table(f, table_area, topic_history, json_selector);
+    draw_table(frame, table_area, topic_history, json_selector);
 }
 
 #[allow(clippy::cast_precision_loss)]
 fn draw_table(
-    f: &mut Frame,
+    frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
     json_selector: &[JsonSelector],
@@ -40,7 +40,7 @@ fn draw_table(
     {
         let without_retain = topic_history
             .iter()
-            .filter_map(|o| o.time.as_optional())
+            .filter_map(|entry| entry.time.as_optional())
             .collect::<Box<[_]>>();
         if let [first, .., last] = *without_retain {
             let seconds = (*last - *first)
@@ -86,7 +86,7 @@ fn draw_table(
         }
     });
 
-    let t = Table::new(
+    let table = Table::new(
         rows,
         [
             Constraint::Length(12),
@@ -100,10 +100,10 @@ fn draw_table(
     let mut state = TableState::default();
     state.select(Some(topic_history.len() - 1));
 
-    f.render_stateful_widget(t, area, &mut state);
+    frame.render_stateful_widget(table, area, &mut state);
 }
 
-fn draw_graph(f: &mut Frame, area: Rect, points: &GraphData) {
+fn draw_graph(frame: &mut Frame, area: Rect, points: &GraphData) {
     const STYLE: Style = Style::new().fg(Color::LightGreen);
     let datasets = vec![Dataset::default()
         .graph_type(GraphType::Line)
@@ -129,5 +129,5 @@ fn draw_graph(f: &mut Frame, area: Rect, points: &GraphData) {
                     Span::raw(points.y_max.to_string()),
                 ]),
         );
-    f.render_widget(chart, area);
+    frame.render_widget(chart, area);
 }
