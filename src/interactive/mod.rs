@@ -143,7 +143,7 @@ fn main_loop<B>(
 where
     B: Backend,
 {
-    terminal.draw(|f| app.draw(f))?;
+    terminal.draw(|frame| app.draw(frame))?;
     loop {
         let refresh = match rx.recv()? {
             Event::Key(event) => app.on_key(event)?,
@@ -154,7 +154,7 @@ where
         };
         match refresh {
             Refresh::Update => {
-                terminal.draw(|f| app.draw(f))?;
+                terminal.draw(|frame| app.draw(frame))?;
             }
             Refresh::Skip => {}
             Refresh::Quit => break,
@@ -207,7 +207,7 @@ impl App {
         self.mqtt_thread
             .get_history()
             .get_last(&topic)
-            .map(|o| o.payload.clone())
+            .map(|entry| entry.payload.clone())
     }
 
     #[allow(clippy::too_many_lines)]
@@ -509,13 +509,13 @@ impl App {
         }
     }
 
-    fn draw(&mut self, f: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         const HEADER_HEIGHT: u16 = 1;
         const FOOTER_HEIGHT: u16 = 1;
 
         let connection_error = self.mqtt_thread.has_connection_err();
 
-        let area = f.size();
+        let area = frame.size();
         let Rect { width, height, .. } = area;
         debug_assert_eq!(area.x, 0, "area should fill the whole space");
         debug_assert_eq!(area.y, 0, "area should fill the whole space");
@@ -548,12 +548,17 @@ impl App {
 
         if let Some(topic) = self.topic_overview.get_selected() {
             let paragraph = Paragraph::new(Span::styled(topic, ui::STYLE_BOLD));
-            f.render_widget(paragraph.alignment(Alignment::Center), header_area);
+            frame.render_widget(paragraph.alignment(Alignment::Center), header_area);
         }
 
-        self.footer.draw(f, footer_area, self);
+        self.footer.draw(frame, footer_area, self);
         if let Some(connection_error) = connection_error {
-            mqtt_error_widget::draw(f, error_area, "MQTT Connection Error", &connection_error);
+            mqtt_error_widget::draw(
+                frame,
+                error_area,
+                "MQTT Connection Error",
+                &connection_error,
+            );
         }
 
         let history = self.mqtt_thread.get_history();
@@ -572,7 +577,7 @@ impl App {
                 };
 
                 self.details.draw(
-                    f,
+                    frame,
                     details_area,
                     topic_history,
                     matches!(self.focus, ElementInFocus::Payload),
@@ -587,7 +592,7 @@ impl App {
 
         let (topic_amount, tree_items) = history.to_tree_items();
         self.topic_overview.draw(
-            f,
+            frame,
             overview_area,
             topic_amount,
             tree_items,
@@ -596,7 +601,7 @@ impl App {
         drop(history);
 
         if let ElementInFocus::CleanRetainedPopup(topic) = &self.focus {
-            clean_retained::draw_popup(f, topic);
+            clean_retained::draw_popup(frame, topic);
         }
     }
 }

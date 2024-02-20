@@ -22,7 +22,7 @@ impl Footer {
         }
     }
 
-    pub fn draw(&self, f: &mut Frame, area: Rect, app: &App) {
+    pub fn draw(&self, frame: &mut Frame, area: Rect, app: &App) {
         const STYLE: Style = Style::new()
             .fg(Color::Black)
             .bg(Color::White)
@@ -73,16 +73,16 @@ impl Footer {
         let remaining = area.width as usize - line.width();
         if remaining > self.full_info.len() {
             let paragraph = Paragraph::new(&*self.full_info);
-            f.render_widget(paragraph.alignment(Alignment::Right), area);
+            frame.render_widget(paragraph.alignment(Alignment::Right), area);
         } else if remaining > self.broker.len() {
             let paragraph = Paragraph::new(&*self.broker);
-            f.render_widget(paragraph.alignment(Alignment::Right), area);
+            frame.render_widget(paragraph.alignment(Alignment::Right), area);
         } else if remaining > VERSION_TEXT.len() {
             let paragraph = Paragraph::new(VERSION_TEXT);
-            f.render_widget(paragraph.alignment(Alignment::Right), area);
+            frame.render_widget(paragraph.alignment(Alignment::Right), area);
         } else {
             // Not enough space -> show nothing
         }
-        f.render_widget(Paragraph::new(line), area);
+        frame.render_widget(Paragraph::new(line), area);
     }
 }

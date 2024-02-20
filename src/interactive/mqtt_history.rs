@@ -52,7 +52,7 @@ impl MqttHistory {
             let mut parent = self.tree.root().id();
             for part in topic.split('/') {
                 let noderef = self.tree.get(parent).unwrap();
-                let equal_or_after = noderef.children().find(|o| &*o.value().leaf >= part);
+                let equal_or_after = noderef.children().find(|node| &*node.value().leaf >= part);
                 if let Some(eoa) = equal_or_after {
                     if eoa.value().leaf.as_ref() == part {
                         parent = eoa.id();
@@ -106,7 +106,7 @@ impl MqttHistory {
 
             let mut entries_below = node
                 .children()
-                .flat_map(|c| build_recursive(&topic, c))
+                .flat_map(|node| build_recursive(&topic, node))
                 .collect::<Vec<_>>();
             if !node.value().history.is_empty() {
                 entries_below.insert(0, topic.join("/"));
@@ -117,7 +117,7 @@ impl MqttHistory {
         // Get the node of the given topic in the tree
         let mut noderef = self.tree.root();
         for part in topic.split('/') {
-            let node = noderef.children().find(|o| &*o.value().leaf == part);
+            let node = noderef.children().find(|node| &*node.value().leaf == part);
             if let Some(node) = node {
                 noderef = node;
             } else {
@@ -138,7 +138,7 @@ impl MqttHistory {
             let mut topic = prefix.to_vec();
             topic.push(leaf);
 
-            let entries_below = node.children().map(|c| build_recursive(&topic, c));
+            let entries_below = node.children().map(|node| build_recursive(&topic, node));
             let mut messages_below: usize = 0;
             let mut topics_below: usize = 0;
             let mut children = Vec::new();
@@ -152,7 +152,7 @@ impl MqttHistory {
                 children.push(below.tree_item);
             }
 
-            let meta = match history.last().map(|o| &o.payload) {
+            let meta = match history.last().map(|entry| &entry.payload) {
                 Some(Payload::Json(json)) => format!("= {json}"),
                 Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_owned(),
                 Some(Payload::String(str)) => format!("= {str}"),
@@ -172,7 +172,11 @@ impl MqttHistory {
             }
         }
 
-        let children = self.tree.root().children().map(|o| build_recursive(&[], o));
+        let children = self
+            .tree
+            .root()
+            .children()
+            .map(|node| build_recursive(&[], node));
         let mut topics: usize = 0;
         let mut items = Vec::new();
         for child in children {
@@ -186,7 +190,7 @@ impl MqttHistory {
 
     #[cfg(test)]
     pub fn example() -> Self {
-        fn e(payload: &str) -> HistoryEntry {
+        fn entry(payload: &str) -> HistoryEntry {
             HistoryEntry {
                 qos: rumqttc::QoS::AtLeastOnce,
                 time: crate::mqtt::Time::new_now(false),
@@ -196,10 +200,10 @@ impl MqttHistory {
         }
 
         let mut history = Self::new();
-        history.add("test".to_owned(), e("A"));
-        history.add("foo/test".to_owned(), e("B"));
-        history.add("test".to_owned(), e("C"));
-        history.add("foo/bar".to_owned(), e("D"));
+        history.add("test".to_owned(), entry("A"));
+        history.add("foo/test".to_owned(), entry("B"));
+        history.add("test".to_owned(), entry("C"));
+        history.add("foo/bar".to_owned(), entry("D"));
         history
     }
 }

@@ -29,8 +29,8 @@ impl MqttThread {
             }
         }
 
-        for t in &subscribe_topic {
-            client.subscribe(t, QoS::ExactlyOnce)?;
+        for topic in &subscribe_topic {
+            client.subscribe(topic, QoS::ExactlyOnce)?;
         }
 
         let connection_err = Arc::new(RwLock::new(None));
@@ -91,13 +91,13 @@ fn thread_logic(
 ) {
     for notification in connection.iter() {
         match notification {
-            Ok(e) => {
+            Ok(event) => {
                 *connection_err.write().unwrap() = None;
-                match e {
+                match event {
                     rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) => {
-                        for t in subscribe_topic {
+                        for topic in subscribe_topic {
                             client
-                                .subscribe(t, QoS::ExactlyOnce)
+                                .subscribe(topic, QoS::ExactlyOnce)
                                 .expect("should be able to subscribe");
                         }
                     }

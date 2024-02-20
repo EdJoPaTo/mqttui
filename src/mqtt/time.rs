@@ -25,10 +25,10 @@ impl Time {
 }
 
 impl std::fmt::Display for Time {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Retained => f.pad("RETAINED"),
-            Self::Local(time) => f.write_fmt(format_args!("{}", time.format("%_H:%M:%S.%3f"))),
+            Self::Retained => fmt.pad("RETAINED"),
+            Self::Local(time) => fmt.write_fmt(format_args!("{}", time.format("%_H:%M:%S.%3f"))),
         }
     }
 }
