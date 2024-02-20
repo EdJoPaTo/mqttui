@@ -90,6 +90,17 @@ fn main() -> anyhow::Result<()> {
             retain,
             verbose,
         }) => {
+            let payload = payload.map_or_else(
+                || {
+                    use std::io::Read;
+                    let mut buffer = Vec::new();
+                    std::io::stdin()
+                        .read_to_end(&mut buffer)
+                        .expect("Should be able to read the payload from stdin");
+                    buffer
+                },
+                String::into_bytes,
+            );
             client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
             publish::eventloop(client, connection, verbose);
         }

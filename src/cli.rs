@@ -80,9 +80,16 @@ pub enum Subcommands {
         #[arg(value_hint = ValueHint::Other)]
         topic: String,
 
-        /// Payload to be published
+        /// Payload to be published.
+        ///
+        /// Reads from stdin when not specified.
+        /// This allows file content to be sent via pipes like this (bash):
+        ///
+        /// `mqttui publish some/topic </etc/hostname`
+        ///
+        /// `cowsay "I was here" | mqttui publish some/topic`
         #[arg(value_hint = ValueHint::Unknown)]
-        payload: String,
+        payload: Option<String>,
 
         /// Publish the MQTT message retained
         #[arg(short, long, env = "MQTTUI_RETAIN")]
@@ -117,6 +124,7 @@ pub struct Cli {
         env = "MQTTUI_BROKER",
         value_hint = ValueHint::Url,
         value_name = "URL",
+        help_heading = "MQTT Connection",
         global = true,
         default_value = "mqtt://localhost",
     )]
@@ -131,6 +139,7 @@ pub struct Cli {
         env = "MQTTUI_USERNAME",
         value_hint = ValueHint::Username,
         value_name = "STRING",
+        help_heading = "MQTT Connection",
         requires = "password",
         global = true,
     )]
@@ -148,6 +157,7 @@ pub struct Cli {
         env = "MQTTUI_PASSWORD",
         value_hint = ValueHint::Other,
         value_name = "STRING",
+        help_heading = "MQTT Connection",
         hide_env_values = true,
         requires = "username",
         global = true,
@@ -161,6 +171,7 @@ pub struct Cli {
         env = "MQTTUI_CLIENTID",
         value_hint = ValueHint::Other,
         value_name = "STRING",
+        help_heading = "MQTT Connection",
         global = true,
     )]
     pub client_id: Option<String>,
@@ -174,6 +185,7 @@ pub struct Cli {
         env = "MQTTUI_CLIENT_CERTIFICATE",
         value_hint = ValueHint::FilePath,
         value_name = "FILEPATH",
+        help_heading = "MQTT Connection",
         requires = "client_key",
         global = true,
     )]
@@ -188,13 +200,14 @@ pub struct Cli {
         env = "MQTTUI_CLIENT_PRIVATE_KEY",
         value_hint = ValueHint::FilePath,
         value_name = "FILEPATH",
+        help_heading = "MQTT Connection",
         requires = "client_cert",
         global = true,
     )]
     pub client_key: Option<std::path::PathBuf>,
 
     /// Allow insecure TLS connections
-    #[arg(long, global = true)]
+    #[arg(long, global = true, help_heading = "MQTT Connection")]
     pub insecure: bool,
 
     /// Topic to watch

@@ -1,15 +1,9 @@
-use std::io::stdout;
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{
-    DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEvent, KeyModifiers,
-    MouseButton, MouseEventKind,
-};
-use crossterm::execute;
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    Event as CEvent, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind,
 };
 use ratatui::backend::Backend;
 use ratatui::layout::{Alignment, Rect};
@@ -58,6 +52,17 @@ enum SearchSelection {
     After,
 }
 
+fn reset_terminal() -> anyhow::Result<()> {
+    crossterm::terminal::disable_raw_mode()?;
+    crossterm::execute!(
+        std::io::stdout(),
+        crossterm::terminal::LeaveAlternateScreen,
+        crossterm::event::DisableMouseCapture,
+        crossterm::cursor::Show
+    )?;
+    Ok(())
+}
+
 pub fn show(
     client: Client,
     connection: Connection,
@@ -67,14 +72,21 @@ pub fn show(
     let mqtt_thread = mqtt_thread::MqttThread::new(client, connection, subscribe_topic)?;
     let mut app = App::new(broker, mqtt_thread);
 
-    enable_raw_mode()?;
+    let original_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic| {
+        reset_terminal().unwrap();
+        original_hook(panic);
+    }));
 
-    let mut stdout = stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-
-    let backend = CrosstermBackend::new(stdout);
-
-    let mut terminal = Terminal::new(backend)?;
+    crossterm::terminal::enable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    crossterm::execute!(
+        stdout,
+        crossterm::terminal::EnterAlternateScreen,
+        crossterm::event::EnableMouseCapture,
+        crossterm::cursor::Hide
+    )?;
+    let mut terminal = Terminal::new(CrosstermBackend::new(stdout))?;
 
     // Setup input handling
     let (tx, rx) = mpsc::channel();
@@ -124,13 +136,7 @@ pub fn show(
 
     let main_loop_result = main_loop(&mut app, &rx, &mut terminal);
 
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+    reset_terminal()?;
 
     main_loop_result
 }
@@ -534,10 +540,7 @@ impl App {
                 .or_else(|| topics.first()),
         };
         let select = select.map_or(Vec::new(), |(_, topic)| {
-            topic
-                .split('/')
-                .map(std::borrow::ToOwned::to_owned)
-                .collect()
+            topic.split('/').map(ToOwned::to_owned).collect()
         });
         drop(history);
 
@@ -555,12 +558,7 @@ impl App {
             .get_all_topics()
             .into_iter()
             .filter(|topic| topic.to_lowercase().contains(&self.topic_overview.search))
-            .map(|topic| {
-                topic
-                    .split('/')
-                    .map(std::borrow::ToOwned::to_owned)
-                    .collect::<Vec<_>>()
-            })
+            .map(|topic| topic.split('/').map(ToOwned::to_owned).collect::<Vec<_>>())
             .collect::<Vec<_>>();
         for splitted in topics {
             for i in 0..splitted.len() {
