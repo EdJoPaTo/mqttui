@@ -5,8 +5,10 @@ use crate::mqtt::HistoryEntry;
 
 mod history;
 mod json_selector;
-pub mod json_view;
+mod json_view;
 pub mod payload_view;
+
+pub use json_view::tree_items_from_json;
 
 #[derive(Default)]
 pub struct Details {

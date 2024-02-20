@@ -7,7 +7,7 @@ use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::details::json_selector::JsonSelector;
-use crate::interactive::details::json_view::tree_items_from_json;
+use crate::interactive::details::tree_items_from_json;
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
 use crate::mqtt::{HistoryEntry, Payload};
 
