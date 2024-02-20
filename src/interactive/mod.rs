@@ -200,12 +200,14 @@ impl App {
         result
     }
 
-    fn get_json_of_current_topic(&self) -> Option<serde_json::Value> {
+    /// Currently always the last payload on the current topic
+    /// In the future it might not be the last one (Select index from history table)
+    fn get_selected_payload(&self) -> Option<Payload> {
         let topic = self.topic_overview.get_selected()?;
         self.mqtt_thread
             .get_history()
             .get_last(&topic)
-            .and_then(|last| last.payload.as_optional_json().cloned())
+            .map(|o| o.payload.clone())
     }
 
     #[allow(clippy::too_many_lines)]
@@ -217,10 +219,8 @@ impl App {
         match &self.focus {
             ElementInFocus::TopicOverview => match key.code {
                 KeyCode::Char('q') => return Ok(Refresh::Quit),
-                KeyCode::Tab | KeyCode::BackTab => {
-                    if self.can_switch_to_payload() {
-                        self.focus = ElementInFocus::JsonPayload;
-                    }
+                KeyCode::Tab | KeyCode::BackTab if self.can_switch_to_payload() => {
+                    self.focus = ElementInFocus::Payload;
                 }
                 KeyCode::Char('/') => {
                     self.focus = ElementInFocus::TopicSearch;
@@ -312,62 +312,58 @@ impl App {
                 }
                 _ => return Ok(Refresh::Skip),
             },
-            ElementInFocus::JsonPayload => match key.code {
-                KeyCode::Char('q') => return Ok(Refresh::Quit),
-                KeyCode::Tab | KeyCode::BackTab => {
+            ElementInFocus::Payload => {
+                if key.code == KeyCode::Char('q') {
+                    return Ok(Refresh::Quit);
+                }
+                if matches!(key.code, KeyCode::Tab | KeyCode::BackTab) {
                     self.focus = ElementInFocus::TopicOverview;
+                    return Ok(Refresh::Update);
                 }
-                KeyCode::Enter | KeyCode::Char(' ') => {
-                    self.details.payload.json_state.toggle_selected();
+                match self.get_selected_payload() {
+                    Some(Payload::NotUtf8(_) | Payload::String(_)) | None => {}
+                    Some(Payload::Json(json)) => match key.code {
+                        KeyCode::Enter | KeyCode::Char(' ') => {
+                            self.details.payload.json_state.toggle_selected();
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            let items = tree_items_from_json(&json);
+                            self.details.payload.json_state.key_down(&items);
+                        }
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            let items = tree_items_from_json(&json);
+                            self.details.payload.json_state.key_up(&items);
+                        }
+                        KeyCode::Left | KeyCode::Char('h') => {
+                            self.details.payload.json_state.key_left();
+                        }
+                        KeyCode::Right | KeyCode::Char('l') => {
+                            self.details.payload.json_state.key_right();
+                        }
+                        KeyCode::Home => {
+                            let items = tree_items_from_json(&json);
+                            self.details.payload.json_state.select_first(&items);
+                        }
+                        KeyCode::End => {
+                            let items = tree_items_from_json(&json);
+                            self.details.payload.json_state.select_last(&items);
+                        }
+                        KeyCode::PageUp => {
+                            self.details.payload.json_state.scroll_up(3);
+                        }
+                        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.json_state.scroll_up(3);
+                        }
+                        KeyCode::PageDown => {
+                            self.details.payload.json_state.scroll_down(3);
+                        }
+                        KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.json_state.scroll_down(3);
+                        }
+                        _ => return Ok(Refresh::Skip),
+                    },
                 }
-                KeyCode::Down | KeyCode::Char('j') => {
-                    let json = self
-                        .get_json_of_current_topic()
-                        .unwrap_or(serde_json::Value::Null);
-                    let items = tree_items_from_json(&json);
-                    self.details.payload.json_state.key_down(&items);
-                }
-                KeyCode::Up | KeyCode::Char('k') => {
-                    let json = self
-                        .get_json_of_current_topic()
-                        .unwrap_or(serde_json::Value::Null);
-                    let items = tree_items_from_json(&json);
-                    self.details.payload.json_state.key_up(&items);
-                }
-                KeyCode::Left | KeyCode::Char('h') => {
-                    self.details.payload.json_state.key_left();
-                }
-                KeyCode::Right | KeyCode::Char('l') => {
-                    self.details.payload.json_state.key_right();
-                }
-                KeyCode::Home => {
-                    let json = self
-                        .get_json_of_current_topic()
-                        .unwrap_or(serde_json::Value::Null);
-                    let items = tree_items_from_json(&json);
-                    self.details.payload.json_state.select_first(&items);
-                }
-                KeyCode::End => {
-                    let json = self
-                        .get_json_of_current_topic()
-                        .unwrap_or(serde_json::Value::Null);
-                    let items = tree_items_from_json(&json);
-                    self.details.payload.json_state.select_last(&items);
-                }
-                KeyCode::PageUp => {
-                    self.details.payload.json_state.scroll_up(3);
-                }
-                KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.details.payload.json_state.scroll_up(3);
-                }
-                KeyCode::PageDown => {
-                    self.details.payload.json_state.scroll_down(3);
-                }
-                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.details.payload.json_state.scroll_down(3);
-                }
-                _ => return Ok(Refresh::Skip),
-            },
+            }
             ElementInFocus::CleanRetainedPopup(topic) => {
                 if matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
                     self.mqtt_thread.clean_below(topic)?;
@@ -383,7 +379,10 @@ impl App {
             ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
                 self.topic_overview.state.scroll_up(1);
             }
-            ElementInFocus::JsonPayload => self.details.payload.json_state.scroll_up(1),
+            ElementInFocus::Payload => match self.get_selected_payload() {
+                Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Json(_)) => self.details.payload.json_state.scroll_up(1),
+            },
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
@@ -394,7 +393,10 @@ impl App {
             ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
                 self.topic_overview.state.scroll_down(1);
             }
-            ElementInFocus::JsonPayload => self.details.payload.json_state.scroll_down(1),
+            ElementInFocus::Payload => match self.get_selected_payload() {
+                Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Json(_)) => self.details.payload.json_state.scroll_down(1),
+            },
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
@@ -415,20 +417,22 @@ impl App {
         }
 
         if let Some(index) = self.details.payload.json_index_of_click(column, row) {
-            let json = self
-                .get_json_of_current_topic()
-                .unwrap_or(serde_json::Value::Null);
-            let items = tree_items_from_json(&json);
-            let changed = self
-                .details
-                .payload
-                .json_state
-                .select_visible_index(&items, index);
-            if !changed {
-                self.details.payload.json_state.toggle_selected();
+            match self.get_selected_payload() {
+                Some(Payload::Json(json)) => {
+                    let items = tree_items_from_json(&json);
+                    let changed = self
+                        .details
+                        .payload
+                        .json_state
+                        .select_visible_index(&items, index);
+                    if !changed {
+                        self.details.payload.json_state.toggle_selected();
+                    }
+                    self.focus = ElementInFocus::Payload;
+                    return Refresh::Update;
+                }
+                Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
             }
-            self.focus = ElementInFocus::JsonPayload;
-            return Refresh::Update;
         }
         Refresh::Skip
     }
@@ -571,7 +575,7 @@ impl App {
                     f,
                     details_area,
                     topic_history,
-                    matches!(self.focus, ElementInFocus::JsonPayload),
+                    matches!(self.focus, ElementInFocus::Payload),
                 );
 
                 Rect {

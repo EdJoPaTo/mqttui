@@ -57,7 +57,7 @@ impl Footer {
                 Span::raw("Search: "),
                 Span::raw(&app.topic_overview.search),
             ],
-            ElementInFocus::JsonPayload => vec![
+            ElementInFocus::Payload => vec![
                 Span::styled("q", STYLE),
                 Span::raw(" Quit  "),
                 Span::styled("Tab", STYLE),
