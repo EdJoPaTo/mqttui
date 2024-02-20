@@ -23,14 +23,6 @@ impl Payload {
         }
     }
 
-    pub const fn as_optional_json(&self) -> Option<&serde_json::Value> {
-        if let Self::Json(json) = self {
-            Some(json)
-        } else {
-            None
-        }
-    }
-
     pub fn format_oneline(&self, size: usize) -> String {
         match self {
             Self::Json(json) => format!("Payload({size:>3}): {json}"),
@@ -55,10 +47,10 @@ fn oneline_string_works() {
 
 #[cfg(test)]
 fn json_macro(json_str: &'static str) -> Option<String> {
-    let payload = Payload::new(json_str.into());
-    payload
-        .as_optional_json()
-        .map(std::string::ToString::to_string)
+    match Payload::new(json_str.into()) {
+        Payload::Json(json) => Some(json.to_string()),
+        _ => None,
+    }
 }
 
 #[test]

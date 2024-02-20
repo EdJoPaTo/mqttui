@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Keep selected JSON object keys selected (by key, not by index as before)
+- Always quit on `Ctrl` + `C` (`q` still only quits when not typing anything)
 
 ## [0.19.0] - 2023-05-17
 
