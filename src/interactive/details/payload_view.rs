@@ -7,7 +7,7 @@ use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::details::json_selector::JsonSelector;
-use crate::interactive::details::tree_items_from_json;
+use crate::interactive::details::{tree_items_from_json, tree_items_from_messagepack};
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
 use crate::mqtt::{HistoryEntry, Payload};
 
@@ -95,14 +95,7 @@ impl PayloadView {
         has_focus: bool,
     ) -> Rect {
         let title = format!("MessagePack Payload (Bytes: {payload_bytes})");
-
-        let messagepack_string = messagepack.to_string();
-        let Ok(json) = serde_json::from_str::<serde_json::Value>(&messagepack_string) else {
-            // TODO: use raw messagepack implementation?
-            return self.draw_string(f, area, payload_bytes, &messagepack_string);
-        };
-
-        let items = tree_items_from_json(&json);
+        let items = tree_items_from_messagepack(messagepack);
 
         let visible = self.json_state.flatten(&items);
         let content_height = visible.into_iter().map(|o| o.item.height()).sum::<usize>();

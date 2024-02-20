@@ -21,7 +21,7 @@ use rumqttc::{Client, Connection};
 use tui_tree_widget::TreeItem;
 
 use crate::cli::Broker;
-use crate::interactive::details::tree_items_from_json;
+use crate::interactive::details::{tree_items_from_json, tree_items_from_messagepack};
 use crate::interactive::ui::ElementInFocus;
 use crate::mqtt::Payload;
 
@@ -195,7 +195,10 @@ impl App {
         let Some(history_entry) = &history.get_last(&topic) else {
             return false;
         };
-        let result = matches!(history_entry.payload, Payload::Json(_));
+        let result = matches!(
+            history_entry.payload,
+            Payload::Json(_) | Payload::MessagePack(_)
+        );
         drop(history);
         result
     }
@@ -362,6 +365,46 @@ impl App {
                         }
                         _ => return Ok(Refresh::Skip),
                     },
+                    Some(Payload::MessagePack(messagepack)) => match key.code {
+                        KeyCode::Enter | KeyCode::Char(' ') => {
+                            self.details.payload.json_state.toggle_selected();
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            let items = tree_items_from_messagepack(&messagepack);
+                            self.details.payload.json_state.key_down(&items);
+                        }
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            let items = tree_items_from_messagepack(&messagepack);
+                            self.details.payload.json_state.key_up(&items);
+                        }
+                        KeyCode::Left | KeyCode::Char('h') => {
+                            self.details.payload.json_state.key_left();
+                        }
+                        KeyCode::Right | KeyCode::Char('l') => {
+                            self.details.payload.json_state.key_right();
+                        }
+                        KeyCode::Home => {
+                            let items = tree_items_from_messagepack(&messagepack);
+                            self.details.payload.json_state.select_first(&items);
+                        }
+                        KeyCode::End => {
+                            let items = tree_items_from_messagepack(&messagepack);
+                            self.details.payload.json_state.select_last(&items);
+                        }
+                        KeyCode::PageUp => {
+                            self.details.payload.json_state.scroll_up(3);
+                        }
+                        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.json_state.scroll_up(3);
+                        }
+                        KeyCode::PageDown => {
+                            self.details.payload.json_state.scroll_down(3);
+                        }
+                        KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.json_state.scroll_down(3);
+                        }
+                        _ => return Ok(Refresh::Skip),
+                    },
                 }
             }
             ElementInFocus::CleanRetainedPopup(topic) => {
@@ -381,7 +424,9 @@ impl App {
             }
             ElementInFocus::Payload => match self.get_selected_payload() {
                 Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
-                Some(Payload::Json(_)) => self.details.payload.json_state.scroll_up(1),
+                Some(Payload::Json(_) | Payload::MessagePack(_)) => {
+                    self.details.payload.json_state.scroll_up(1);
+                }
             },
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
@@ -395,7 +440,9 @@ impl App {
             }
             ElementInFocus::Payload => match self.get_selected_payload() {
                 Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
-                Some(Payload::Json(_)) => self.details.payload.json_state.scroll_down(1),
+                Some(Payload::Json(_) | Payload::MessagePack(_)) => {
+                    self.details.payload.json_state.scroll_down(1);
+                }
             },
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
@@ -420,6 +467,19 @@ impl App {
             match self.get_selected_payload() {
                 Some(Payload::Json(json)) => {
                     let items = tree_items_from_json(&json);
+                    let changed = self
+                        .details
+                        .payload
+                        .json_state
+                        .select_visible_index(&items, index);
+                    if !changed {
+                        self.details.payload.json_state.toggle_selected();
+                    }
+                    self.focus = ElementInFocus::Payload;
+                    return Refresh::Update;
+                }
+                Some(Payload::MessagePack(messagepack)) => {
+                    let items = tree_items_from_messagepack(&messagepack);
                     let changed = self
                         .details
                         .payload

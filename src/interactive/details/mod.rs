@@ -6,9 +6,11 @@ use crate::mqtt::HistoryEntry;
 mod history;
 mod json_selector;
 mod json_view;
+mod messagepack_view;
 pub mod payload_view;
 
 pub use json_view::tree_items_from_json;
+pub use messagepack_view::tree_items_from_messagepack;
 
 #[derive(Default)]
 pub struct Details {

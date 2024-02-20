@@ -33,12 +33,11 @@ impl JsonSelector {
             (Value::Array(array), Self::ArrayIndex(index)) => array.get(*index),
             (Value::Map(object), Self::ObjectKey(selectkey)) => object
                 .iter()
-                .find(|(mapkey, _value)| match mapkey {
-                    Value::F32(f) => &f.to_string() == selectkey,
-                    Value::F64(f) => &f.to_string() == selectkey,
-                    Value::Integer(i) => &i.to_string() == selectkey,
-                    Value::String(str) => str.as_str() == Some(selectkey),
-                    _ => false,
+                .find(|(mapkey, _value)| {
+                    mapkey.as_str().map_or_else(
+                        || &mapkey.to_string() == selectkey,
+                        |mapkey| mapkey == selectkey,
+                    )
                 })
                 .map(|(_key, value)| value),
             _ => None,
@@ -169,6 +168,7 @@ mod messagepack_tests {
         let root = Value::Map(vec![
             (Value::String("bla".into()), Value::Boolean(false)),
             (Value::String("blubb".into()), Value::Boolean(true)),
+            (Value::Integer(12.into()), Value::Boolean(true)),
         ]);
         let result = JsonSelector::ObjectKey("blubb".to_owned()).apply_messagepack(&root);
         assert_eq!(result, Some(&Value::Boolean(true)));
