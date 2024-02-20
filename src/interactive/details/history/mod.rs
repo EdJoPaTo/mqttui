@@ -7,9 +7,9 @@ use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, Row, Table, Table
 use ratatui::{symbols, Frame};
 
 use crate::format;
-use crate::interactive::details::json_selector::JsonSelector;
 use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
-use crate::mqtt::{HistoryEntry, Payload};
+use crate::mqtt::HistoryEntry;
+use crate::payload::{JsonSelector, Payload};
 use graph_data::GraphData;
 
 mod graph_data;

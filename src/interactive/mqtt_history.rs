@@ -6,7 +6,8 @@ use ratatui::text::{Line, Span};
 use tui_tree_widget::TreeItem;
 
 use crate::interactive::ui::STYLE_BOLD;
-use crate::mqtt::{HistoryEntry, Payload};
+use crate::mqtt::HistoryEntry;
+use crate::payload::Payload;
 
 pub const STYLE_DARKGRAY: Style = Style::new().fg(Color::DarkGray);
 
@@ -195,7 +196,7 @@ impl MqttHistory {
                 qos: rumqttc::QoS::AtLeastOnce,
                 time: crate::mqtt::Time::new_now(false),
                 payload_size: payload.len(),
-                payload: crate::mqtt::Payload::new(payload.into()),
+                payload: Payload::new(payload.into()),
             }
         }
 

@@ -1,3 +1,9 @@
+mod json_selector;
+mod tree_items_from_json;
+
+pub use json_selector::JsonSelector;
+pub use tree_items_from_json::tree_items_from_json;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Payload {
     Json(serde_json::Value),

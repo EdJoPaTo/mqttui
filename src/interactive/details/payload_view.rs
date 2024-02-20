@@ -6,10 +6,9 @@ use ratatui::widgets::{Block, List};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::details::json_selector::JsonSelector;
-use crate::interactive::details::tree_items_from_json;
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
-use crate::mqtt::{HistoryEntry, Payload};
+use crate::mqtt::HistoryEntry;
+use crate::payload::{tree_items_from_json, JsonSelector, Payload};
 
 #[derive(Default)]
 pub struct PayloadView {

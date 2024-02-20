@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use rumqttc::{Client, Connection};
 
-use crate::mqtt::Payload;
+use crate::payload::Payload;
 
 enum Finished {
     StillWaiting,

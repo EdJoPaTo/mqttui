@@ -1,7 +1,7 @@
 use serde_json::Value;
 use tui_tree_widget::TreeItem;
 
-use crate::interactive::details::json_selector::JsonSelector;
+use crate::payload::JsonSelector;
 
 pub fn tree_items_from_json(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
     match root {

@@ -5,7 +5,8 @@ use chrono::Local;
 use rumqttc::Connection;
 
 use crate::format;
-use crate::mqtt::{Payload, Time};
+use crate::mqtt::Time;
+use crate::payload::Payload;
 
 pub fn show(mut connection: Connection, verbose: bool) {
     for notification in connection.iter() {

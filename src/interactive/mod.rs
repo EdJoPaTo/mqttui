@@ -15,9 +15,8 @@ use rumqttc::{Client, Connection};
 use tui_tree_widget::TreeItem;
 
 use crate::cli::Broker;
-use crate::interactive::details::tree_items_from_json;
 use crate::interactive::ui::ElementInFocus;
-use crate::mqtt::Payload;
+use crate::payload::{tree_items_from_json, Payload};
 
 mod clean_retained;
 mod details;

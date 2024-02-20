@@ -4,7 +4,7 @@ use std::time::Duration;
 use rumqttc::{Client, Connection, QoS};
 
 use crate::format;
-use crate::mqtt::Payload;
+use crate::payload::Payload;
 
 pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: bool) {
     let mut amount: usize = 0;
