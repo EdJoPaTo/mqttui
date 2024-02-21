@@ -31,6 +31,7 @@ crossterm = "0.27"
 ego-tree = "0.6"
 rand = "0.8"
 ratatui = "0.26"
+rmpv = "1"
 rumqttc = { version = "0.23", features = ["websocket"] }
 rustls = { version = "0.21", features = ["dangerous_configuration"] }
 rustls-native-certs = "0.6"

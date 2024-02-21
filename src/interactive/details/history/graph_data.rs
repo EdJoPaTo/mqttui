@@ -18,8 +18,11 @@ impl Point {
         let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::Json(json) => {
-                f64_from_json(JsonSelector::get_selection(json, json_selector).unwrap_or(json))
+                f64_from_json(JsonSelector::get_json(json, json_selector).unwrap_or(json))
             }
+            Payload::MessagePack(messagepack) => f64_from_messagepack(
+                JsonSelector::get_messagepack(messagepack, json_selector).unwrap_or(messagepack),
+            ),
             Payload::NotUtf8(_) => None,
             Payload::String(str) => f64_from_string(str),
         }
@@ -42,6 +45,21 @@ fn f64_from_json(json: &JsonValue) -> Option<f64> {
         JsonValue::String(str) => f64_from_string(str),
         JsonValue::Array(arr) => Some(arr.len() as f64),
         JsonValue::Null | JsonValue::Object(_) => None,
+    }
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn f64_from_messagepack(messagepack: &rmpv::Value) -> Option<f64> {
+    match messagepack {
+        rmpv::Value::Boolean(true) => Some(1.0),
+        rmpv::Value::Boolean(false) => Some(0.0),
+        rmpv::Value::Integer(int) => int.as_f64(),
+        rmpv::Value::F32(float) => Some(f64::from(*float)),
+        rmpv::Value::F64(float) => Some(*float),
+        rmpv::Value::String(str) => str.as_str().and_then(f64_from_string),
+        rmpv::Value::Array(arr) => Some(arr.len() as f64),
+        rmpv::Value::Map(map) => Some(map.len() as f64),
+        rmpv::Value::Binary(_) | rmpv::Value::Ext(_, _) | rmpv::Value::Nil => None,
     }
 }
 

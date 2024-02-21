@@ -721,6 +721,7 @@ dependencies = [
  "ego-tree",
  "rand",
  "ratatui",
+ "rmpv",
  "rumqttc",
  "rustls",
  "rustls-native-certs",
@@ -913,6 +914,27 @@ dependencies = [
  "spin",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "rmp"
+version = "0.8.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f9860a6cc38ed1da53456442089b4dfa35e7cedaa326df63017af88385e6b20"
+dependencies = [
+ "byteorder",
+ "num-traits",
+ "paste",
+]
+
+[[package]]
+name = "rmpv"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e0e0214a4a2b444ecce41a4025792fc31f77c7bb89c46d253953ea8c65701ec"
+dependencies = [
+ "num-traits",
+ "rmp",
 ]
 
 [[package]]
