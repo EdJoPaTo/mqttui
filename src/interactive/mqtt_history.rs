@@ -7,7 +7,6 @@ use tui_tree_widget::TreeItem;
 
 use crate::interactive::ui::STYLE_BOLD;
 use crate::mqtt::HistoryEntry;
-use crate::payload::Payload;
 
 pub const STYLE_DARKGRAY: Style = Style::new().fg(Color::DarkGray);
 
@@ -153,12 +152,10 @@ impl MqttHistory {
                 children.push(below.tree_item);
             }
 
-            let meta = match history.last().map(|entry| &entry.payload) {
-                Some(Payload::Json(json)) => format!("= {json}"),
-                Some(Payload::NotUtf8(_)) => "Payload not UTF-8".to_owned(),
-                Some(Payload::String(str)) => format!("= {str}"),
-                None => format!("({topics_below} topics, {messages_below} messages)"),
-            };
+            let meta = history.last().map(|entry| &entry.payload).map_or_else(
+                || format!("({topics_below} topics, {messages_below} messages)"),
+                |payload| format!("= {payload}"),
+            );
             let text = Line::from(vec![
                 Span::styled(leaf.to_string(), STYLE_BOLD),
                 Span::raw(" "),
@@ -196,7 +193,7 @@ impl MqttHistory {
                 qos: rumqttc::QoS::AtLeastOnce,
                 time: crate::mqtt::Time::new_now(false),
                 payload_size: payload.len(),
-                payload: Payload::new(payload.into()),
+                payload: crate::payload::Payload::new(payload.into()),
             }
         }
 
