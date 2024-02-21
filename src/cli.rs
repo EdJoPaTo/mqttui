@@ -284,21 +284,19 @@ impl core::fmt::Display for Broker {
         match self {
             Self::Tcp { host, port } => {
                 if *port == 1883 {
-                    fmt.write_str("mqtt://")?;
-                    fmt.write_str(host)
+                    write!(fmt, "mqtt://{host}")
                 } else {
-                    fmt.write_fmt(format_args!("mqtt://{host}@{port}"))
+                    write!(fmt, "mqtt://{host}@{port}")
                 }
             }
             Self::Ssl { host, port } => {
                 if *port == 8883 {
-                    fmt.write_str("mqtts://")?;
-                    fmt.write_str(host)
+                    write!(fmt, "mqtts://{host}")
                 } else {
-                    fmt.write_fmt(format_args!("mqtts://{host}@{port}"))
+                    write!(fmt, "mqtts://{host}@{port}")
                 }
             }
-            Self::WebSocket(url) | Self::WebSocketSsl(url) => fmt.write_str(url.as_str()),
+            Self::WebSocket(url) | Self::WebSocketSsl(url) => url.fmt(fmt),
         }
     }
 }
