@@ -25,27 +25,29 @@ impl Payload {
                 .map_or_else(|| Self::NotUtf8(err.utf8_error()), Self::MessagePack),
         }
     }
+}
 
-    pub fn format_oneline(&self, size: usize) -> String {
+impl std::fmt::Display for Payload {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Json(json) => format!("Payload({size:>3}): {json}"),
-            Self::MessagePack(messagepack) => format!("Payload({size:>3}): {messagepack}"),
-            Self::NotUtf8(err) => format!("Payload({size:>3}) is not valid UTF-8: {err}"),
-            Self::String(str) => format!("Payload({size:>3}): {str}"),
+            Self::Json(json) => json.fmt(fmt),
+            Self::MessagePack(messagepack) => messagepack.fmt(fmt),
+            Self::NotUtf8(err) => write!(fmt, "not valid UTF-8: {err}"),
+            Self::String(str) => str.fmt(fmt),
         }
     }
 }
 
 #[test]
-fn oneline_json_works() {
+fn display_json_works() {
     let payload = Payload::Json(serde_json::json!([42, false]));
-    assert_eq!(payload.format_oneline(666), "Payload(666): [42,false]");
+    assert_eq!(format!("{payload}"), "[42,false]");
 }
 
 #[test]
-fn oneline_string_works() {
+fn display_string_works() {
     let payload = Payload::String("bar".into());
-    assert_eq!(payload.format_oneline(3), "Payload(  3): bar");
+    assert_eq!(format!("{payload}"), "bar");
 }
 
 #[cfg(test)]
