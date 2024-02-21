@@ -34,6 +34,7 @@ impl JsonSelector {
             (Value::Map(object), Self::ObjectKey(selectkey)) => object
                 .iter()
                 .find(|(mapkey, _value)| {
+                    // similar to messagepack::map_key
                     mapkey.as_str().map_or_else(
                         || &mapkey.to_string() == selectkey,
                         |mapkey| mapkey == selectkey,

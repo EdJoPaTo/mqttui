@@ -1,6 +1,7 @@
 use rmpv::Value;
 use tui_tree_widget::TreeItem;
 
+use crate::payload::messagepack::map_key;
 use crate::payload::JsonSelector;
 
 pub fn tree_items_from_messagepack(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
@@ -31,12 +32,7 @@ fn recurse(key: JsonSelector, value: &Value) -> TreeItem<JsonSelector> {
 fn from_map(object: &[(Value, Value)]) -> Vec<TreeItem<'_, JsonSelector>> {
     object
         .iter()
-        .map(|(key, value)| {
-            let key = key
-                .as_str()
-                .map_or_else(|| key.to_string(), ToOwned::to_owned);
-            recurse(JsonSelector::ObjectKey(key), value)
-        })
+        .map(|(key, value)| recurse(JsonSelector::ObjectKey(map_key(key)), value))
         .collect()
 }
 

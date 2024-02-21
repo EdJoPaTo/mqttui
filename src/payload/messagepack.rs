@@ -26,6 +26,11 @@ fn decode_true() {
     assert_eq!(decode(&[0xC3]), Some(Value::Boolean(true)));
 }
 
+pub fn map_key(key: &Value) -> String {
+    key.as_str()
+        .map_or_else(|| key.to_string(), ToOwned::to_owned)
+}
+
 fn has_duplicate_keys(value: &Value) -> bool {
     match value {
         Value::Nil
@@ -40,10 +45,7 @@ fn has_duplicate_keys(value: &Value) -> bool {
         Value::Map(map) => {
             let mut keys = map
                 .iter()
-                .map(|(key, _value)| {
-                    key.as_str()
-                        .map_or_else(|| key.to_string(), ToOwned::to_owned)
-                })
+                .map(|(key, _value)| map_key(key))
                 .collect::<Vec<_>>();
             let before = keys.len();
             keys.sort_unstable();
