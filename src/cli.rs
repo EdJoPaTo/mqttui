@@ -56,8 +56,9 @@ pub enum Subcommands {
     ///
     /// `echo "The temperature is $(mqttui read-one room/temp)"`
     ///
-    /// When the payload is parsable JSON its printed as single line non-pretty JSON.
-    /// When the payload is not unicode the process exists without printing anything to stdout and with exit code 1.
+    /// The output is the exact payload in its binary form.
+    /// This might be valid ASCII / Unicode but could also be something not intended to be displayed on a terminal.
+    /// For a human readable format use `--pretty` or `mqttui log`.
     #[command(visible_alias = "r", visible_alias = "read")]
     ReadOne {
         /// Topics to watch
@@ -71,6 +72,12 @@ pub enum Subcommands {
         /// Do not return on a retained message on connection, wait for another message to arrive
         #[arg(long, short = 'r')]
         ignore_retained: bool,
+
+        /// Parse the payload and print it in a human readable pretty form.
+        ///
+        /// This might not be useful for piping the data.
+        #[arg(short, long)]
+        pretty: bool,
     },
 
     /// Publish a value quickly
@@ -277,21 +284,19 @@ impl core::fmt::Display for Broker {
         match self {
             Self::Tcp { host, port } => {
                 if *port == 1883 {
-                    fmt.write_str("mqtt://")?;
-                    fmt.write_str(host)
+                    write!(fmt, "mqtt://{host}")
                 } else {
-                    fmt.write_fmt(format_args!("mqtt://{host}@{port}"))
+                    write!(fmt, "mqtt://{host}@{port}")
                 }
             }
             Self::Ssl { host, port } => {
                 if *port == 8883 {
-                    fmt.write_str("mqtts://")?;
-                    fmt.write_str(host)
+                    write!(fmt, "mqtts://{host}")
                 } else {
-                    fmt.write_fmt(format_args!("mqtts://{host}@{port}"))
+                    write!(fmt, "mqtts://{host}@{port}")
                 }
             }
-            Self::WebSocket(url) | Self::WebSocketSsl(url) => fmt.write_str(url.as_str()),
+            Self::WebSocket(url) | Self::WebSocketSsl(url) => url.fmt(fmt),
         }
     }
 }

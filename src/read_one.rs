@@ -1,4 +1,3 @@
-use std::process::exit;
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -6,13 +5,7 @@ use rumqttc::{Client, Connection};
 
 use crate::payload::Payload;
 
-enum Finished {
-    StillWaiting,
-    Successfully,
-    NonUtf8,
-}
-
-pub fn show(mut client: Client, mut connection: Connection, ignore_retained: bool) {
+pub fn show(mut client: Client, mut connection: Connection, ignore_retained: bool, pretty: bool) {
     for notification in connection.iter() {
         if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
             notification.expect("connection error")
@@ -20,7 +13,7 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
             break;
         }
     }
-    let mut done = Finished::StillWaiting;
+    let mut done = false;
     for notification in connection.iter() {
         match notification {
             Ok(rumqttc::Event::Outgoing(outgoing)) => {
@@ -29,25 +22,23 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                 }
             }
             Ok(rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish))) => {
-                if publish.dup || !matches!(done, Finished::StillWaiting) {
+                if publish.dup || done {
                     continue;
                 }
                 if ignore_retained && publish.retain {
                     continue;
                 }
                 eprintln!("{}", publish.topic);
-                let size = publish.payload.len();
-                let payload = Payload::new(publish.payload.into());
-                done = match payload {
-                    Payload::NotUtf8(err) => {
-                        eprintln!("Payload ({size}) is not valid UTF-8: {err}");
-                        Finished::NonUtf8
-                    }
-                    Payload::Json(_) | Payload::MessagePack(_) | Payload::String(_) => {
-                        println!("{payload}");
-                        Finished::Successfully
-                    }
+                if pretty {
+                    let payload = Payload::new(publish.payload.into());
+                    println!("{payload:#}");
+                } else {
+                    use std::io::Write;
+                    std::io::stdout()
+                        .write_all(&publish.payload)
+                        .expect("Should be able to write payload to stdout");
                 };
+                done = true;
                 client.disconnect().unwrap();
             }
             Ok(rumqttc::Event::Incoming(_)) => {}
@@ -56,9 +47,5 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                 sleep(Duration::from_millis(25));
             }
         }
-    }
-
-    if matches!(done, Finished::NonUtf8) {
-        exit(1);
     }
 }
