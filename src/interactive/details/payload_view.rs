@@ -4,6 +4,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, List};
 use ratatui::Frame;
+use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
 
 use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
@@ -12,6 +13,7 @@ use crate::payload::{tree_items_from_json, tree_items_from_messagepack, JsonSele
 
 #[derive(Default)]
 pub struct PayloadView {
+    pub binary_state: BinaryDataWidgetState,
     pub json_state: TreeState<JsonSelector>,
     pub last_area: Rect,
 }
@@ -29,7 +31,7 @@ impl PayloadView {
             .expect("when Details are drawn they should always have at least one HistoryEntry");
         let size = last.payload_size;
         match &last.payload {
-            Payload::Binary(data) => self.draw_string(frame, area, size, &format!("{data:?}")),
+            Payload::Binary(data) => self.draw_binary(frame, area, size, data, has_focus),
             Payload::Json(json) => self.draw_json(frame, area, size, json, has_focus),
             Payload::MessagePack(messagepack) => {
                 self.draw_messagepack(frame, area, size, messagepack, has_focus)
@@ -55,6 +57,32 @@ impl PayloadView {
         let (payload_area, remaining_area) = split_area_vertically(area, payload_height);
         self.last_area = payload_area;
         (payload_area, remaining_area)
+    }
+
+    fn draw_binary(
+        &mut self,
+        frame: &mut Frame,
+        area: Rect,
+        payload_bytes: usize,
+        data: &[u8],
+        has_focus: bool,
+    ) -> Rect {
+        let title = format!("Binary Payload (Bytes: {payload_bytes})");
+
+        let focus_color = focus_color(has_focus);
+        let widget = BinaryDataWidget::new(data)
+            .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
+            .block(
+                Block::bordered()
+                    .border_style(Style::new().fg(focus_color))
+                    .title(title),
+            );
+
+        let max_lines = widget.get_max_lines_of_data_in_area(area);
+        let (payload_area, remaining_area) = self.areas(area, max_lines);
+
+        frame.render_stateful_widget(widget, payload_area, &mut self.binary_state);
+        remaining_area
     }
 
     fn draw_json(

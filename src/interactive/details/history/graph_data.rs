@@ -14,10 +14,14 @@ struct Point {
 }
 
 impl Point {
-    fn parse(entry: &HistoryEntry, json_selector: &[JsonSelector]) -> Option<Self> {
+    fn parse(
+        entry: &HistoryEntry,
+        binary_address: usize,
+        json_selector: &[JsonSelector],
+    ) -> Option<Self> {
         let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
-            Payload::Binary(data) => data.first().copied().map(f64::from),
+            Payload::Binary(data) => data.get(binary_address).copied().map(f64::from),
             Payload::Json(json) => {
                 f64_from_json(JsonSelector::get_json(json, json_selector).unwrap_or(json))
             }
@@ -103,10 +107,14 @@ pub struct GraphData {
 }
 
 impl GraphData {
-    pub fn parse(entries: &[HistoryEntry], json_selector: &[JsonSelector]) -> Option<Self> {
+    pub fn parse(
+        entries: &[HistoryEntry],
+        binary_address: usize,
+        json_selector: &[JsonSelector],
+    ) -> Option<Self> {
         let points = entries
             .iter()
-            .filter_map(|entry| Point::parse(entry, json_selector))
+            .filter_map(|entry| Point::parse(entry, binary_address, json_selector))
             .collect::<Box<[_]>>();
 
         let [ref first, .., ref last] = *points else {

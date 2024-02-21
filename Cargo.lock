@@ -721,6 +721,7 @@ dependencies = [
  "ego-tree",
  "rand",
  "ratatui",
+ "ratatui-binary-data-widget",
  "rmpv",
  "rumqttc",
  "rustls",
@@ -890,6 +891,14 @@ dependencies = [
  "strum",
  "unicode-segmentation",
  "unicode-width",
+]
+
+[[package]]
+name = "ratatui-binary-data-widget"
+version = "0.1.0"
+source = "git+https://github.com/EdJoPaTo/ratatui-binary-data-widget?branch=main#6d75b2c39d1d873ea170fe17afd46a0f6daa4399"
+dependencies = [
+ "ratatui",
 ]
 
 [[package]]

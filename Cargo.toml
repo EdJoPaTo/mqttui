@@ -31,6 +31,7 @@ crossterm = "0.27"
 ego-tree = "0.6"
 rand = "0.8"
 ratatui = "0.26"
+ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "main" }
 rmpv = "1"
 rumqttc = { version = "0.23", features = ["websocket"] }
 rustls = { version = "0.21", features = ["dangerous_configuration"] }

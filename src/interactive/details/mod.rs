@@ -22,7 +22,14 @@ impl Details {
         let history_area = self
             .payload
             .draw(frame, area, topic_history, payload_has_focus);
+        let binary_address = self.payload.binary_state.selected();
         let json_selector = self.payload.json_state.selected();
-        history::draw(frame, history_area, topic_history, &json_selector);
+        history::draw(
+            frame,
+            history_area,
+            topic_history,
+            binary_address,
+            &json_selector,
+        );
     }
 }

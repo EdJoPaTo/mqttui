@@ -202,7 +202,10 @@ impl App {
             .get_history()
             .get_last(&topic)
             .is_some_and(|entry| {
-                matches!(entry.payload, Payload::Json(_) | Payload::MessagePack(_))
+                matches!(
+                    entry.payload,
+                    Payload::Binary(_) | Payload::Json(_) | Payload::MessagePack(_)
+                )
             })
     }
 
@@ -230,6 +233,9 @@ impl App {
                 }
                 KeyCode::Char('/') => {
                     self.focus = ElementInFocus::TopicSearch;
+                }
+                KeyCode::Esc => {
+                    self.topic_overview.state.select(vec![]);
                 }
                 KeyCode::Enter | KeyCode::Char(' ') => {
                     self.topic_overview.state.toggle_selected();
@@ -327,10 +333,44 @@ impl App {
                     return Ok(Refresh::Update);
                 }
                 match self.get_selected_payload() {
-                    Some(Payload::Binary(_) | Payload::String(_)) | None => {
-                        return Ok(Refresh::Skip);
-                    }
+                    Some(Payload::Binary(_)) => match key.code {
+                        KeyCode::Esc => self.details.payload.binary_state.select(None),
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            self.details.payload.binary_state.key_down();
+                        }
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            self.details.payload.binary_state.key_up();
+                        }
+                        KeyCode::Left | KeyCode::Char('h') => {
+                            self.details.payload.binary_state.key_left();
+                        }
+                        KeyCode::Right | KeyCode::Char('l') => {
+                            self.details.payload.binary_state.key_right();
+                        }
+                        KeyCode::Home => {
+                            self.details.payload.binary_state.select(Some(0));
+                        }
+                        KeyCode::End => {
+                            self.details.payload.binary_state.select(Some(usize::MAX));
+                        }
+                        KeyCode::PageUp => {
+                            self.details.payload.binary_state.scroll_up(3);
+                        }
+                        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.binary_state.scroll_up(3);
+                        }
+                        KeyCode::PageDown => {
+                            self.details.payload.binary_state.scroll_down(3);
+                        }
+                        KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.binary_state.scroll_down(3);
+                        }
+                        _ => return Ok(Refresh::Skip),
+                    },
                     Some(Payload::Json(json)) => match key.code {
+                        KeyCode::Esc => {
+                            self.details.payload.json_state.select(vec![]);
+                        }
                         KeyCode::Enter | KeyCode::Char(' ') => {
                             self.details.payload.json_state.toggle_selected();
                         }
@@ -371,6 +411,9 @@ impl App {
                         _ => return Ok(Refresh::Skip),
                     },
                     Some(Payload::MessagePack(messagepack)) => match key.code {
+                        KeyCode::Esc => {
+                            self.details.payload.json_state.select(vec![]);
+                        }
                         KeyCode::Enter | KeyCode::Char(' ') => {
                             self.details.payload.json_state.toggle_selected();
                         }
@@ -410,6 +453,7 @@ impl App {
                         }
                         _ => return Ok(Refresh::Skip),
                     },
+                    Some(Payload::String(_)) | None => return Ok(Refresh::Skip),
                 }
             }
             ElementInFocus::CleanRetainedPopup(topic) => {
@@ -428,10 +472,13 @@ impl App {
                 self.topic_overview.state.scroll_up(1);
             }
             ElementInFocus::Payload => match self.get_selected_payload() {
-                Some(Payload::Binary(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Binary(_)) => {
+                    self.details.payload.binary_state.scroll_up(1);
+                }
                 Some(Payload::Json(_) | Payload::MessagePack(_)) => {
                     self.details.payload.json_state.scroll_up(1);
                 }
+                Some(Payload::String(_)) | None => return Refresh::Skip,
             },
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
@@ -444,10 +491,13 @@ impl App {
                 self.topic_overview.state.scroll_down(1);
             }
             ElementInFocus::Payload => match self.get_selected_payload() {
-                Some(Payload::Binary(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Binary(_)) => {
+                    self.details.payload.binary_state.scroll_down(1);
+                }
                 Some(Payload::Json(_) | Payload::MessagePack(_)) => {
                     self.details.payload.json_state.scroll_down(1);
                 }
+                Some(Payload::String(_)) | None => return Refresh::Skip,
             },
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
@@ -471,6 +521,18 @@ impl App {
         if let Some(index) = self.details.payload.json_index_of_click(column, row) {
             match self.get_selected_payload() {
                 None => return Refresh::Update, // No payload but click into payload area -> redraw
+                Some(Payload::Binary(_)) => {
+                    if let Some(address) = self
+                        .details
+                        .payload
+                        .binary_state
+                        .clicked_address(column, row)
+                    {
+                        self.details.payload.binary_state.select(Some(address));
+                        self.focus = ElementInFocus::Payload;
+                        return Refresh::Update;
+                    }
+                }
                 Some(Payload::Json(json)) => {
                     let items = tree_items_from_json(&json);
                     let changed = self
@@ -497,7 +559,7 @@ impl App {
                     self.focus = ElementInFocus::Payload;
                     return Refresh::Update;
                 }
-                Some(Payload::Binary(_) | Payload::String(_)) => return Refresh::Skip,
+                Some(Payload::String(_)) => return Refresh::Skip,
             }
         }
         Refresh::Skip

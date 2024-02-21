@@ -18,14 +18,22 @@ pub fn draw(
     frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
+    binary_address: Option<usize>,
     json_selector: &[JsonSelector],
 ) {
-    let table_area = GraphData::parse(topic_history, json_selector).map_or(area, |data| {
-        let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
-        draw_graph(frame, graph_area, &data);
-        table_area
-    });
-    draw_table(frame, table_area, topic_history, json_selector);
+    let table_area = GraphData::parse(topic_history, binary_address.unwrap_or(0), json_selector)
+        .map_or(area, |data| {
+            let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
+            draw_graph(frame, graph_area, &data);
+            table_area
+        });
+    draw_table(
+        frame,
+        table_area,
+        topic_history,
+        binary_address,
+        json_selector,
+    );
 }
 
 #[allow(clippy::cast_precision_loss)]
@@ -33,6 +41,7 @@ fn draw_table(
     frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
+    binary_address: Option<usize>,
     json_selector: &[JsonSelector],
 ) {
     let mut title = format!("History ({}", topic_history.len());
@@ -67,7 +76,9 @@ fn draw_table(
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos).to_owned();
         let value = match &entry.payload {
-            Payload::Binary(data) => format!("{data:?}"),
+            Payload::Binary(data) => binary_address
+                .and_then(|address| data.get(address).copied())
+                .map_or_else(|| format!("{data:?}"), |data| format!("{data}")),
             Payload::Json(json) => JsonSelector::get_json(json, json_selector)
                 .unwrap_or(json)
                 .to_string(),
