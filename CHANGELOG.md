@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Only display delete / tab footer keys when useful
 - Prevent JSON Payload empty space for bigger history/graph view
 - Group MQTT connection related CLI options in --help
+- ReadOne: Output raw payload or --pretty
 - Build: always build with TLS support
 - Performance: Less clones on interactive draw
 - Performance: Dont keep Timezone information of each message
