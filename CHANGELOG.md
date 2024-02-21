@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interactive graph plots values with units will ignore everything after the whitespace (`20.0 °C` → `20.0`)
 - Publish from stdin (and with that from file contents)
 - Support for decoding [MessagePack](https://msgpack.org/) payloads
+- Support for binary payloads
+- Interactive: Truncate payloads to ´--payload-size-limit´ for reduced RAM usage
 
 ### Changed
 

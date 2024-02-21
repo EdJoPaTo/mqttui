@@ -67,8 +67,10 @@ pub fn show(
     connection: Connection,
     broker: &Broker,
     subscribe_topic: Vec<String>,
+    payload_size_limit: usize,
 ) -> anyhow::Result<()> {
-    let mqtt_thread = mqtt_thread::MqttThread::new(client, connection, subscribe_topic)?;
+    let mqtt_thread =
+        mqtt_thread::MqttThread::new(client, connection, subscribe_topic, payload_size_limit)?;
     let mut app = App::new(broker, mqtt_thread);
 
     let original_hook = std::panic::take_hook();
@@ -325,7 +327,9 @@ impl App {
                     return Ok(Refresh::Update);
                 }
                 match self.get_selected_payload() {
-                    Some(Payload::NotUtf8(_) | Payload::String(_)) | None => {}
+                    Some(Payload::Binary(_) | Payload::String(_)) | None => {
+                        return Ok(Refresh::Skip);
+                    }
                     Some(Payload::Json(json)) => match key.code {
                         KeyCode::Enter | KeyCode::Char(' ') => {
                             self.details.payload.json_state.toggle_selected();
@@ -424,7 +428,7 @@ impl App {
                 self.topic_overview.state.scroll_up(1);
             }
             ElementInFocus::Payload => match self.get_selected_payload() {
-                Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Binary(_) | Payload::String(_)) | None => return Refresh::Skip,
                 Some(Payload::Json(_) | Payload::MessagePack(_)) => {
                     self.details.payload.json_state.scroll_up(1);
                 }
@@ -440,7 +444,7 @@ impl App {
                 self.topic_overview.state.scroll_down(1);
             }
             ElementInFocus::Payload => match self.get_selected_payload() {
-                Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Binary(_) | Payload::String(_)) | None => return Refresh::Skip,
                 Some(Payload::Json(_) | Payload::MessagePack(_)) => {
                     self.details.payload.json_state.scroll_down(1);
                 }
@@ -466,6 +470,7 @@ impl App {
 
         if let Some(index) = self.details.payload.json_index_of_click(column, row) {
             match self.get_selected_payload() {
+                None => return Refresh::Update, // No payload but click into payload area -> redraw
                 Some(Payload::Json(json)) => {
                     let items = tree_items_from_json(&json);
                     let changed = self
@@ -492,7 +497,7 @@ impl App {
                     self.focus = ElementInFocus::Payload;
                     return Refresh::Update;
                 }
-                Some(Payload::NotUtf8(_) | Payload::String(_)) | None => return Refresh::Skip,
+                Some(Payload::Binary(_) | Payload::String(_)) => return Refresh::Skip,
             }
         }
         Refresh::Skip

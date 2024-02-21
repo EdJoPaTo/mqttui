@@ -30,7 +30,7 @@ pub fn show(mut client: Client, mut connection: Connection, ignore_retained: boo
                 }
                 eprintln!("{}", publish.topic);
                 if pretty {
-                    let payload = Payload::new(publish.payload.into());
+                    let payload = Payload::unlimited(publish.payload.into());
                     println!("{payload:#}");
                 } else {
                     use std::io::Write;

@@ -38,7 +38,7 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 let qos = format::qos(publish.qos);
                 let topic = publish.topic;
                 let size = publish.payload.len();
-                let payload = Payload::new(publish.payload.into());
+                let payload = Payload::unlimited(publish.payload.into());
                 println!("{time:12} QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
             }
             Ok(rumqttc::Event::Incoming(packet)) => {

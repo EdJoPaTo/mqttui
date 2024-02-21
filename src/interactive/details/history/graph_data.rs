@@ -17,13 +17,13 @@ impl Point {
     fn parse(entry: &HistoryEntry, json_selector: &[JsonSelector]) -> Option<Self> {
         let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
+            Payload::Binary(data) => data.first().copied().map(f64::from),
             Payload::Json(json) => {
                 f64_from_json(JsonSelector::get_json(json, json_selector).unwrap_or(json))
             }
             Payload::MessagePack(messagepack) => f64_from_messagepack(
                 JsonSelector::get_messagepack(messagepack, json_selector).unwrap_or(messagepack),
             ),
-            Payload::NotUtf8(_) => None,
             Payload::String(str) => f64_from_string(str),
         }
         .filter(|y| y.is_finite())?;

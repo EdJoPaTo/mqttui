@@ -224,6 +224,19 @@ pub struct Cli {
         default_value = "#",
     )]
     pub topic: Vec<String>,
+
+    /// Truncate the payloads stored to the given size.
+    ///
+    /// Payloads bigger than that are truncated and not inspected for formats like JSON or MessagePack.
+    /// Only their beginning up to the specified amount of bytes can be viewed.
+    /// Increasing this value might result in higher memory consumption especially over time.
+    #[arg(
+        long,
+        env = "MQTTUI_PAYLOAD_SIZE_LIMIT",
+        value_hint = ValueHint::Other,
+        default_value_t = 8_000,
+    )]
+    pub payload_size_limit: usize,
 }
 
 #[derive(Debug, Clone)]

@@ -107,8 +107,13 @@ fn main() -> anyhow::Result<()> {
             publish::eventloop(client, connection, verbose);
         }
         None => {
-            let broker = matches.broker;
-            interactive::show(client.clone(), connection, &broker, matches.topic)?;
+            interactive::show(
+                client.clone(),
+                connection,
+                &matches.broker,
+                matches.topic,
+                matches.payload_size_limit,
+            )?;
             client.disconnect()?;
         }
     }

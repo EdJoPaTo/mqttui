@@ -29,11 +29,11 @@ impl PayloadView {
             .expect("when Details are drawn they should always have at least one HistoryEntry");
         let size = last.payload_size;
         match &last.payload {
+            Payload::Binary(data) => self.draw_string(frame, area, size, &format!("{data:?}")),
             Payload::Json(json) => self.draw_json(frame, area, size, json, has_focus),
             Payload::MessagePack(messagepack) => {
                 self.draw_messagepack(frame, area, size, messagepack, has_focus)
             }
-            Payload::NotUtf8(err) => self.draw_string(frame, area, size, &err.to_string()),
             Payload::String(str) => self.draw_string(frame, area, size, str),
         }
     }

@@ -34,7 +34,7 @@ pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: b
                 {
                     let qos = format::qos(publish.qos);
                     let size = publish.payload.len();
-                    let payload = Payload::new(publish.payload.into());
+                    let payload = Payload::unlimited(publish.payload.into());
                     println!("QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
                 }
                 amount += 1;

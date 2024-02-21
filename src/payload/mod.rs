@@ -9,20 +9,35 @@ pub use tree_items_from_messagepack::tree_items_from_messagepack;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Payload {
+    /// Might be truncated
+    Binary(Box<[u8]>),
     Json(serde_json::Value),
     MessagePack(rmpv::Value),
-    NotUtf8(std::str::Utf8Error),
+    /// Might be truncated
     String(Box<str>),
 }
 
 impl Payload {
-    pub fn new(payload: Vec<u8>) -> Self {
+    pub fn truncated(mut payload: Vec<u8>, limit: usize) -> Self {
+        if payload.len() > limit {
+            payload.truncate(limit);
+
+            match String::from_utf8(payload) {
+                Ok(str) => Self::String(str.into()),
+                Err(err) => Self::Binary(err.into_bytes().into()),
+            }
+        } else {
+            Self::unlimited(payload)
+        }
+    }
+
+    pub fn unlimited(payload: Vec<u8>) -> Self {
         match String::from_utf8(payload) {
             Ok(str) => {
                 serde_json::from_str(&str).map_or_else(|_| Self::String(str.into()), Self::Json)
             }
             Err(err) => messagepack::decode(err.as_bytes())
-                .map_or_else(|| Self::NotUtf8(err.utf8_error()), Self::MessagePack),
+                .map_or_else(|| Self::Binary(err.into_bytes().into()), Self::MessagePack),
         }
     }
 }
@@ -30,9 +45,9 @@ impl Payload {
 impl std::fmt::Display for Payload {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Binary(binary) => std::fmt::Debug::fmt(&binary, fmt),
             Self::Json(json) => json.fmt(fmt),
             Self::MessagePack(messagepack) => messagepack.fmt(fmt),
-            Self::NotUtf8(err) => write!(fmt, "not valid UTF-8: {err}"),
             Self::String(str) => str.fmt(fmt),
         }
     }
@@ -52,7 +67,7 @@ fn display_string_works() {
 
 #[cfg(test)]
 fn json_macro(json_str: &'static str) -> Option<String> {
-    match Payload::new(json_str.into()) {
+    match Payload::unlimited(json_str.into()) {
         Payload::Json(json) => Some(json.to_string()),
         _ => None,
     }

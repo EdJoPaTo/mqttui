@@ -193,7 +193,7 @@ impl MqttHistory {
                 qos: rumqttc::QoS::AtLeastOnce,
                 time: crate::mqtt::Time::new_now(false),
                 payload_size: payload.len(),
-                payload: crate::payload::Payload::new(payload.into()),
+                payload: crate::payload::Payload::unlimited(payload.into()),
             }
         }
 

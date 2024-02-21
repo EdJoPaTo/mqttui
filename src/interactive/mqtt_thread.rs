@@ -22,6 +22,7 @@ impl MqttThread {
         mut client: Client,
         mut connection: Connection,
         subscribe_topic: Vec<String>,
+        payload_size_limit: usize,
     ) -> anyhow::Result<Self> {
         // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
         for notification in connection.iter() {
@@ -48,6 +49,7 @@ impl MqttThread {
                         client,
                         connection,
                         &subscribe_topic,
+                        payload_size_limit,
                         &connection_err,
                         &history,
                     );
@@ -87,6 +89,7 @@ fn thread_logic(
     mut client: Client,
     mut connection: Connection,
     subscribe_topic: &[String],
+    payload_size_limit: usize,
     connection_err: &ConnectionErrorArc,
     history: &HistoryArc,
 ) {
@@ -112,7 +115,10 @@ fn thread_logic(
                                 qos: publish.qos,
                                 time: Time::new_now(publish.retain),
                                 payload_size: publish.payload.len(),
-                                payload: Payload::new(publish.payload.into()),
+                                payload: Payload::truncated(
+                                    publish.payload.into(),
+                                    payload_size_limit,
+                                ),
                             },
                         );
                     }
