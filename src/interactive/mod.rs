@@ -196,16 +196,12 @@ impl App {
         let Some(topic) = self.topic_overview.get_selected() else {
             return false;
         };
-        let history = self.mqtt_thread.get_history();
-        let Some(history_entry) = &history.get_last(&topic) else {
-            return false;
-        };
-        let result = matches!(
-            history_entry.payload,
-            Payload::Json(_) | Payload::MessagePack(_)
-        );
-        drop(history);
-        result
+        self.mqtt_thread
+            .get_history()
+            .get_last(&topic)
+            .is_some_and(|entry| {
+                matches!(entry.payload, Payload::Json(_) | Payload::MessagePack(_))
+            })
     }
 
     /// Currently always the last payload on the current topic
