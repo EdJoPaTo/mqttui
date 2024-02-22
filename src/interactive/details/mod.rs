@@ -3,6 +3,7 @@ use ratatui::Frame;
 
 use crate::mqtt::HistoryEntry;
 
+mod graph_data;
 mod history;
 pub mod payload_view;
 

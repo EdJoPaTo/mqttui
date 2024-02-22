@@ -7,12 +7,10 @@ use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, Row, Table, Table
 use ratatui::{symbols, Frame};
 
 use crate::format;
+use crate::interactive::details::graph_data::GraphData;
 use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
-use graph_data::GraphData;
-
-mod graph_data;
 
 pub fn draw(
     frame: &mut Frame,
