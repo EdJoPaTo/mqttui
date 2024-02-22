@@ -5,7 +5,7 @@ use crate::mqtt::HistoryEntry;
 
 mod graph_data;
 mod history;
-pub mod payload_view;
+mod payload_view;
 
 #[derive(Default)]
 pub struct Details {
