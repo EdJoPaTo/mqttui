@@ -23,14 +23,11 @@ impl PayloadView {
         &mut self,
         frame: &mut Frame,
         area: Rect,
-        topic_history: &[HistoryEntry],
+        entry: &HistoryEntry,
         has_focus: bool,
     ) -> Rect {
-        let last = topic_history
-            .last()
-            .expect("when Details are drawn they should always have at least one HistoryEntry");
-        let size = last.payload_size;
-        match &last.payload {
+        let size = entry.payload_size;
+        match &entry.payload {
             Payload::Binary(data) => self.draw_binary(frame, area, size, data, has_focus),
             Payload::Json(json) => self.draw_json(frame, area, size, json, has_focus),
             Payload::MessagePack(messagepack) => {
