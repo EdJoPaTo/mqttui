@@ -1,8 +1,8 @@
 use std::cmp::min;
 
-use ratatui::layout::Rect;
+use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, List};
+use ratatui::widgets::{Block, Borders, List};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
@@ -70,7 +70,9 @@ impl PayloadView {
         let widget = BinaryDataWidget::new(data)
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
-                Block::bordered()
+                Block::new()
+                    .borders(Borders::TOP | Borders::RIGHT)
+                    .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
@@ -105,7 +107,9 @@ impl PayloadView {
             .unwrap()
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
-                Block::bordered()
+                Block::new()
+                    .borders(Borders::TOP | Borders::RIGHT)
+                    .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
@@ -136,7 +140,9 @@ impl PayloadView {
             .unwrap()
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
-                Block::bordered()
+                Block::new()
+                    .borders(Borders::TOP | Borders::RIGHT)
+                    .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
@@ -156,7 +162,12 @@ impl PayloadView {
 
         let (payload_area, remaining_area) = self.areas(area, items.len());
 
-        let widget = List::new(items).block(Block::bordered().title(title));
+        let widget = List::new(items).block(
+            Block::new()
+                .borders(Borders::TOP | Borders::RIGHT)
+                .title_alignment(Alignment::Center)
+                .title(title),
+        );
         frame.render_widget(widget, payload_area);
         remaining_area
     }

@@ -1,4 +1,4 @@
-use ratatui::layout::{Alignment, Rect};
+use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
@@ -7,7 +7,8 @@ use ratatui::Frame;
 use crate::cli::Broker;
 use crate::interactive::{App, ElementInFocus};
 
-const VERSION_TEXT: &str = concat!("mqttui ", env!("CARGO_PKG_VERSION"));
+const VERSION_TEXT: &str = concat!(" mqttui ", env!("CARGO_PKG_VERSION"), " ");
+const VERSION_STYLE: Style = Style::new().fg(Color::Black).bg(Color::Gray);
 const KEY_STYLE: Style = Style::new()
     .fg(Color::Black)
     .bg(Color::Gray)
@@ -37,8 +38,8 @@ pub struct Footer {
 impl Footer {
     pub fn new(broker: &Broker) -> Self {
         Self {
-            broker: format!("{broker}").into(),
-            full_info: format!("{VERSION_TEXT} @ {broker}").into(),
+            broker: format!(" {broker} ").into(),
+            full_info: format!("{VERSION_TEXT}@ {broker} ").into(),
         }
     }
 
@@ -93,19 +94,31 @@ impl Footer {
                 [key!("Enter", "Clean topic tree"), key!("Any", "Abort")].concat()
             }
         });
-        let remaining = area.width as usize - line.width();
-        if remaining > self.full_info.len() {
-            let paragraph = Paragraph::new(&*self.full_info);
-            frame.render_widget(paragraph.alignment(Alignment::Right), area);
-        } else if remaining > self.broker.len() {
-            let paragraph = Paragraph::new(&*self.broker);
-            frame.render_widget(paragraph.alignment(Alignment::Right), area);
-        } else if remaining > VERSION_TEXT.len() {
-            let paragraph = Paragraph::new(VERSION_TEXT);
-            frame.render_widget(paragraph.alignment(Alignment::Right), area);
-        } else {
-            // Not enough space -> show nothing
+
+        // Show version / broker when enough space
+        {
+            let remaining = area.width as usize - line.width();
+            let text = if remaining > self.full_info.len() {
+                Some(&*self.full_info)
+            } else if remaining > self.broker.len() {
+                Some(&*self.broker)
+            } else if remaining > VERSION_TEXT.len() {
+                Some(VERSION_TEXT)
+            } else {
+                None // Not enough space -> show nothing
+            };
+            if let Some(text) = text {
+                #[allow(clippy::cast_possible_truncation)]
+                let area = Rect {
+                    x: area.width.saturating_sub(text.len() as u16),
+                    width: text.len() as u16,
+                    ..area
+                };
+                let paragraph = Paragraph::new(text).style(VERSION_STYLE);
+                frame.render_widget(paragraph, area);
+            }
         }
+
         frame.render_widget(Paragraph::new(line), area);
     }
 }

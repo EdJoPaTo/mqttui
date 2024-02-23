@@ -1,4 +1,4 @@
-use ratatui::layout::Rect;
+use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
 use ratatui::Frame;
@@ -8,6 +8,7 @@ pub fn draw(frame: &mut Frame, area: Rect, title: &str, error: &str) {
     let block = Block::new()
         .border_style(STYLE)
         .borders(Borders::TOP)
+        .title_alignment(Alignment::Center)
         .title(title);
     let paragraph = Paragraph::new(error)
         .style(STYLE)

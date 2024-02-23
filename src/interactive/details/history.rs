@@ -1,9 +1,9 @@
 use std::fmt::Write;
 
-use ratatui::layout::{Constraint, Rect};
+use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
-use ratatui::widgets::{Axis, Block, Chart, Dataset, GraphType, Row, Table, TableState};
+use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
 use ratatui::{symbols, Frame};
 
 use crate::format;
@@ -87,7 +87,9 @@ pub fn draw_table(
     )
     .header(Row::new(["Time", "QoS", "Value"]).style(STYLE_BOLD))
     .block(
-        Block::bordered()
+        Block::new()
+            .borders(Borders::TOP | Borders::RIGHT)
+            .title_alignment(Alignment::Center)
             .border_style(Style::new().fg(focus_color))
             .title(title),
     );
@@ -129,7 +131,12 @@ pub fn draw_graph(frame: &mut Frame, area: Rect, points: &GraphData) {
         .data(&points.data)];
 
     let chart = Chart::new(datasets)
-        .block(Block::bordered().title("Graph"))
+        .block(
+            Block::new()
+                .borders(Borders::TOP)
+                .title_alignment(Alignment::Center)
+                .title("Graph"),
+        )
         .x_axis(
             Axis::default()
                 .bounds([points.x_min, points.x_max])

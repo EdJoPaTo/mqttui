@@ -37,7 +37,7 @@ impl TopicOverview {
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
-                    .borders(Borders::TOP)
+                    .borders(Borders::TOP | Borders::RIGHT)
                     .border_style(Style::new().fg(focus_color))
                     .title_alignment(Alignment::Center)
                     .title(title),
