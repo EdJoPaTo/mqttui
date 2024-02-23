@@ -8,6 +8,26 @@ use crate::cli::Broker;
 use crate::interactive::{App, ElementInFocus};
 
 const VERSION_TEXT: &str = concat!("mqttui ", env!("CARGO_PKG_VERSION"));
+const KEY_STYLE: Style = Style::new()
+    .fg(Color::Black)
+    .bg(Color::Gray)
+    .add_modifier(Modifier::BOLD);
+
+macro_rules! key {
+    ( $key:expr,$text:expr ) => {
+        [
+            Span::styled(concat![" ", $key, " "], KEY_STYLE),
+            Span::raw(concat![" ", $text, " "]),
+        ]
+    };
+}
+macro_rules! addkey {
+    ( $vec:expr,$key:expr,$text:expr ) => {
+        let [key, text] = key! {$key, $text};
+        $vec.push(key);
+        $vec.push(text);
+    };
+}
 
 pub struct Footer {
     broker: Box<str>,
@@ -23,70 +43,44 @@ impl Footer {
     }
 
     pub fn draw(&self, frame: &mut Frame, area: Rect, app: &App) {
-        const STYLE: Style = Style::new()
-            .fg(Color::Black)
-            .bg(Color::White)
-            .add_modifier(Modifier::BOLD);
         let line = Line::from(match app.focus {
             ElementInFocus::TopicOverview => {
-                let mut result = vec![
-                    Span::styled("q", STYLE),
-                    Span::raw(" Quit  "),
-                    Span::styled("/", STYLE),
-                    Span::raw(" Search  "),
-                ];
+                let mut result = [key!("q", "Quit"), key!("/", "Search")].concat();
                 if app.topic_overview.get_selected().is_some() {
-                    result.push(Span::styled("Del", STYLE));
-                    result.push(Span::raw(" Clean retained  "));
+                    addkey!(result, "Del", "Clean retained");
                 }
                 if app.can_switch_to_payload() {
-                    result.push(Span::styled("Tab", STYLE));
-                    result.push(Span::raw(" Switch to Payload  "));
+                    addkey!(result, "Tab", "Switch to Payload");
                 } else if app.can_switch_to_history_table() {
-                    result.push(Span::styled("Tab", STYLE));
-                    result.push(Span::raw(" Switch to History  "));
+                    addkey!(result, "Tab", "Switch to History");
                 } else {
                     // Changing somewhere is pointless currently
                 }
                 result
             }
-            ElementInFocus::TopicSearch => vec![
-                Span::styled("↑", STYLE),
-                Span::raw(" Before  "),
-                Span::styled("↓", STYLE),
-                Span::raw(" Next  "),
-                Span::styled("Enter", STYLE),
-                Span::raw(" Open All  "),
-                Span::styled("Esc", STYLE),
-                Span::raw(" Clear  "),
-                Span::raw("Search: "),
-                Span::raw(&app.topic_overview.search),
-            ],
+            ElementInFocus::TopicSearch => [
+                key!("↑", "Before"),
+                key!("↓", "Next"),
+                key!("Enter", "Open All"),
+                key!("Esc", "Clear"),
+                [Span::raw("Search: "), Span::raw(&app.topic_overview.search)],
+            ]
+            .concat(),
             ElementInFocus::Payload => {
-                let mut result = vec![
-                    Span::styled("q", STYLE),
-                    Span::raw(" Quit  "),
-                    Span::styled("Tab", STYLE),
-                ];
-                result.push(Span::raw(if app.can_switch_to_history_table() {
-                    " Switch to History  "
+                let mut result = [key!("q", "Quit")].concat();
+                if app.can_switch_to_history_table() {
+                    addkey!(result, "Tab", "Switch to History");
                 } else {
-                    " Switch to Topics  "
-                }));
+                    addkey!(result, "Tab", "Switch to Topics");
+                }
                 result
             }
-            ElementInFocus::HistoryTable => vec![
-                Span::styled("q", STYLE),
-                Span::raw(" Quit  "),
-                Span::styled("Tab", STYLE),
-                Span::raw(" Switch to Topics  "),
-            ],
-            ElementInFocus::CleanRetainedPopup(_) => vec![
-                Span::styled("Enter", STYLE),
-                Span::raw(" Clean topic tree  "),
-                Span::styled("Any", STYLE),
-                Span::raw(" Abort  "),
-            ],
+            ElementInFocus::HistoryTable => {
+                [key!("q", "Quit"), key!("Tab", "Switch to Topics")].concat()
+            }
+            ElementInFocus::CleanRetainedPopup(_) => {
+                [key!("Enter", "Clean topic tree"), key!("Any", "Abort")].concat()
+            }
         });
         let remaining = area.width as usize - line.width();
         if remaining > self.full_info.len() {
