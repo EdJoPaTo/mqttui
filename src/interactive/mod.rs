@@ -30,8 +30,9 @@ mod ui;
 enum Event {
     Key(KeyEvent),
     MouseClick { column: u16, row: u16 },
-    MouseScrollUp,
     MouseScrollDown,
+    MouseScrollUp,
+    Resize,
     Tick,
 }
 
@@ -94,41 +95,50 @@ pub fn show(
 
     thread::spawn(move || {
         const TICK_RATE: Duration = Duration::from_millis(500);
+        const DEBOUNCE: Duration = Duration::from_millis(20); // 50 FPS
 
-        let mut last_tick = Instant::now();
-        loop {
-            // poll for tick rate duration, if no events, sent tick event.
-            let timeout = TICK_RATE
-                .checked_sub(last_tick.elapsed())
-                .unwrap_or_default();
+        let mut last_send = Instant::now();
+        let mut last_debounced: Option<Instant> = None;
+        let mut events = Vec::new();
+        'eventloop: loop {
+            let timeout =
+                last_debounced.map_or(DEBOUNCE, |last| DEBOUNCE.saturating_sub(last.elapsed()));
             if crossterm::event::poll(timeout).unwrap() {
-                match crossterm::event::read().unwrap() {
-                    CEvent::Key(key) => tx.send(Event::Key(key)).unwrap(),
+                let event = match crossterm::event::read().unwrap() {
+                    CEvent::Key(key) => Some(Event::Key(key)),
                     CEvent::Mouse(mouse) => match mouse.kind {
-                        MouseEventKind::ScrollUp => tx.send(Event::MouseScrollUp).unwrap(),
-                        MouseEventKind::ScrollDown => tx.send(Event::MouseScrollDown).unwrap(),
-                        MouseEventKind::Down(MouseButton::Left) => tx
-                            .send(Event::MouseClick {
-                                column: mouse.column,
-                                row: mouse.row,
-                            })
-                            .unwrap(),
-                        _ => {}
+                        MouseEventKind::ScrollUp => Some(Event::MouseScrollUp),
+                        MouseEventKind::ScrollDown => Some(Event::MouseScrollDown),
+                        MouseEventKind::Down(MouseButton::Left) => Some(Event::MouseClick {
+                            column: mouse.column,
+                            row: mouse.row,
+                        }),
+                        _ => None,
                     },
-                    CEvent::FocusGained
-                    | CEvent::FocusLost
-                    | CEvent::Paste(_)
-                    | CEvent::Resize(_, _) => {}
+                    CEvent::Resize(_, _) => Some(Event::Resize),
+                    CEvent::FocusGained | CEvent::FocusLost | CEvent::Paste(_) => None,
+                };
+                if let Some(event) = event {
+                    last_debounced.get_or_insert_with(Instant::now);
+                    events.push(event);
                 }
             }
-            if last_tick.elapsed() >= TICK_RATE {
-                if tx.send(Event::Tick).is_err() {
+            if last_debounced.map_or_else(
+                || last_send.elapsed() >= TICK_RATE,
+                |last_debounced| last_debounced.elapsed() >= DEBOUNCE,
+            ) {
+                if events.is_empty() {
+                    events.push(Event::Tick);
+                }
+                if tx.send(events).is_err() {
                     // The receiver is gone → the main thread is finished.
                     // Just end the loop here, reporting this error is not helpful in any form.
                     // If the main loop exited successfully this is planned. If not we cant give a helpful error message here anyway.
-                    break;
+                    break 'eventloop;
                 }
-                last_tick = Instant::now();
+                events = Vec::new();
+                last_send = Instant::now();
+                last_debounced = None;
             }
         }
     });
@@ -144,27 +154,31 @@ pub fn show(
 
 fn main_loop<B>(
     app: &mut App,
-    rx: &Receiver<Event>,
+    rx: &Receiver<Vec<Event>>,
     terminal: &mut Terminal<B>,
 ) -> anyhow::Result<()>
 where
     B: Backend,
 {
     terminal.draw(|frame| app.draw(frame))?;
-    loop {
-        let refresh = match rx.recv()? {
-            Event::Key(event) => app.on_key(event)?,
-            Event::MouseClick { column, row } => app.on_click(column, row),
-            Event::MouseScrollDown => app.on_scroll_down(),
-            Event::MouseScrollUp => app.on_scroll_up(),
-            Event::Tick => Refresh::Update,
-        };
-        match refresh {
-            Refresh::Update => {
-                terminal.draw(|frame| app.draw(frame))?;
+    'main_loop: loop {
+        let mut update = false;
+        for event in rx.recv()? {
+            let refresh = match event {
+                Event::Key(event) => app.on_key(event)?,
+                Event::MouseClick { column, row } => app.on_click(column, row),
+                Event::MouseScrollDown => app.on_scroll_down(),
+                Event::MouseScrollUp => app.on_scroll_up(),
+                Event::Resize | Event::Tick => Refresh::Update,
+            };
+            match refresh {
+                Refresh::Update => update = true,
+                Refresh::Skip => {}
+                Refresh::Quit => break 'main_loop,
             }
-            Refresh::Skip => {}
-            Refresh::Quit => break,
+        }
+        if update {
+            terminal.draw(|frame| app.draw(frame))?;
         }
     }
     Ok(())

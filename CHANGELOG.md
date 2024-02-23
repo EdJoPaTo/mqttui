@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Group MQTT connection related CLI options in --help
 - ReadOne: Output raw payload or --pretty
 - Build: always build with TLS support
+- Performance: Debounce input events on interactive draw (especially noticeable on many events like scrolling)
 - Performance: Less clones on interactive draw
 - Performance: Dont keep Timezone information of each message
 - Performance: Dont clone each incoming MQTT payload
