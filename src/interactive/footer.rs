@@ -58,14 +58,25 @@ impl Footer {
                 }
                 result
             }
-            ElementInFocus::TopicSearch => [
-                key!("↑", "Before"),
-                key!("↓", "Next"),
-                key!("Enter", "Open All"),
-                key!("Esc", "Clear"),
-                [Span::raw("Search: "), Span::raw(&app.topic_overview.search)],
-            ]
-            .concat(),
+            ElementInFocus::TopicSearch => {
+                let mut result = [
+                    key!("↑", "Before"),
+                    key!("↓", "Next"),
+                    key!("Enter", "Open All"),
+                    key!("Esc", "Clear"),
+                ]
+                .concat();
+                result.push(Span::styled(
+                    " Search: ",
+                    Style::new()
+                        .fg(Color::Black)
+                        .bg(Color::LightGreen)
+                        .add_modifier(Modifier::BOLD),
+                ));
+                result.push(Span::raw(" "));
+                result.push(Span::raw(&app.topic_overview.search));
+                result
+            }
             ElementInFocus::Payload => {
                 let mut result = [key!("q", "Quit")].concat();
                 if app.can_switch_to_history_table() {
