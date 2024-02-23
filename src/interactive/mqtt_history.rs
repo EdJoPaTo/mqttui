@@ -86,13 +86,6 @@ impl MqttHistory {
         self.tree.get(*id).map(|node| &node.value().history)
     }
 
-    pub fn get_last(&self, topic: &str) -> Option<&HistoryEntry> {
-        let id = self.ids.get(topic)?;
-        self.tree
-            .get(*id)
-            .and_then(|node| node.value().history.last())
-    }
-
     pub fn get_all_topics(&self) -> Vec<&String> {
         let mut topics = self.ids.keys().collect::<Vec<_>>();
         topics.sort();

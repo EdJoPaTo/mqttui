@@ -42,6 +42,11 @@ impl Footer {
                 if app.can_switch_to_payload() {
                     result.push(Span::styled("Tab", STYLE));
                     result.push(Span::raw(" Switch to Payload  "));
+                } else if app.can_switch_to_history_table() {
+                    result.push(Span::styled("Tab", STYLE));
+                    result.push(Span::raw(" Switch to History  "));
+                } else {
+                    // Changing somewhere is pointless currently
                 }
                 result
             }
@@ -57,7 +62,20 @@ impl Footer {
                 Span::raw("Search: "),
                 Span::raw(&app.topic_overview.search),
             ],
-            ElementInFocus::Payload => vec![
+            ElementInFocus::Payload => {
+                let mut result = vec![
+                    Span::styled("q", STYLE),
+                    Span::raw(" Quit  "),
+                    Span::styled("Tab", STYLE),
+                ];
+                result.push(Span::raw(if app.can_switch_to_history_table() {
+                    " Switch to History  "
+                } else {
+                    " Switch to Topics  "
+                }));
+                result
+            }
+            ElementInFocus::HistoryTable => vec![
                 Span::styled("q", STYLE),
                 Span::raw(" Quit  "),
                 Span::styled("Tab", STYLE),

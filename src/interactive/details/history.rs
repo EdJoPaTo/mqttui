@@ -8,39 +8,19 @@ use ratatui::{symbols, Frame};
 
 use crate::format;
 use crate::interactive::details::graph_data::GraphData;
-use crate::interactive::ui::{split_area_vertically, STYLE_BOLD};
+use crate::interactive::ui::{focus_color, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
 
-pub fn draw(
-    frame: &mut Frame,
-    area: Rect,
-    topic_history: &[HistoryEntry],
-    binary_address: Option<usize>,
-    json_selector: &[JsonSelector],
-) {
-    let table_area = GraphData::parse(topic_history, binary_address.unwrap_or(0), json_selector)
-        .map_or(area, |data| {
-            let (table_area, graph_area) = split_area_vertically(area, area.height / 2);
-            draw_graph(frame, graph_area, &data);
-            table_area
-        });
-    draw_table(
-        frame,
-        table_area,
-        topic_history,
-        binary_address,
-        json_selector,
-    );
-}
-
 #[allow(clippy::cast_precision_loss)]
-fn draw_table(
+pub fn draw_table(
     frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
     binary_address: Option<usize>,
     json_selector: &[JsonSelector],
+    state: &mut TableState,
+    has_focus: bool,
 ) {
     let mut title = format!("History ({}", topic_history.len());
 
@@ -95,7 +75,9 @@ fn draw_table(
         }
     });
 
-    let table = Table::new(
+    let focus_color = focus_color(has_focus);
+
+    let mut table = Table::new(
         rows,
         [
             Constraint::Length(12),
@@ -103,16 +85,42 @@ fn draw_table(
             Constraint::Percentage(100),
         ],
     )
-    .header(Row::new(vec!["Time", "QoS", "Value"]).style(STYLE_BOLD))
-    .block(Block::bordered().title(title));
+    .header(Row::new(["Time", "QoS", "Value"]).style(STYLE_BOLD))
+    .block(
+        Block::bordered()
+            .border_style(Style::new().fg(focus_color))
+            .title(title),
+    );
 
-    let mut state = TableState::default();
-    state.select(Some(topic_history.len() - 1));
+    // Ensure selection is possible
+    if let Some(selection) = state.selected_mut() {
+        *selection = (*selection).min(topic_history.len().saturating_sub(1));
+    }
 
-    frame.render_stateful_widget(table, area, &mut state);
+    // Scroll down offset as much as possible
+    let height = area.height.saturating_sub(3); // remove block and title
+    let offset_with_last_in_view = topic_history.len().saturating_sub(height as usize);
+    if let Some(selection) = state.selected() {
+        // Only scroll when the change will include both end and selection.
+        // When the user manually scrolled away from the end keep the offset.
+        if selection >= offset_with_last_in_view {
+            *state.offset_mut() = offset_with_last_in_view;
+        }
+    } else {
+        *state.offset_mut() = offset_with_last_in_view;
+    }
+
+    // Workaround selection, see https://github.com/ratatui-org/ratatui/issues/174
+    if state.selected().is_none() {
+        let mut state = TableState::new().with_selected(Some(topic_history.len() - 1));
+        frame.render_stateful_widget(table, area, &mut state);
+    } else {
+        table = table.highlight_style(Style::new().fg(Color::Black).bg(focus_color));
+        frame.render_stateful_widget(table, area, state);
+    }
 }
 
-fn draw_graph(frame: &mut Frame, area: Rect, points: &GraphData) {
+pub fn draw_graph(frame: &mut Frame, area: Rect, points: &GraphData) {
     const STYLE: Style = Style::new().fg(Color::LightGreen);
     let datasets = vec![Dataset::default()
         .graph_type(GraphType::Line)

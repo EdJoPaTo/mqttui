@@ -7,6 +7,7 @@ pub enum ElementInFocus {
     TopicOverview,
     TopicSearch,
     Payload,
+    HistoryTable,
     CleanRetainedPopup(String),
 }
 

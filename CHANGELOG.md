@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Interactive: Topic search
+- Interactive: History table entry is selectable (keyboard & mouse) to view a payload in detail
 - Interactive graph plots values with units will ignore everything after the whitespace (`20.0 °C` → `20.0`)
 - Publish from stdin (and with that from file contents)
 - Support for decoding [MessagePack](https://msgpack.org/) payloads

@@ -194,13 +194,27 @@ impl App {
         items
     }
 
+    fn can_switch_to_history_table(&self) -> bool {
+        let Some(topic) = self.topic_overview.get_selected() else {
+            return false;
+        };
+        self.mqtt_thread
+            .get_history()
+            .get(&topic)
+            .is_some_and(|history| history.len() >= 2)
+    }
+
     fn can_switch_to_payload(&self) -> bool {
         let Some(topic) = self.topic_overview.get_selected() else {
             return false;
         };
         self.mqtt_thread
             .get_history()
-            .get_last(&topic)
+            .get(&topic)
+            .and_then(|entries| {
+                let index = self.details.selected_history_index(entries.len());
+                entries.get(index)
+            })
             .is_some_and(|entry| {
                 matches!(
                     entry.payload,
@@ -209,13 +223,16 @@ impl App {
             })
     }
 
-    /// Currently always the last payload on the current topic
-    /// In the future it might not be the last one (Select index from history table)
+    /// On current topic with the current history table index
     fn get_selected_payload(&self) -> Option<Payload> {
         let topic = self.topic_overview.get_selected()?;
         self.mqtt_thread
             .get_history()
-            .get_last(&topic)
+            .get(&topic)
+            .and_then(|entries| {
+                let index = self.details.selected_history_index(entries.len());
+                entries.get(index)
+            })
             .map(|entry| entry.payload.clone())
     }
 
@@ -228,8 +245,11 @@ impl App {
         match &self.focus {
             ElementInFocus::TopicOverview => match key.code {
                 KeyCode::Char('q') => return Ok(Refresh::Quit),
-                KeyCode::Tab | KeyCode::BackTab if self.can_switch_to_payload() => {
+                KeyCode::Tab if self.can_switch_to_payload() => {
                     self.focus = ElementInFocus::Payload;
+                }
+                KeyCode::Tab | KeyCode::BackTab if self.can_switch_to_history_table() => {
+                    self.focus = ElementInFocus::HistoryTable;
                 }
                 KeyCode::Char('/') => {
                     self.focus = ElementInFocus::TopicSearch;
@@ -327,6 +347,10 @@ impl App {
             ElementInFocus::Payload => {
                 if key.code == KeyCode::Char('q') {
                     return Ok(Refresh::Quit);
+                }
+                if matches!(key.code, KeyCode::Tab) && self.can_switch_to_history_table() {
+                    self.focus = ElementInFocus::HistoryTable;
+                    return Ok(Refresh::Update);
                 }
                 if matches!(key.code, KeyCode::Tab | KeyCode::BackTab) {
                     self.focus = ElementInFocus::TopicOverview;
@@ -456,6 +480,52 @@ impl App {
                     Some(Payload::String(_)) | None => return Ok(Refresh::Skip),
                 }
             }
+            ElementInFocus::HistoryTable => match key.code {
+                KeyCode::Char('q') => return Ok(Refresh::Quit),
+                KeyCode::BackTab if self.can_switch_to_payload() => {
+                    self.focus = ElementInFocus::Payload;
+                }
+                KeyCode::Tab | KeyCode::BackTab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                }
+                KeyCode::Esc => {
+                    self.details.table_state.select(None);
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    let selection = self.details.table_state.selected_mut();
+                    *selection = Some(selection.map_or(0, |selection| selection.saturating_add(1)));
+                }
+                KeyCode::Up | KeyCode::Char('k') => {
+                    let selection = self.details.table_state.selected_mut();
+                    *selection =
+                        Some(selection.map_or(usize::MAX, |selection| selection.saturating_sub(1)));
+                }
+                KeyCode::Home => {
+                    let selection = self.details.table_state.selected_mut();
+                    *selection = Some(0);
+                }
+                KeyCode::End => {
+                    let selection = self.details.table_state.selected_mut();
+                    *selection = Some(usize::MAX);
+                }
+                KeyCode::PageUp => {
+                    let offset = self.details.table_state.offset_mut();
+                    *offset = offset.saturating_sub(3);
+                }
+                KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    let offset = self.details.table_state.offset_mut();
+                    *offset = offset.saturating_sub(3);
+                }
+                KeyCode::PageDown => {
+                    let offset = self.details.table_state.offset_mut();
+                    *offset = offset.saturating_add(3);
+                }
+                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    let offset = self.details.table_state.offset_mut();
+                    *offset = offset.saturating_add(3);
+                }
+                _ => return Ok(Refresh::Skip),
+            },
             ElementInFocus::CleanRetainedPopup(topic) => {
                 if matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
                     self.mqtt_thread.clean_below(topic)?;
@@ -480,6 +550,10 @@ impl App {
                 }
                 Some(Payload::String(_)) | None => return Refresh::Skip,
             },
+            ElementInFocus::HistoryTable => {
+                let offset = self.details.table_state.offset_mut();
+                *offset = offset.saturating_sub(1);
+            }
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
@@ -499,6 +573,10 @@ impl App {
                 }
                 Some(Payload::String(_)) | None => return Refresh::Skip,
             },
+            ElementInFocus::HistoryTable => {
+                let offset = self.details.table_state.offset_mut();
+                *offset = offset.saturating_add(1);
+            }
             ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
         }
         Refresh::Update
@@ -562,6 +640,12 @@ impl App {
                 Some(Payload::String(_)) => return Refresh::Skip,
             }
         }
+
+        if self.details.table_click(column, row) {
+            self.focus = ElementInFocus::HistoryTable;
+            return Refresh::Update;
+        }
+
         Refresh::Skip
     }
 
@@ -696,12 +780,8 @@ impl App {
                     ..main_area
                 };
 
-                self.details.draw(
-                    frame,
-                    details_area,
-                    topic_history,
-                    matches!(self.focus, ElementInFocus::Payload),
-                );
+                self.details
+                    .draw(frame, details_area, topic_history, &self.focus);
 
                 Rect {
                     width: x,
