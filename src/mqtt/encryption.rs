@@ -72,10 +72,11 @@ fn read_certificate_file(file: &Path) -> anyhow::Result<Vec<Certificate>> {
 fn read_private_key_file(file: &Path) -> anyhow::Result<PrivateKey> {
     let file = File::open(file)?;
     let mut file = BufReader::new(file);
-    let keys = rustls_pemfile::pkcs8_private_keys(&mut file)?;
-    if let [key] = keys.as_slice() {
-        Ok(PrivateKey(key.clone()))
-    } else {
-        anyhow::bail!("Private key file must contain exactly one key");
-    }
+    let mut keys = rustls_pemfile::pkcs8_private_keys(&mut file)?;
+    anyhow::ensure!(
+        keys.len() == 1,
+        "Private key file must contain exactly one key"
+    );
+    let key = keys.swap_remove(0);
+    Ok(PrivateKey(key))
 }

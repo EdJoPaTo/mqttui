@@ -30,9 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ReadOne: Output raw payload or --pretty
 - Build: always build with TLS support
 - Performance: Debounce input events on interactive draw (especially noticeable on many events like scrolling)
-- Performance: Less clones on interactive draw
-- Performance: Dont keep Timezone information of each message
-- Performance: Dont clone each incoming MQTT payload
+- Performance: Fewer clones on interactive draw
+- Performance: Don't keep Timezone information of each message
+- Performance: Don't clone each incoming MQTT payload
+- Performance: Don't clone TLS private key on startup
 
 ### Fixed
 
