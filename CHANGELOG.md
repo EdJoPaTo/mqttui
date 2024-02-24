@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for decoding [MessagePack](https://msgpack.org/) payloads
 - Support for binary payloads
 - Interactive: Truncate payloads to ´--payload-size-limit´ for reduced RAM usage
+- Auto-generated man pages from CLI definition (clap)
 
 ### Changed
 

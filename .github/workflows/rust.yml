@@ -151,6 +151,7 @@ jobs:
           tar -cv
           CHANGELOG.md LICENSE README.md
           -C target/ completions/ -C ../
+          -C target/ manpages/ -C ../
           -C target/${{ matrix.triple }}/release/ mqttui
           | gzip --best > ${{ env.ARTIFACT_NAME }}.tar.gz
       - name: Package zip (Windows)
@@ -159,6 +160,7 @@ jobs:
           7z a ${{ env.ARTIFACT_NAME }}.zip
           CHANGELOG.md LICENSE README.md
           ./target/completions/
+          ./target/manpages/
           ./target/${{ matrix.triple }}/release/mqttui.exe
       - name: Package deb
         if: runner.os == 'Linux'
