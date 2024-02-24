@@ -2,7 +2,8 @@ use std::cmp::min;
 
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders, List};
+use ratatui::text::Text;
+use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
@@ -158,11 +159,9 @@ impl PayloadView {
         payload: &str,
     ) -> Rect {
         let title = format!("Payload (Bytes: {payload_bytes})");
-        let items = payload.lines().collect::<Vec<_>>();
-
-        let (payload_area, remaining_area) = self.areas(area, items.len());
-
-        let widget = List::new(items).block(
+        let text = Text::from(payload);
+        let (payload_area, remaining_area) = self.areas(area, text.height());
+        let widget = Paragraph::new(text).block(
             Block::new()
                 .borders(Borders::TOP | Borders::RIGHT)
                 .title_alignment(Alignment::Center)
