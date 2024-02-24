@@ -1,7 +1,6 @@
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 
 use crate::cli::Broker;
@@ -13,22 +12,6 @@ const KEY_STYLE: Style = Style::new()
     .fg(Color::Black)
     .bg(Color::Gray)
     .add_modifier(Modifier::BOLD);
-
-macro_rules! key {
-    ( $key:expr,$text:expr ) => {
-        [
-            Span::styled(concat![" ", $key, " "], KEY_STYLE),
-            Span::raw(concat![" ", $text, " "]),
-        ]
-    };
-}
-macro_rules! addkey {
-    ( $vec:expr,$key:expr,$text:expr ) => {
-        let [key, text] = key! {$key, $text};
-        $vec.push(key);
-        $vec.push(text);
-    };
-}
 
 pub struct Footer {
     broker: Box<str>,
@@ -44,60 +27,68 @@ impl Footer {
     }
 
     pub fn draw(&self, frame: &mut Frame, area: Rect, app: &App) {
-        let line = Line::from(match app.focus {
+        let mut keys = Vec::new();
+
+        macro_rules! add {
+            ( $key:literal,$text:literal ) => {
+                keys.push(Span::styled(concat![" ", $key, " "], KEY_STYLE));
+                keys.push(Span::raw(concat![" ", $text, " "]));
+            };
+        }
+
+        match app.focus {
             ElementInFocus::TopicOverview => {
-                let mut result = [key!("q", "Quit"), key!("/", "Search")].concat();
+                add!("q", "Quit");
+                add!("/", "Search");
                 if app.topic_overview.get_selected().is_some() {
-                    addkey!(result, "Del", "Clean retained");
+                    add!("Del", "Clean retained");
                 }
                 if app.can_switch_to_payload() {
-                    addkey!(result, "Tab", "Switch to Payload");
+                    add!("Tab", "Switch to Payload");
                 } else if app.can_switch_to_history_table() {
-                    addkey!(result, "Tab", "Switch to History");
+                    add!("Tab", "Switch to History");
                 } else {
                     // Changing somewhere is pointless currently
                 }
-                result
             }
             ElementInFocus::TopicSearch => {
-                let mut result = [
-                    key!("↑", "Before"),
-                    key!("↓", "Next"),
-                    key!("Enter", "Open All"),
-                    key!("Esc", "Clear"),
-                ]
-                .concat();
-                result.push(Span::styled(
+                add!("↑", "Before");
+                add!("↓", "Next");
+                add!("Enter", "Open All");
+                add!("Esc", "Clear");
+                keys.push(Span::styled(
                     " Search: ",
                     Style::new()
                         .fg(Color::Black)
                         .bg(Color::LightGreen)
                         .add_modifier(Modifier::BOLD),
                 ));
-                result.push(Span::raw(" "));
-                result.push(Span::raw(&app.topic_overview.search));
-                result
+                keys.push(Span::raw(" "));
+                keys.push(Span::raw(&app.topic_overview.search));
             }
             ElementInFocus::Payload => {
-                let mut result = [key!("q", "Quit")].concat();
+                add!("q", "Quit");
+                #[allow(clippy::branches_sharing_code)]
                 if app.can_switch_to_history_table() {
-                    addkey!(result, "Tab", "Switch to History");
+                    add!("Tab", "Switch to History");
                 } else {
-                    addkey!(result, "Tab", "Switch to Topics");
+                    add!("Tab", "Switch to Topics");
                 }
-                result
             }
             ElementInFocus::HistoryTable => {
-                [key!("q", "Quit"), key!("Tab", "Switch to Topics")].concat()
+                add!("q", "Quit");
+                add!("Tab", "Switch to Topics");
             }
             ElementInFocus::CleanRetainedPopup(_) => {
-                [key!("Enter", "Clean topic tree"), key!("Any", "Abort")].concat()
+                add!("Enter", "Clean topic tree");
+                add!("Any", "Abort");
             }
-        });
+        }
+        let keys = Line::from(keys);
 
         // Show version / broker when enough space
         {
-            let remaining = area.width as usize - line.width();
+            let remaining = area.width as usize - keys.width();
             let text = if remaining > self.full_info.len() {
                 Some(&*self.full_info)
             } else if remaining > self.broker.len() {
@@ -114,11 +105,10 @@ impl Footer {
                     width: text.len() as u16,
                     ..area
                 };
-                let paragraph = Paragraph::new(text).style(VERSION_STYLE);
-                frame.render_widget(paragraph, area);
+                frame.render_widget(Span::styled(text, VERSION_STYLE), area);
             }
         }
 
-        frame.render_widget(Paragraph::new(line), area);
+        frame.render_widget(keys, area);
     }
 }
