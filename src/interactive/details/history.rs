@@ -4,7 +4,8 @@ use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 use ratatui::widgets::{
-    Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, Table, TableState,
+    Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, ScrollbarOrientation,
+    ScrollbarState, Table, TableState,
 };
 use ratatui::{symbols, Frame};
 
@@ -14,7 +15,7 @@ use crate::interactive::ui::{focus_color, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
 
-#[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_precision_loss, clippy::too_many_lines)]
 pub fn draw_table(
     frame: &mut Frame,
     area: Rect,
@@ -122,6 +123,24 @@ pub fn draw_table(
     } else {
         table = table.highlight_style(Style::new().fg(Color::Black).bg(focus_color));
         frame.render_stateful_widget(table, area, state);
+    }
+
+    {
+        let scrollbar = ratatui::widgets::Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .begin_symbol(None)
+            .track_symbol(None)
+            .end_symbol(None);
+        // Work around overscroll by removing height from total
+        let mut scrollbar_state =
+            ScrollbarState::new(topic_history.len().saturating_sub(usize::from(height)))
+                .position(state.offset())
+                .viewport_content_length(height as usize);
+        let scrollbar_area = Rect {
+            y: area.y.saturating_add(2),
+            height: area.height.saturating_sub(2),
+            ..area
+        };
+        frame.render_stateful_widget(scrollbar, scrollbar_area, &mut scrollbar_state);
     }
 }
 
