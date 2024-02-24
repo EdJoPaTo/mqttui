@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Interactive: Topic search
 - Interactive: History table entry is selectable (keyboard & mouse) to view a payload in detail
+- Interactive: Scrolling moves view not selection and has scrollbars
 - Interactive graph plots values with units will ignore everything after the whitespace (`20.0 °C` → `20.0`)
 - Publish from stdin (and with that from file contents)
 - Support for decoding [MessagePack](https://msgpack.org/) payloads
@@ -20,8 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Borderless Topic view for more characters of topic names
-- Improved mouse scroll
+- Interactive: Fewer borders for more content characters like longer topics in the overview
 - Display broker text easier to read
 - Display version & broker in the lower right corner
 - Display MQTT connection error in its own area

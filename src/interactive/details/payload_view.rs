@@ -3,7 +3,7 @@ use std::cmp::min;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
-use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
@@ -107,6 +107,12 @@ impl PayloadView {
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(items)
             .unwrap()
+            .experimental_scrollbar(Some(
+                Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                    .begin_symbol(None)
+                    .end_symbol(None)
+                    .track_symbol(None),
+            ))
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
@@ -141,6 +147,12 @@ impl PayloadView {
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(items)
             .unwrap()
+            .experimental_scrollbar(Some(
+                Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                    .begin_symbol(None)
+                    .end_symbol(None)
+                    .track_symbol(None),
+            ))
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()

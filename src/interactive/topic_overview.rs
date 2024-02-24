@@ -1,6 +1,6 @@
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, BorderType, Borders};
+use ratatui::widgets::{Block, BorderType, Borders, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeItem, TreeState};
 
@@ -34,6 +34,12 @@ impl TopicOverview {
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(tree_items)
             .unwrap()
+            .experimental_scrollbar(Some(
+                Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                    .begin_symbol(None)
+                    .end_symbol(None)
+                    .track_symbol(None),
+            ))
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
