@@ -100,7 +100,7 @@ pub fn draw_table(
     }
 
     // Scroll down offset as much as possible
-    let height = area.height.saturating_sub(3); // remove block and title
+    let height = area.height.saturating_sub(2); // remove block and title
     let offset_with_last_in_view = topic_history.len().saturating_sub(height as usize);
     if let Some(selection) = state.selected() {
         // Only scroll when the change will include both end and selection.
