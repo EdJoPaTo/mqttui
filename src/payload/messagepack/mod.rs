@@ -1,5 +1,12 @@
 use rmpv::Value;
 
+pub mod tree_items;
+
+fn map_key(key: &Value) -> String {
+    key.as_str()
+        .map_or_else(|| key.to_string(), ToOwned::to_owned)
+}
+
 /// Attempts to decode [`MessagePack`](rmpv::Value) from the payload.
 /// Tries to find out if data seems valid.
 pub fn decode(mut payload: &[u8]) -> Option<Value> {
@@ -24,11 +31,6 @@ fn decode_empty() {
 #[test]
 fn decode_true() {
     assert_eq!(decode(&[0xC3]), Some(Value::Boolean(true)));
-}
-
-pub fn map_key(key: &Value) -> String {
-    key.as_str()
-        .map_or_else(|| key.to_string(), ToOwned::to_owned)
 }
 
 fn has_duplicate_keys(value: &Value) -> bool {

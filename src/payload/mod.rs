@@ -1,11 +1,10 @@
+mod json;
 mod json_selector;
 mod messagepack;
-mod tree_items_from_json;
-mod tree_items_from_messagepack;
 
+pub use json::tree_items as tree_items_from_json;
 pub use json_selector::JsonSelector;
-pub use tree_items_from_json::tree_items_from_json;
-pub use tree_items_from_messagepack::tree_items_from_messagepack;
+pub use messagepack::tree_items::tree_items as tree_items_from_messagepack;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Payload {
