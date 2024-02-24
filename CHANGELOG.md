@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+The format is based on [Keep a change log](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interactive: Topic search
 - Interactive: History table entry is selectable (keyboard & mouse) to view a payload in detail
 - Interactive: Scrolling moves view not selection and has scrollbars
-- Interactive graph plots values with units will ignore everything after the whitespace (`20.0 °C` → `20.0`)
+- Interactive: graph plots values with units will ignore everything after the whitespace (`20.0 °C` → `20.0`)
 - Publish from stdin (and with that from file contents)
 - Support for decoding [MessagePack](https://msgpack.org/) payloads
 - Support for binary payloads
@@ -22,13 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Interactive: Fewer borders for more content characters like longer topics in the overview
-- Display broker text easier to read
-- Display version & broker in the lower right corner
-- Display MQTT connection error in its own area
-- Only display delete / tab footer keys when useful
-- Prevent JSON Payload empty space for bigger history/graph view
-- Group MQTT connection related CLI options in --help
-- ReadOne: Output raw payload or --pretty
+- Interactive: Display version & broker in the lower right corner
+- Interactive: Display MQTT connection error in its own area
+- Interactive: Only display keys in footer when useful
+- Interactive: JSON Payload takes only required space for bigger history/graph view
+- CLI: Group MQTT connection related options in --help
+- Read One: Output raw payload or --pretty
 - Build: always build with TLS support
 - Performance: Debounce input events on interactive draw (especially noticeable on many events like scrolling)
 - Performance: Fewer clones on interactive draw
@@ -49,8 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TLS client certificate authentication
 - Interactive: Vim paging keys
 - Interactive: Show messages per second instead of every n seconds when >1 per second
-- Interactive: Allow to subscribe to multiple topics
-- ReadOne: New Subcommand to receive one payload from a given topic
+- Interactive: Allow subscribing to multiple topics
+- Read One: New sub-command to receive one payload from a given topic
 
 ### Changed
 
@@ -66,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Clean retained from interactive now uses the same mqtt connection. It now publishes on all topics below rather than only retained ones to ensure everything is being cleaned.
+- Clean retained from interactive now uses the same MQTT connection. It now publishes on all topics below rather than only retained ones to ensure everything is being cleaned.
 - Precompiled x86_64 build works again on Debian 11
 
 ## [0.17.0] - 2022-09-07
@@ -74,10 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support TLS encryption (via `--broker mqtts://`)
-- Support websockets (via `--broker ws://` or `--broker wss://`)
+- Support web sockets (via `--broker ws://` or `--broker wss://`)
 - Mouse clicks now select the overview / JSON Payload area
 - Home/End key support for overview and JSON Payload area
-- PageUp/Down key support for the overview
+- Page Up/Down key support for the overview
 - Add key hints in the bottom of the TUI
 
 ### Changed
@@ -94,18 +93,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Simplify JSON Payload view of non-Object/Array datatypes (don't prefix with "root: ")
+- Simplify JSON Payload view of non-Object/Array data types (don't prefix with "root: ")
 
 ## [0.16.2] - 2022-05-01
 
 ### Fixed
 
-- Dont crash / endless loop on payloads bigger than 10 kB.
+- Don't crash / endless loop on payloads bigger than 10 kB.
 
 ### Changed
 
 - Parse payload content (JSON/UTF8-String/other) only once. Before it was done on every display update.
-- Less data cloning while showing the graph improves performance.
+- Fewer data clones while showing the graph improves performance.
 
 ## [0.16.1] - 2022-03-23
 
@@ -121,25 +120,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `clean-retained` subcommand to clean retained topics.
+- `clean-retained` sub-command to clean retained topics.
 - Interactive: Press Delete or Backspace to clean retained topics from the selected topic tree.
-- Alias for log subcommand: `mqttui l`.
+- Alias for log sub-command: `mqttui l`.
 
 ### Changed
 
 - Interactive: Improve performance of the graphs.
-- Interactive: Reimplement the mqtt history data structure to be both simpler and faster.
+- Interactive: Reimplement the MQTT history data structure to be both simpler and faster.
 
 ### Fixed
 
 - Interactive: Don't plot non-finite numbers.
-- Do not display mqtt password from env in --help.
+- Do not display MQTT password from env in --help.
 
 ## [0.15.0] - 2022-02-14
 
 ### Added
 
-- New `log` subcommand to watch topics and prints them to stdout.
+- New `log` sub-command to watch topics and prints them to stdout.
 
 ### Changed
 
@@ -158,7 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- CLI: visible publish subcommand aliases.
+- CLI: visible publish sub-command aliases.
 - Performance improvements.
 
 ### Fixed
