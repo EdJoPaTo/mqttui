@@ -1,6 +1,6 @@
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, Borders};
+use ratatui::widgets::{Block, BorderType, Borders};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeItem, TreeState};
 
@@ -37,6 +37,7 @@ impl TopicOverview {
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
+                    .border_type(BorderType::Rounded)
                     .borders(Borders::TOP | Borders::RIGHT)
                     .border_style(Style::new().fg(focus_color))
                     .title_alignment(Alignment::Center)

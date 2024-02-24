@@ -3,7 +3,7 @@ use std::cmp::min;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
-use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
@@ -72,6 +72,7 @@ impl PayloadView {
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
+                    .border_type(BorderType::Rounded)
                     .borders(Borders::TOP | Borders::RIGHT)
                     .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
@@ -109,6 +110,7 @@ impl PayloadView {
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
+                    .border_type(BorderType::Rounded)
                     .borders(Borders::TOP | Borders::RIGHT)
                     .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
@@ -142,6 +144,7 @@ impl PayloadView {
             .highlight_style(Style::new().fg(Color::Black).bg(focus_color))
             .block(
                 Block::new()
+                    .border_type(BorderType::Rounded)
                     .borders(Borders::TOP | Borders::RIGHT)
                     .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
@@ -163,6 +166,7 @@ impl PayloadView {
         let (payload_area, remaining_area) = self.areas(area, text.height());
         let widget = Paragraph::new(text).block(
             Block::new()
+                .border_type(BorderType::Rounded)
                 .borders(Borders::TOP | Borders::RIGHT)
                 .title_alignment(Alignment::Center)
                 .title(title),

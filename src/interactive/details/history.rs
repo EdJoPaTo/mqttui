@@ -3,7 +3,9 @@ use std::fmt::Write;
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
-use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Row, Table, TableState};
+use ratatui::widgets::{
+    Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, Table, TableState,
+};
 use ratatui::{symbols, Frame};
 
 use crate::format;
@@ -88,6 +90,7 @@ pub fn draw_table(
     .header(Row::new(["Time", "QoS", "Value"]).style(STYLE_BOLD))
     .block(
         Block::new()
+            .border_type(BorderType::Rounded)
             .borders(Borders::TOP | Borders::RIGHT)
             .title_alignment(Alignment::Center)
             .border_style(Style::new().fg(focus_color))
