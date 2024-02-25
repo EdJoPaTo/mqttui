@@ -41,6 +41,11 @@ mqttui publish "hello" "world"
 
 mqttui publish --retain "foo/bar" "Banana?"
 
+# Use stdin to publish file contents
+mqttui publish "foo/bar" </etc/hostname
+# or other things
+cowsay "I was here" | mqttui publish "foo/bar"
+
 # More arguments and details
 mqttui publish --help
 ```
@@ -98,9 +103,9 @@ mqttui read-one --help
 
 ### Clean retained topics
 
-Use the interactive TUI and press Delete or Backspace on a topic to clean the tree or use the subcommand.
+Use the interactive TUI and press Delete or Backspace on a topic to clean the tree or use the sub-command.
 
-![Screenshot of the tui with the cleaning dialog open](media/clean-interactive.png)
+![Screenshot of the TUI with the cleaning dialog open](media/clean-interactive.png)
 
 ```plaintext
 $ mqttui publish --retain "hello" "world"
