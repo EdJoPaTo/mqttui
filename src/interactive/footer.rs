@@ -88,7 +88,7 @@ impl Footer {
 
         // Show version / broker when enough space
         {
-            let remaining = area.width as usize - keys.width();
+            let remaining = (area.width as usize).saturating_sub(keys.width());
             let text = if remaining > self.full_info.len() {
                 Some(&*self.full_info)
             } else if remaining > self.broker.len() {
