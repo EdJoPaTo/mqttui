@@ -331,7 +331,7 @@ impl App {
                 }
                 match self.get_selected_payload() {
                     Some(Payload::Binary(_)) => match key.code {
-                        KeyCode::Esc => self.details.payload.binary_state.select(None),
+                        KeyCode::Esc => self.details.payload.binary_state.select_address(None),
                         KeyCode::Down | KeyCode::Char('j') => {
                             self.details.payload.binary_state.key_down();
                         }
@@ -344,11 +344,19 @@ impl App {
                         KeyCode::Right | KeyCode::Char('l') => {
                             self.details.payload.binary_state.key_right();
                         }
+                        KeyCode::Home if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.binary_state.select_address(Some(0));
+                        }
+                        KeyCode::End if key.modifiers.contains(KeyModifiers::CONTROL) => self
+                            .details
+                            .payload
+                            .binary_state
+                            .select_address(Some(usize::MAX)),
                         KeyCode::Home => {
-                            self.details.payload.binary_state.select(Some(0));
+                            self.details.payload.binary_state.select_first_in_row();
                         }
                         KeyCode::End => {
-                            self.details.payload.binary_state.select(Some(usize::MAX));
+                            self.details.payload.binary_state.select_last_in_row();
                         }
                         KeyCode::PageUp => {
                             self.details.payload.binary_state.scroll_up(3);
@@ -577,7 +585,10 @@ impl App {
                         .binary_state
                         .clicked_address(column, row)
                     {
-                        self.details.payload.binary_state.select(Some(address));
+                        self.details
+                            .payload
+                            .binary_state
+                            .select_address(Some(address));
                         self.focus = ElementInFocus::Payload;
                         return Refresh::Update;
                     }

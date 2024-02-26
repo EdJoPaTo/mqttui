@@ -904,7 +904,7 @@ dependencies = [
 [[package]]
 name = "ratatui-binary-data-widget"
 version = "0.1.0"
-source = "git+https://github.com/EdJoPaTo/ratatui-binary-data-widget?branch=main#65c21c65ba0d46064fafeae632afcc4b72f36c0b"
+source = "git+https://github.com/EdJoPaTo/ratatui-binary-data-widget?branch=main#4014b65ffe5926701a437aaea9e89ad28ab3aeb8"
 dependencies = [
  "ratatui",
 ]

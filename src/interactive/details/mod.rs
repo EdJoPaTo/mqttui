@@ -60,7 +60,7 @@ impl Details {
             entry,
             matches!(focus, ElementInFocus::Payload),
         );
-        let binary_address = self.payload.binary_state.selected();
+        let binary_address = self.payload.binary_state.selected_address();
         let json_selector = self.payload.json_state.selected();
 
         let table_area =
