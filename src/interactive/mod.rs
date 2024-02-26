@@ -39,6 +39,12 @@ enum SearchSelection {
     After,
 }
 
+#[derive(Clone, Copy)]
+enum ScrollDirection {
+    Up,
+    Down,
+}
+
 fn reset_terminal() -> anyhow::Result<()> {
     crossterm::terminal::disable_raw_mode()?;
     crossterm::execute!(
@@ -107,8 +113,12 @@ where
                     MouseEventKind::Down(MouseButton::Left) => {
                         app.on_click(mouse.column, mouse.row)
                     }
-                    MouseEventKind::ScrollDown => app.on_scroll_down(),
-                    MouseEventKind::ScrollUp => app.on_scroll_up(),
+                    MouseEventKind::ScrollDown => {
+                        app.on_scroll(ScrollDirection::Down, mouse.column, mouse.row)
+                    }
+                    MouseEventKind::ScrollUp => {
+                        app.on_scroll(ScrollDirection::Up, mouse.column, mouse.row)
+                    }
                     _ => Refresh::Skip,
                 },
                 Event::Resize(_, _) => Refresh::Update,
@@ -499,50 +509,48 @@ impl App {
         Ok(Refresh::Update)
     }
 
-    fn on_scroll_up(&mut self) -> Refresh {
-        match &self.focus {
-            ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
-                self.topic_overview.state.scroll_up(1);
-            }
-            ElementInFocus::Payload => match self.get_selected_payload() {
-                Some(Payload::Binary(_)) => {
-                    self.details.payload.binary_state.scroll_up(1);
-                }
-                Some(Payload::Json(_) | Payload::MessagePack(_)) => {
-                    self.details.payload.json_state.scroll_up(1);
-                }
-                Some(Payload::String(_)) | None => return Refresh::Skip,
-            },
-            ElementInFocus::HistoryTable => {
-                let offset = self.details.table_state.offset_mut();
-                *offset = offset.saturating_sub(1);
-            }
-            ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
-        }
-        Refresh::Update
-    }
+    fn on_scroll(&mut self, direction: ScrollDirection, column: u16, row: u16) -> Refresh {
+        let position = ratatui::layout::Position { x: column, y: row };
 
-    fn on_scroll_down(&mut self) -> Refresh {
-        match &self.focus {
-            ElementInFocus::TopicOverview | ElementInFocus::TopicSearch => {
-                self.topic_overview.state.scroll_down(1);
+        if self.topic_overview.last_area.contains(position) {
+            match direction {
+                ScrollDirection::Up => self.topic_overview.state.scroll_up(1),
+                ScrollDirection::Down => self.topic_overview.state.scroll_down(1),
             }
-            ElementInFocus::Payload => match self.get_selected_payload() {
+            return Refresh::Update;
+        }
+
+        if self.details.payload.last_area.contains(position) {
+            match self.get_selected_payload() {
                 Some(Payload::Binary(_)) => {
-                    self.details.payload.binary_state.scroll_down(1);
+                    let state = &mut self.details.payload.binary_state;
+                    match direction {
+                        ScrollDirection::Up => state.scroll_up(1),
+                        ScrollDirection::Down => state.scroll_down(1),
+                    }
                 }
                 Some(Payload::Json(_) | Payload::MessagePack(_)) => {
-                    self.details.payload.json_state.scroll_down(1);
+                    let state = &mut self.details.payload.json_state;
+                    match direction {
+                        ScrollDirection::Up => state.scroll_up(1),
+                        ScrollDirection::Down => state.scroll_down(1),
+                    }
                 }
                 Some(Payload::String(_)) | None => return Refresh::Skip,
-            },
-            ElementInFocus::HistoryTable => {
-                let offset = self.details.table_state.offset_mut();
-                *offset = offset.saturating_add(1);
             }
-            ElementInFocus::CleanRetainedPopup(_) => return Refresh::Skip,
+            return Refresh::Update;
         }
-        Refresh::Update
+
+        if self.details.last_table_area.contains(position) {
+            let offset = self.details.table_state.offset_mut();
+            match direction {
+                ScrollDirection::Down => *offset = offset.saturating_add(1),
+                ScrollDirection::Up => *offset = offset.saturating_sub(1),
+            }
+            return Refresh::Update;
+        }
+
+        Refresh::Skip
     }
 
     fn on_click(&mut self, column: u16, row: u16) -> Refresh {

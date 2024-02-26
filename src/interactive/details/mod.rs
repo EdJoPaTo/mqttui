@@ -12,7 +12,7 @@ mod table;
 #[derive(Default)]
 pub struct Details {
     pub table_state: TableState,
-    pub last_table_area: Option<Rect>,
+    pub last_table_area: Rect,
     pub payload: payload_view::PayloadView,
 }
 
@@ -25,7 +25,7 @@ impl Details {
     }
 
     fn table_index_of_click(&self, column: u16, row: u16) -> Option<usize> {
-        let area = self.last_table_area?;
+        let area = self.last_table_area;
         if !area.contains(Position { x: column, y: row }) {
             return None;
         }
@@ -73,7 +73,7 @@ impl Details {
                     table_area
                 },
             );
-        self.last_table_area = Some(table_area);
+        self.last_table_area = table_area;
         table::draw(
             frame,
             table_area,
