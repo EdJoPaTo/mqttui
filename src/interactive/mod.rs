@@ -209,113 +209,108 @@ impl App {
             .map(|entry| entry.payload.clone())
     }
 
-    #[allow(clippy::too_many_lines)]
+    #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn on_key(&mut self, key: KeyEvent) -> anyhow::Result<Refresh> {
         if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
             return Ok(Refresh::Quit);
         }
 
-        match &self.focus {
+        let update = match &self.focus {
             ElementInFocus::TopicOverview => match key.code {
                 KeyCode::Char('q') => return Ok(Refresh::Quit),
                 KeyCode::Tab if self.can_switch_to_payload() => {
                     self.focus = ElementInFocus::Payload;
+                    true
                 }
                 KeyCode::Tab | KeyCode::BackTab if self.can_switch_to_history_table() => {
                     self.focus = ElementInFocus::HistoryTable;
+                    true
                 }
                 KeyCode::Char('/') => {
                     self.focus = ElementInFocus::TopicSearch;
+                    true
                 }
-                KeyCode::Esc => {
-                    self.topic_overview.state.select(vec![]);
-                }
-                KeyCode::Enter | KeyCode::Char(' ') => {
-                    self.topic_overview.state.toggle_selected();
-                }
+                KeyCode::Esc => self.topic_overview.state.select(vec![]),
+                KeyCode::Enter | KeyCode::Char(' ') => self.topic_overview.state.toggle_selected(),
                 KeyCode::Down | KeyCode::Char('j') => {
                     let items = self.get_topic_tree_items();
-                    self.topic_overview.state.key_down(&items);
+                    self.topic_overview.state.key_down(&items)
                 }
                 KeyCode::Up | KeyCode::Char('k') => {
                     let items = self.get_topic_tree_items();
-                    self.topic_overview.state.key_up(&items);
+                    self.topic_overview.state.key_up(&items)
                 }
-                KeyCode::Left | KeyCode::Char('h') => {
-                    self.topic_overview.state.key_left();
-                }
-                KeyCode::Right | KeyCode::Char('l') => {
-                    self.topic_overview.state.key_right();
-                }
+                KeyCode::Left | KeyCode::Char('h') => self.topic_overview.state.key_left(),
+                KeyCode::Right | KeyCode::Char('l') => self.topic_overview.state.key_right(),
                 KeyCode::Home => {
                     let items = self.get_topic_tree_items();
-                    self.topic_overview.state.select_first(&items);
+                    self.topic_overview.state.select_first(&items)
                 }
                 KeyCode::End => {
                     let items = self.get_topic_tree_items();
-                    self.topic_overview.state.select_last(&items);
+                    self.topic_overview.state.select_last(&items)
                 }
                 KeyCode::PageUp => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
-                    self.topic_overview.state.scroll_up(page_jump);
+                    self.topic_overview.state.scroll_up(page_jump)
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
-                    self.topic_overview.state.scroll_up(page_jump);
+                    self.topic_overview.state.scroll_up(page_jump)
                 }
                 KeyCode::PageDown => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
-                    self.topic_overview.state.scroll_down(page_jump);
+                    self.topic_overview.state.scroll_down(page_jump)
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
-                    self.topic_overview.state.scroll_down(page_jump);
+                    self.topic_overview.state.scroll_down(page_jump)
                 }
                 KeyCode::Backspace | KeyCode::Delete => {
                     if let Some(topic) = self.topic_overview.get_selected() {
                         self.focus = ElementInFocus::CleanRetainedPopup(topic);
+                        true
                     } else {
-                        return Ok(Refresh::Skip);
+                        false
                     }
                 }
-                _ => return Ok(Refresh::Skip),
+                _ => false,
             },
             ElementInFocus::TopicSearch => match key.code {
                 KeyCode::Char(char) => {
                     self.topic_overview.search += &char.to_lowercase().to_string();
-                    self.search_select(SearchSelection::Stay);
+                    self.search_select(SearchSelection::Stay)
                 }
                 KeyCode::Backspace => {
                     self.topic_overview.search.pop();
-                    self.search_select(SearchSelection::Stay);
+                    self.search_select(SearchSelection::Stay)
                 }
-                KeyCode::Up => {
-                    self.search_select(SearchSelection::Before);
-                }
-                KeyCode::Down => {
-                    self.search_select(SearchSelection::After);
-                }
+                KeyCode::Up => self.search_select(SearchSelection::Before),
+                KeyCode::Down => self.search_select(SearchSelection::After),
                 KeyCode::Enter => {
                     self.search_select(SearchSelection::After);
                     self.topic_overview.state.close_all();
                     self.open_all_search_matches();
+                    true
                 }
                 KeyCode::Esc => {
                     self.topic_overview.search = String::new();
                     self.focus = ElementInFocus::TopicOverview;
+                    true
                 }
                 KeyCode::PageUp => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
-                    self.topic_overview.state.scroll_up(page_jump);
+                    self.topic_overview.state.scroll_up(page_jump)
                 }
                 KeyCode::PageDown => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
-                    self.topic_overview.state.scroll_down(page_jump);
+                    self.topic_overview.state.scroll_down(page_jump)
                 }
                 KeyCode::Tab => {
                     self.focus = ElementInFocus::TopicOverview;
+                    true
                 }
-                _ => return Ok(Refresh::Skip),
+                _ => false,
             },
             ElementInFocus::Payload => {
                 if key.code == KeyCode::Char('q') {
@@ -333,202 +328,203 @@ impl App {
                     Some(Payload::Binary(_)) => match key.code {
                         KeyCode::Esc => self.details.payload.binary_state.select_address(None),
                         KeyCode::Down | KeyCode::Char('j') => {
-                            self.details.payload.binary_state.key_down();
+                            self.details.payload.binary_state.key_down()
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
-                            self.details.payload.binary_state.key_up();
+                            self.details.payload.binary_state.key_up()
                         }
                         KeyCode::Left | KeyCode::Char('h') => {
-                            self.details.payload.binary_state.key_left();
+                            self.details.payload.binary_state.key_left()
                         }
                         KeyCode::Right | KeyCode::Char('l') => {
-                            self.details.payload.binary_state.key_right();
+                            self.details.payload.binary_state.key_right()
                         }
                         KeyCode::Home if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.binary_state.select_address(Some(0));
+                            self.details.payload.binary_state.select_address(Some(0))
                         }
                         KeyCode::End if key.modifiers.contains(KeyModifiers::CONTROL) => self
                             .details
                             .payload
                             .binary_state
                             .select_address(Some(usize::MAX)),
-                        KeyCode::Home => {
-                            self.details.payload.binary_state.select_first_in_row();
-                        }
-                        KeyCode::End => {
-                            self.details.payload.binary_state.select_last_in_row();
-                        }
-                        KeyCode::PageUp => {
-                            self.details.payload.binary_state.scroll_up(3);
-                        }
+                        KeyCode::Home => self.details.payload.binary_state.select_first_in_row(),
+                        KeyCode::End => self.details.payload.binary_state.select_last_in_row(),
+                        KeyCode::PageUp => self.details.payload.binary_state.scroll_up(3),
                         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.binary_state.scroll_up(3);
+                            self.details.payload.binary_state.scroll_up(3)
                         }
-                        KeyCode::PageDown => {
-                            self.details.payload.binary_state.scroll_down(3);
-                        }
+                        KeyCode::PageDown => self.details.payload.binary_state.scroll_down(3),
                         KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.binary_state.scroll_down(3);
+                            self.details.payload.binary_state.scroll_down(3)
                         }
-                        _ => return Ok(Refresh::Skip),
+                        _ => false,
                     },
                     Some(Payload::Json(json)) => match key.code {
-                        KeyCode::Esc => {
-                            self.details.payload.json_state.select(vec![]);
-                        }
+                        KeyCode::Esc => self.details.payload.json_state.select(vec![]),
                         KeyCode::Enter | KeyCode::Char(' ') => {
-                            self.details.payload.json_state.toggle_selected();
+                            self.details.payload.json_state.toggle_selected()
                         }
                         KeyCode::Down | KeyCode::Char('j') => {
                             let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.key_down(&items);
+                            self.details.payload.json_state.key_down(&items)
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
                             let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.key_up(&items);
+                            self.details.payload.json_state.key_up(&items)
                         }
                         KeyCode::Left | KeyCode::Char('h') => {
-                            self.details.payload.json_state.key_left();
+                            self.details.payload.json_state.key_left()
                         }
                         KeyCode::Right | KeyCode::Char('l') => {
-                            self.details.payload.json_state.key_right();
+                            self.details.payload.json_state.key_right()
                         }
                         KeyCode::Home => {
                             let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.select_first(&items);
+                            self.details.payload.json_state.select_first(&items)
                         }
                         KeyCode::End => {
                             let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.select_last(&items);
+                            self.details.payload.json_state.select_last(&items)
                         }
-                        KeyCode::PageUp => {
-                            self.details.payload.json_state.scroll_up(3);
-                        }
+                        KeyCode::PageUp => self.details.payload.json_state.scroll_up(3),
                         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.json_state.scroll_up(3);
+                            self.details.payload.json_state.scroll_up(3)
                         }
-                        KeyCode::PageDown => {
-                            self.details.payload.json_state.scroll_down(3);
-                        }
+                        KeyCode::PageDown => self.details.payload.json_state.scroll_down(3),
                         KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.json_state.scroll_down(3);
+                            self.details.payload.json_state.scroll_down(3)
                         }
-                        _ => return Ok(Refresh::Skip),
+                        _ => false,
                     },
                     Some(Payload::MessagePack(messagepack)) => match key.code {
-                        KeyCode::Esc => {
-                            self.details.payload.json_state.select(vec![]);
-                        }
+                        KeyCode::Esc => self.details.payload.json_state.select(vec![]),
                         KeyCode::Enter | KeyCode::Char(' ') => {
-                            self.details.payload.json_state.toggle_selected();
+                            self.details.payload.json_state.toggle_selected()
                         }
                         KeyCode::Down | KeyCode::Char('j') => {
                             let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.key_down(&items);
+                            self.details.payload.json_state.key_down(&items)
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
                             let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.key_up(&items);
+                            self.details.payload.json_state.key_up(&items)
                         }
                         KeyCode::Left | KeyCode::Char('h') => {
-                            self.details.payload.json_state.key_left();
+                            self.details.payload.json_state.key_left()
                         }
                         KeyCode::Right | KeyCode::Char('l') => {
-                            self.details.payload.json_state.key_right();
+                            self.details.payload.json_state.key_right()
                         }
                         KeyCode::Home => {
                             let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.select_first(&items);
+                            self.details.payload.json_state.select_first(&items)
                         }
                         KeyCode::End => {
                             let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.select_last(&items);
+                            self.details.payload.json_state.select_last(&items)
                         }
-                        KeyCode::PageUp => {
-                            self.details.payload.json_state.scroll_up(3);
-                        }
+                        KeyCode::PageUp => self.details.payload.json_state.scroll_up(3),
                         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.json_state.scroll_up(3);
+                            self.details.payload.json_state.scroll_up(3)
                         }
-                        KeyCode::PageDown => {
-                            self.details.payload.json_state.scroll_down(3);
-                        }
+                        KeyCode::PageDown => self.details.payload.json_state.scroll_down(3),
                         KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.json_state.scroll_down(3);
+                            self.details.payload.json_state.scroll_down(3)
                         }
-                        _ => return Ok(Refresh::Skip),
+                        _ => false,
                     },
-                    Some(Payload::String(_)) | None => return Ok(Refresh::Skip),
+                    Some(Payload::String(_)) | None => false,
                 }
             }
             ElementInFocus::HistoryTable => match key.code {
                 KeyCode::Char('q') => return Ok(Refresh::Quit),
                 KeyCode::BackTab if self.can_switch_to_payload() => {
                     self.focus = ElementInFocus::Payload;
+                    true
                 }
                 KeyCode::Tab | KeyCode::BackTab => {
                     self.focus = ElementInFocus::TopicOverview;
+                    true
                 }
                 KeyCode::Esc => {
-                    self.details.table_state.select(None);
+                    let selection = self.details.table_state.selected_mut();
+                    let before = *selection;
+                    *selection = None;
+                    before != *selection
                 }
                 KeyCode::Down | KeyCode::Char('j') => {
                     let selection = self.details.table_state.selected_mut();
+                    let before = *selection;
                     *selection = Some(selection.map_or(0, |selection| selection.saturating_add(1)));
+                    before != *selection
                 }
                 KeyCode::Up | KeyCode::Char('k') => {
                     let selection = self.details.table_state.selected_mut();
+                    let before = *selection;
                     *selection =
                         Some(selection.map_or(usize::MAX, |selection| selection.saturating_sub(1)));
+                    before != *selection
                 }
                 KeyCode::Home => {
                     let selection = self.details.table_state.selected_mut();
+                    let before = *selection;
                     *selection = Some(0);
+                    before != *selection
                 }
                 KeyCode::End => {
                     let selection = self.details.table_state.selected_mut();
+                    let before = *selection;
                     *selection = Some(usize::MAX);
+                    before != *selection
                 }
                 KeyCode::PageUp => {
                     let offset = self.details.table_state.offset_mut();
+                    let before = *offset;
                     *offset = offset.saturating_sub(3);
+                    before != *offset
                 }
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let offset = self.details.table_state.offset_mut();
+                    let before = *offset;
                     *offset = offset.saturating_sub(3);
+                    before != *offset
                 }
                 KeyCode::PageDown => {
                     let offset = self.details.table_state.offset_mut();
                     *offset = offset.saturating_add(3);
+                    true
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let offset = self.details.table_state.offset_mut();
                     *offset = offset.saturating_add(3);
+                    true
                 }
-                _ => return Ok(Refresh::Skip),
+                _ => false,
             },
             ElementInFocus::CleanRetainedPopup(topic) => {
                 if matches!(key.code, KeyCode::Enter | KeyCode::Char(' ')) {
                     self.mqtt_thread.clean_below(topic)?;
                 }
                 self.focus = ElementInFocus::TopicOverview;
+                true
             }
-        }
-        Ok(Refresh::Update)
+        };
+        Ok(if update {
+            Refresh::Update
+        } else {
+            Refresh::Skip
+        })
     }
 
     fn on_scroll(&mut self, direction: ScrollDirection, column: u16, row: u16) -> Refresh {
         let position = ratatui::layout::Position { x: column, y: row };
 
-        if self.topic_overview.last_area.contains(position) {
+        let changed = if self.topic_overview.last_area.contains(position) {
             match direction {
                 ScrollDirection::Up => self.topic_overview.state.scroll_up(1),
                 ScrollDirection::Down => self.topic_overview.state.scroll_down(1),
             }
-            return Refresh::Update;
-        }
-
-        if self.details.payload.last_area.contains(position) {
+        } else if self.details.payload.last_area.contains(position) {
             match self.get_selected_payload() {
                 Some(Payload::Binary(_)) => {
                     let state = &mut self.details.payload.binary_state;
@@ -546,19 +542,22 @@ impl App {
                 }
                 Some(Payload::String(_)) | None => return Refresh::Skip,
             }
-            return Refresh::Update;
-        }
-
-        if self.details.last_table_area.contains(position) {
+        } else if self.details.last_table_area.contains(position) {
             let offset = self.details.table_state.offset_mut();
+            let before = *offset;
             match direction {
                 ScrollDirection::Down => *offset = offset.saturating_add(1),
                 ScrollDirection::Up => *offset = offset.saturating_sub(1),
             }
-            return Refresh::Update;
+            *offset != before
+        } else {
+            false
+        };
+        if changed {
+            Refresh::Update
+        } else {
+            Refresh::Skip
         }
-
-        Refresh::Skip
     }
 
     fn on_click(&mut self, column: u16, row: u16) -> Refresh {
@@ -631,7 +630,8 @@ impl App {
         Refresh::Skip
     }
 
-    fn search_select(&mut self, advance: SearchSelection) {
+    // Returns `true` when selection changed
+    fn search_select(&mut self, advance: SearchSelection) -> bool {
         let selection = self.topic_overview.get_selected();
         let history = self.mqtt_thread.get_history();
         let mut topics = history
@@ -676,7 +676,7 @@ impl App {
             self.topic_overview.state.open(select[0..i].to_vec());
         }
 
-        self.topic_overview.state.select(select);
+        self.topic_overview.state.select(select)
     }
 
     fn open_all_search_matches(&mut self) {
