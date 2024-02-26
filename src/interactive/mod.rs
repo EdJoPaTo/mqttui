@@ -276,11 +276,13 @@ impl App {
             ElementInFocus::TopicSearch => match key.code {
                 KeyCode::Char(char) => {
                     self.topic_overview.search += &char.to_lowercase().to_string();
-                    self.search_select(SearchSelection::Stay)
+                    self.search_select(SearchSelection::Stay);
+                    true
                 }
                 KeyCode::Backspace => {
                     self.topic_overview.search.pop();
-                    self.search_select(SearchSelection::Stay)
+                    self.search_select(SearchSelection::Stay);
+                    true
                 }
                 KeyCode::Up => self.search_select(SearchSelection::Before),
                 KeyCode::Down => self.search_select(SearchSelection::After),
