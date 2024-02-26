@@ -22,6 +22,14 @@ impl Time {
             None
         }
     }
+
+    #[cfg(test)]
+    pub fn datetime_example() -> NaiveDateTime {
+        chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
+            .unwrap()
+            .and_hms_opt(16, 39, 57)
+            .unwrap()
+    }
 }
 
 impl std::fmt::Display for Time {
@@ -48,20 +56,14 @@ fn optional_retained() {
 
 #[test]
 fn optional_time() {
-    let date = chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
-        .unwrap()
-        .and_hms_opt(16, 39, 57)
-        .unwrap();
+    let date = Time::datetime_example();
     let time = Time::Local(date);
     assert_eq!(time.as_optional(), Some(&date));
 }
 
 #[test]
 fn local_to_string() {
-    let date = chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
-        .unwrap()
-        .and_hms_opt(16, 39, 57)
-        .unwrap();
+    let date = Time::datetime_example();
     let time = Time::Local(date);
     assert_eq!(time.to_string(), "16:39:57.000");
 }

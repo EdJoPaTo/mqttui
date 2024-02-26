@@ -38,11 +38,6 @@ impl Graph {
             return None;
         };
 
-        let first_time = first.time;
-        let last_time = last.time;
-        let x_min = first.as_graph_x();
-        let x_max = last.as_graph_x();
-
         let mut data = Vec::with_capacity(points.len());
         let mut y_min = first.y;
         let mut y_max = y_min;
@@ -54,10 +49,10 @@ impl Graph {
 
         Some(Self {
             data,
-            first_time,
-            last_time,
-            x_max,
-            x_min,
+            first_time: first.time,
+            last_time: last.time,
+            x_max: last.as_graph_x(),
+            x_min: first.as_graph_x(),
             y_max,
             y_min,
         })
@@ -94,5 +89,57 @@ impl Graph {
                     ]),
             );
         frame.render_widget(chart, area);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::Timelike;
+
+    use crate::mqtt::Time;
+    use crate::payload::Payload;
+
+    use super::*;
+
+    fn entry(time: Time, payload: &str) -> HistoryEntry {
+        HistoryEntry {
+            qos: rumqttc::QoS::AtMostOnce,
+            time,
+            payload_size: payload.len(),
+            payload: Payload::String(payload.into()),
+        }
+    }
+
+    #[test]
+    fn not_enough_points() {
+        let entries = vec![
+            entry(Time::Retained, "12.3"),
+            entry(Time::Local(Time::datetime_example()), "12.3"),
+            // After an MQTT reconnect retained are sent again -> also filter them out
+            entry(Time::Retained, "12.3"),
+        ];
+        let graph = Graph::parse(&entries, 0, &[]);
+        assert!(graph.is_none());
+    }
+
+    #[test]
+    fn retained_filtered_out() {
+        let first_date = Time::datetime_example();
+        let second_date = first_date.with_second(59).unwrap();
+        let entries = vec![
+            entry(Time::Retained, "12.3"),
+            entry(Time::Local(first_date), "12.4"),
+            // After an MQTT reconnect retained are sent again -> also filter them out
+            entry(Time::Retained, "12.4"),
+            entry(Time::Local(second_date), "12.5"),
+        ];
+
+        let graph = Graph::parse(&entries, 0, &[]).expect("Should be possible to create graph");
+
+        assert_eq!(graph.data.len(), 2);
+        assert_eq!(graph.first_time, first_date);
+        assert_eq!(graph.last_time, second_date);
+        assert!((graph.y_min - 12.4) < 0.01);
+        assert!((graph.y_max - 12.5) < 0.01);
     }
 }

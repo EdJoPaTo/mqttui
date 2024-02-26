@@ -100,13 +100,6 @@ mod parse_tests {
 
     use super::*;
 
-    fn date() -> NaiveDateTime {
-        chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
-            .unwrap()
-            .and_hms_opt(16, 39, 57)
-            .unwrap()
-    }
-
     #[test]
     fn retained() {
         let entry = HistoryEntry {
@@ -122,7 +115,7 @@ mod parse_tests {
     #[test]
     fn json_number_works() {
         use serde_json::{Number, Value};
-        let date = date();
+        let date = Time::datetime_example();
         let entry = HistoryEntry {
             qos: QoS::AtMostOnce,
             time: Time::Local(date),
@@ -136,7 +129,7 @@ mod parse_tests {
 
     #[test]
     fn messagepack_number_works() {
-        let date = date();
+        let date = Time::datetime_example();
         let entry = HistoryEntry {
             qos: QoS::AtMostOnce,
             time: Time::Local(date),
