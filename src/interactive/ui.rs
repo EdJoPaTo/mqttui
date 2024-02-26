@@ -63,3 +63,11 @@ pub const fn split_area_vertically(area: Rect, height_first: u16) -> (Rect, Rect
     };
     (first, second)
 }
+
+#[test]
+pub fn split_vertically_example() {
+    let area = Rect::new(5, 10, 10, 14);
+    let (first, second) = split_area_vertically(area, 7);
+    assert_eq!(first, Rect::new(5, 10, 10, 7));
+    assert_eq!(second, Rect::new(5, 17, 10, 7));
+}

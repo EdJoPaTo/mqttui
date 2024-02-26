@@ -34,6 +34,13 @@ impl std::fmt::Display for Time {
 }
 
 #[test]
+fn new_now_retained() {
+    let result = Time::new_now(true);
+    dbg!(result);
+    assert!(matches!(result, Time::Retained));
+}
+
+#[test]
 fn optional_retained() {
     let time = Time::Retained;
     assert_eq!(time.as_optional(), None);
@@ -47,6 +54,16 @@ fn optional_time() {
         .unwrap();
     let time = Time::Local(date);
     assert_eq!(time.as_optional(), Some(&date));
+}
+
+#[test]
+fn local_to_string() {
+    let date = chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
+        .unwrap()
+        .and_hms_opt(16, 39, 57)
+        .unwrap();
+    let time = Time::Local(date);
+    assert_eq!(time.to_string(), "16:39:57.000");
 }
 
 #[test]

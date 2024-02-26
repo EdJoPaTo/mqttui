@@ -60,11 +60,32 @@ impl JsonSelector {
 impl std::fmt::Display for JsonSelector {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::ObjectKey(key) => fmt.write_str(key),
-            Self::ArrayIndex(index) => fmt.write_str(&index.to_string()),
+            Self::ObjectKey(key) => key.fmt(fmt),
+            Self::ArrayIndex(index) => index.fmt(fmt),
             Self::None => Ok(()),
         }
     }
+}
+
+#[test]
+fn display_object() {
+    let selector = JsonSelector::ObjectKey("foo".to_owned());
+    let result = format!("{selector}");
+    assert_eq!(result, "foo");
+}
+
+#[test]
+fn display_array() {
+    let selector = JsonSelector::ArrayIndex(42);
+    let result = format!("{selector}");
+    assert_eq!(result, "42");
+}
+
+#[test]
+fn display_none() {
+    let selector = JsonSelector::None;
+    let result = format!("{selector}");
+    assert_eq!(result, "");
 }
 
 #[cfg(test)]
@@ -172,6 +193,27 @@ mod messagepack_tests {
             (Value::Integer(12.into()), Value::Boolean(true)),
         ]);
         let result = JsonSelector::ObjectKey("blubb".to_owned()).apply_messagepack(&root);
+        assert_eq!(result, Some(&Value::Boolean(true)));
+    }
+
+    #[test]
+    fn can_get_selected_value() {
+        let inner = vec![
+            (Value::String("bla".into()), Value::Boolean(false)),
+            (Value::String("blubb".into()), Value::Boolean(true)),
+        ];
+        let root = Value::Array(vec![
+            Value::Boolean(false),
+            Value::Map(inner),
+            Value::Boolean(false),
+        ]);
+
+        let selector = vec![
+            JsonSelector::ArrayIndex(1),
+            JsonSelector::ObjectKey("blubb".to_owned()),
+        ];
+
+        let result = JsonSelector::get_messagepack(&root, &selector);
         assert_eq!(result, Some(&Value::Boolean(true)));
     }
 }

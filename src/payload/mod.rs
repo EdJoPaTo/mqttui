@@ -53,9 +53,53 @@ impl std::fmt::Display for Payload {
 }
 
 #[test]
+fn truncates_string() {
+    let payload = b"hello world".into();
+    let payload = Payload::truncated(payload, 5);
+    assert_eq!(payload, Payload::String("hello".into()));
+}
+
+#[test]
+fn doesnt_truncate_short_string() {
+    let payload = b"hello world".into();
+    let payload = Payload::truncated(payload, 20);
+    assert_eq!(payload, Payload::String("hello world".into()));
+}
+
+#[test]
+fn truncates_binary() {
+    let payload = vec![0, 159, 146, 150, 42];
+    let payload = Payload::truncated(payload, 4);
+    assert_eq!(payload, Payload::Binary([0, 159, 146, 150].into()));
+}
+
+#[test]
+fn unlimited_binary() {
+    let payload = vec![0, 159, 146, 150];
+    let payload = Payload::unlimited(payload);
+    assert_eq!(payload, Payload::Binary([0, 159, 146, 150].into()));
+}
+
+#[test]
+fn display_binary_works() {
+    let payload = Payload::Binary([1, 3, 3, 7].into());
+    assert_eq!(format!("{payload}"), "[1, 3, 3, 7]");
+}
+
+#[test]
 fn display_json_works() {
     let payload = Payload::Json(serde_json::json!([42, false]));
     assert_eq!(format!("{payload}"), "[42,false]");
+}
+
+#[test]
+fn display_messagepack_works() {
+    use rmpv::Value;
+    let payload = Payload::MessagePack(Value::Array(vec![
+        Value::Integer(42.into()),
+        Value::Boolean(false),
+    ]));
+    assert_eq!(format!("{payload}"), "[42, false]");
 }
 
 #[test]
