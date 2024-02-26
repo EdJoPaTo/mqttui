@@ -171,10 +171,7 @@ impl App {
         let Some(topic) = self.topic_overview.get_selected() else {
             return false;
         };
-        self.mqtt_thread
-            .get_history()
-            .get(&topic)
-            .is_some_and(|history| history.len() >= 2)
+        self.mqtt_thread.get_history().get(&topic).is_some()
     }
 
     fn can_switch_to_payload(&self) -> bool {
