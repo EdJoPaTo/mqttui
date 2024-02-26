@@ -91,3 +91,60 @@ fn f64_from_string_works() {
     test("12.3 °C", Some(12.3));
     test(" 2.4 °C", Some(2.4));
 }
+
+#[cfg(test)]
+mod parse_tests {
+    use rumqttc::QoS;
+
+    use crate::mqtt::Time;
+
+    use super::*;
+
+    fn date() -> NaiveDateTime {
+        chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
+            .unwrap()
+            .and_hms_opt(16, 39, 57)
+            .unwrap()
+    }
+
+    #[test]
+    fn retained() {
+        let entry = HistoryEntry {
+            qos: QoS::AtMostOnce,
+            time: Time::Retained,
+            payload_size: 42,
+            payload: Payload::unlimited(vec![]),
+        };
+        let point = Point::parse(&entry, 0, &[]);
+        assert!(point.is_none());
+    }
+
+    #[test]
+    fn json_number_works() {
+        use serde_json::{Number, Value};
+        let date = date();
+        let entry = HistoryEntry {
+            qos: QoS::AtMostOnce,
+            time: Time::Local(date),
+            payload_size: 42,
+            payload: Payload::Json(Value::Number(Number::from_f64(12.3).unwrap())),
+        };
+        let point = Point::parse(&entry, 0, &[]).unwrap();
+        assert_eq!(point.time, date);
+        assert!((point.y - 12.3) < 0.1);
+    }
+
+    #[test]
+    fn messagepack_number_works() {
+        let date = date();
+        let entry = HistoryEntry {
+            qos: QoS::AtMostOnce,
+            time: Time::Local(date),
+            payload_size: 42,
+            payload: Payload::MessagePack(rmpv::Value::F64(12.3)),
+        };
+        let point = Point::parse(&entry, 0, &[]).unwrap();
+        assert_eq!(point.time, date);
+        assert!((point.y - 12.3) < 0.1);
+    }
+}
