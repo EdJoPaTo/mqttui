@@ -1,6 +1,6 @@
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::Line;
+use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, Clear, Paragraph};
 use ratatui::Frame;
 
@@ -18,23 +18,25 @@ pub fn draw_popup(frame: &mut Frame, topic: &str) {
         Line::raw(""),
         Line::raw("Confirm with Enter, abort with Esc"),
     ];
+    let text = Text::from(text);
+    let area = popup_area(frame.size(), text.width());
     let paragraph = Paragraph::new(text)
         .block(block)
         .alignment(Alignment::Center);
-    let area = popup_area(frame.size());
     frame.render_widget(Clear, area); // clear the background of the popup
     frame.render_widget(paragraph, area);
 }
 
 /// helper function to create a centered area using up certain percentage of the available `area`.
-fn popup_area(area: Rect) -> Rect {
-    let height = 6;
-    // The order is important here. Clamp just panics on min > max which is not what is wanted.
-    #[allow(clippy::manual_clamp)]
-    let width = (area.width.saturating_mul(4) / 5)
-        .max(60)
-        .min(area.width.saturating_sub(4));
-    let x = (area.width - width) / 2;
-    let y = (area.height - height) / 2;
-    Rect::new(x, y, width, height)
+fn popup_area(area: Rect, text_width: usize) -> Rect {
+    let height = area.height.min(6);
+    let max_width = area.width.saturating_sub(4);
+    #[allow(clippy::cast_possible_truncation)]
+    let width = text_width.saturating_add(14).min(max_width as usize) as u16;
+    Rect {
+        x: area.width.saturating_sub(width) / 2,
+        y: area.height.saturating_sub(height) / 2,
+        width,
+        height,
+    }
 }
