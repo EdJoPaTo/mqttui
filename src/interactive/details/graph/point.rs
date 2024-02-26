@@ -1,0 +1,93 @@
+use chrono::NaiveDateTime;
+
+use crate::mqtt::HistoryEntry;
+use crate::payload::{JsonSelector, Payload};
+
+pub struct Point {
+    pub time: NaiveDateTime,
+    pub y: f64,
+}
+
+impl Point {
+    pub fn parse(
+        entry: &HistoryEntry,
+        binary_address: usize,
+        json_selector: &[JsonSelector],
+    ) -> Option<Self> {
+        let time = *entry.time.as_optional()?;
+        let y = match &entry.payload {
+            Payload::Binary(data) => data.get(binary_address).copied().map(f64::from),
+            Payload::Json(json) => {
+                f64_from_json(JsonSelector::get_json(json, json_selector).unwrap_or(json))
+            }
+            Payload::MessagePack(messagepack) => f64_from_messagepack(
+                JsonSelector::get_messagepack(messagepack, json_selector).unwrap_or(messagepack),
+            ),
+            Payload::String(str) => f64_from_string(str),
+        }
+        .filter(|y| y.is_finite())?;
+        Some(Self { time, y })
+    }
+
+    #[allow(clippy::cast_precision_loss)]
+    pub const fn as_graph_x(&self) -> f64 {
+        self.time.timestamp_millis() as f64
+    }
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn f64_from_json(json: &serde_json::Value) -> Option<f64> {
+    use serde_json::Value;
+    match json {
+        Value::Bool(true) => Some(1.0),
+        Value::Bool(false) => Some(0.0),
+        Value::Number(num) => num.as_f64(),
+        Value::String(str) => f64_from_string(str),
+        Value::Array(arr) => Some(arr.len() as f64),
+        Value::Null | Value::Object(_) => None,
+    }
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn f64_from_messagepack(messagepack: &rmpv::Value) -> Option<f64> {
+    use rmpv::Value;
+    match messagepack {
+        Value::Boolean(true) => Some(1.0),
+        Value::Boolean(false) => Some(0.0),
+        Value::Integer(int) => int.as_f64(),
+        Value::F32(float) => Some(f64::from(*float)),
+        Value::F64(float) => Some(*float),
+        Value::String(str) => str.as_str().and_then(f64_from_string),
+        Value::Array(arr) => Some(arr.len() as f64),
+        Value::Map(map) => Some(map.len() as f64),
+        Value::Binary(_) | Value::Ext(_, _) | Value::Nil => None,
+    }
+}
+
+fn f64_from_string(payload: &str) -> Option<f64> {
+    payload
+        .split(char::is_whitespace)
+        .find(|str| !str.is_empty())? // lazy trim
+        .parse::<f64>()
+        .ok()
+}
+
+#[test]
+fn f64_from_string_works() {
+    fn test(input: &str, expected: Option<f64>) {
+        let actual = f64_from_string(input);
+        match (actual, expected) {
+            (None, None) => {} // All fine
+            (Some(actual), Some(expected)) => assert!(
+                (actual - expected).abs() < 0.01,
+                "Assertion failed:\n{actual} is not\n{expected}"
+            ),
+            _ => panic!("Assertion failed:\n{actual:?} is not\n{expected:?}"),
+        }
+    }
+
+    test("", None);
+    test("42", Some(42.0));
+    test("12.3 °C", Some(12.3));
+    test(" 2.4 °C", Some(2.4));
+}

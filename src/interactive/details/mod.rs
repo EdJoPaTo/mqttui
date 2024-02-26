@@ -2,13 +2,12 @@ use ratatui::layout::{Position, Rect};
 use ratatui::widgets::TableState;
 use ratatui::Frame;
 
-use crate::interactive::details::graph_data::GraphData;
 use crate::interactive::ui::{split_area_vertically, ElementInFocus};
 use crate::mqtt::HistoryEntry;
 
-mod graph_data;
-mod history;
+mod graph;
 mod payload_view;
+mod table;
 
 #[derive(Default)]
 pub struct Details {
@@ -65,17 +64,17 @@ impl Details {
         let json_selector = self.payload.json_state.selected();
 
         let table_area =
-            GraphData::parse(topic_history, binary_address.unwrap_or(0), &json_selector).map_or(
+            graph::Graph::parse(topic_history, binary_address.unwrap_or(0), &json_selector).map_or(
                 history_area,
-                |data| {
+                |graph| {
                     let (table_area, graph_area) =
                         split_area_vertically(history_area, history_area.height / 2);
-                    history::draw_graph(frame, graph_area, &data);
+                    graph.draw(frame, graph_area);
                     table_area
                 },
             );
         self.last_table_area = Some(table_area);
-        history::draw_table(
+        table::draw(
             frame,
             table_area,
             topic_history,

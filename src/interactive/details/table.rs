@@ -2,21 +2,18 @@ use std::fmt::Write;
 
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::text::Span;
 use ratatui::widgets::{
-    Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, Row, ScrollbarOrientation,
-    ScrollbarState, Table, TableState,
+    Block, BorderType, Borders, Row, ScrollbarOrientation, ScrollbarState, Table, TableState,
 };
-use ratatui::{symbols, Frame};
+use ratatui::Frame;
 
 use crate::format;
-use crate::interactive::details::graph_data::GraphData;
 use crate::interactive::ui::{focus_color, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
 
 #[allow(clippy::cast_precision_loss, clippy::too_many_lines)]
-pub fn draw_table(
+pub fn draw(
     frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
@@ -142,38 +139,4 @@ pub fn draw_table(
         };
         frame.render_stateful_widget(scrollbar, scrollbar_area, &mut scrollbar_state);
     }
-}
-
-pub fn draw_graph(frame: &mut Frame, area: Rect, points: &GraphData) {
-    const STYLE: Style = Style::new().fg(Color::LightGreen);
-    let datasets = vec![Dataset::default()
-        .graph_type(GraphType::Line)
-        .marker(symbols::Marker::Braille)
-        .style(STYLE)
-        .data(&points.data)];
-
-    let chart = Chart::new(datasets)
-        .block(
-            Block::new()
-                .borders(Borders::TOP)
-                .title_alignment(Alignment::Center)
-                .title("Graph"),
-        )
-        .x_axis(
-            Axis::default()
-                .bounds([points.x_min, points.x_max])
-                .labels(vec![
-                    Span::raw(points.first_time.format("%H:%M:%S").to_string()),
-                    Span::raw(points.last_time.format("%H:%M:%S").to_string()),
-                ]),
-        )
-        .y_axis(
-            Axis::default()
-                .bounds([points.y_min, points.y_max])
-                .labels(vec![
-                    Span::raw(points.y_min.to_string()),
-                    Span::raw(points.y_max.to_string()),
-                ]),
-        );
-    frame.render_widget(chart, area);
 }
