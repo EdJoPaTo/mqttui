@@ -139,7 +139,7 @@ mod tests {
         assert_eq!(graph.data.len(), 2);
         assert_eq!(graph.first_time, first_date);
         assert_eq!(graph.last_time, second_date);
-        assert!((graph.y_min - 12.4) < 0.01);
-        assert!((graph.y_max - 12.5) < 0.01);
+        assert!((graph.y_min - 12.4).abs() < 0.01);
+        assert!((graph.y_max - 12.5).abs() < 0.01);
     }
 }

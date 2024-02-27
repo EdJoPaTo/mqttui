@@ -124,7 +124,7 @@ mod parse_tests {
         };
         let point = Point::parse(&entry, 0, &[]).unwrap();
         assert_eq!(point.time, date);
-        assert!((point.y - 12.3) < 0.1);
+        assert!((point.y - 12.3).abs() < 0.1);
     }
 
     #[test]
@@ -138,6 +138,6 @@ mod parse_tests {
         };
         let point = Point::parse(&entry, 0, &[]).unwrap();
         assert_eq!(point.time, date);
-        assert!((point.y - 12.3) < 0.1);
+        assert!((point.y - 12.3).abs() < 0.1);
     }
 }
