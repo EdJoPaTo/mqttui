@@ -11,6 +11,12 @@ edition = "2021"
 rust-version = "1.74.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lints.rust]
+unsafe_code = "forbid"
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"
+
 [profile.release]
 # See https://doc.rust-lang.org/cargo/reference/profiles.html
 codegen-units = 1
