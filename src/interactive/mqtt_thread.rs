@@ -19,7 +19,7 @@ pub struct MqttThread {
 
 impl MqttThread {
     pub fn new(
-        mut client: Client,
+        client: Client,
         mut connection: Connection,
         subscribe_topic: Vec<String>,
         payload_size_limit: usize,
@@ -85,8 +85,9 @@ impl MqttThread {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn thread_logic(
-    mut client: Client,
+    client: Client,
     mut connection: Connection,
     subscribe_topic: &[String],
     payload_size_limit: usize,

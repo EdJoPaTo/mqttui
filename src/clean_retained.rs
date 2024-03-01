@@ -6,7 +6,7 @@ use rumqttc::{Client, Connection, QoS};
 use crate::format;
 use crate::payload::Payload;
 
-pub fn clean_retained(mut client: Client, mut connection: Connection, dry_run: bool) {
+pub fn clean_retained(client: &Client, mut connection: Connection, dry_run: bool) {
     let mut amount: usize = 0;
     for notification in connection.iter() {
         if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =

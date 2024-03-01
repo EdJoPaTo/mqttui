@@ -5,7 +5,7 @@ use rumqttc::{Client, Connection};
 
 use crate::payload::Payload;
 
-pub fn show(mut client: Client, mut connection: Connection, ignore_retained: bool, pretty: bool) {
+pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, pretty: bool) {
     for notification in connection.iter() {
         if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
             notification.expect("connection error")

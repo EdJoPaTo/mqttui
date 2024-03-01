@@ -20,7 +20,7 @@ mod read_one;
 fn main() -> anyhow::Result<()> {
     let matches = cli::Cli::parse();
 
-    let (mut client, connection) = {
+    let (client, connection) = {
         let (transport, host, port) = match &matches.broker {
             cli::Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
             cli::Broker::Ssl { host, port } => (
@@ -68,7 +68,7 @@ fn main() -> anyhow::Result<()> {
     match matches.subcommands {
         Some(Subcommands::CleanRetained { topic, dry_run, .. }) => {
             client.subscribe(topic, QoS::AtLeastOnce)?;
-            clean_retained::clean_retained(client, connection, dry_run);
+            clean_retained::clean_retained(&client, connection, dry_run);
         }
         Some(Subcommands::Log { topic, verbose }) => {
             for topic in topic {
@@ -84,7 +84,7 @@ fn main() -> anyhow::Result<()> {
             for topic in topic {
                 client.subscribe(topic, QoS::AtLeastOnce)?;
             }
-            read_one::show(client, connection, ignore_retained, pretty);
+            read_one::show(&client, connection, ignore_retained, pretty);
         }
         Some(Subcommands::Publish {
             topic,
@@ -104,7 +104,7 @@ fn main() -> anyhow::Result<()> {
                 String::into_bytes,
             );
             client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
-            publish::eventloop(client, connection, verbose);
+            publish::eventloop(&client, connection, verbose);
         }
         None => {
             interactive::show(
