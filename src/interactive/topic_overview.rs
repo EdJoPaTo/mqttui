@@ -1,10 +1,10 @@
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{Block, BorderType, Borders, Scrollbar, ScrollbarOrientation};
+use ratatui::widgets::{Block, BorderType, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeItem, TreeState};
 
-use crate::interactive::ui::{focus_color, get_row_inside};
+use crate::interactive::ui::{focus_color, get_row_inside, BORDERS_TOP_RIGHT};
 
 #[derive(Default)]
 pub struct TopicOverview {
@@ -44,7 +44,7 @@ impl TopicOverview {
             .block(
                 Block::new()
                     .border_type(BorderType::Rounded)
-                    .borders(Borders::TOP | Borders::RIGHT)
+                    .borders(BORDERS_TOP_RIGHT)
                     .border_style(Style::new().fg(focus_color))
                     .title_alignment(Alignment::Center)
                     .title(title),

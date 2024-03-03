@@ -3,12 +3,14 @@ use std::cmp::min;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
-use ratatui::widgets::{Block, BorderType, Borders, Paragraph, Scrollbar, ScrollbarOrientation};
+use ratatui::widgets::{Block, BorderType, Paragraph, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::ui::{focus_color, get_row_inside, split_area_vertically};
+use crate::interactive::ui::{
+    focus_color, get_row_inside, split_area_vertically, BORDERS_TOP_RIGHT,
+};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{tree_items_from_json, tree_items_from_messagepack, JsonSelector, Payload};
 
@@ -73,7 +75,7 @@ impl PayloadView {
             .block(
                 Block::new()
                     .border_type(BorderType::Rounded)
-                    .borders(Borders::TOP | Borders::RIGHT)
+                    .borders(BORDERS_TOP_RIGHT)
                     .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
@@ -117,7 +119,7 @@ impl PayloadView {
             .block(
                 Block::new()
                     .border_type(BorderType::Rounded)
-                    .borders(Borders::TOP | Borders::RIGHT)
+                    .borders(BORDERS_TOP_RIGHT)
                     .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
@@ -157,7 +159,7 @@ impl PayloadView {
             .block(
                 Block::new()
                     .border_type(BorderType::Rounded)
-                    .borders(Borders::TOP | Borders::RIGHT)
+                    .borders(BORDERS_TOP_RIGHT)
                     .title_alignment(Alignment::Center)
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
@@ -179,7 +181,7 @@ impl PayloadView {
         let widget = Paragraph::new(text).block(
             Block::new()
                 .border_type(BorderType::Rounded)
-                .borders(Borders::TOP | Borders::RIGHT)
+                .borders(BORDERS_TOP_RIGHT)
                 .title_alignment(Alignment::Center)
                 .title(title),
         );

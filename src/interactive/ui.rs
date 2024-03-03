@@ -1,6 +1,8 @@
 use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
+use ratatui::widgets::Borders;
 
+pub const BORDERS_TOP_RIGHT: Borders = Borders::TOP.union(Borders::RIGHT);
 pub const STYLE_BOLD: Style = Style::new().add_modifier(Modifier::BOLD);
 
 pub enum ElementInFocus {

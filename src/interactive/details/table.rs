@@ -3,12 +3,12 @@ use std::fmt::Write;
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{
-    Block, BorderType, Borders, Row, ScrollbarOrientation, ScrollbarState, Table, TableState,
+    Block, BorderType, Row, ScrollbarOrientation, ScrollbarState, Table, TableState,
 };
 use ratatui::Frame;
 
 use crate::format;
-use crate::interactive::ui::{focus_color, STYLE_BOLD};
+use crate::interactive::ui::{focus_color, BORDERS_TOP_RIGHT, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
 
@@ -89,7 +89,7 @@ pub fn draw(
     .block(
         Block::new()
             .border_type(BorderType::Rounded)
-            .borders(Borders::TOP | Borders::RIGHT)
+            .borders(BORDERS_TOP_RIGHT)
             .title_alignment(Alignment::Center)
             .border_style(Style::new().fg(focus_color))
             .title(title),
