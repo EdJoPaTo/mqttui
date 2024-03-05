@@ -20,17 +20,10 @@ pub struct MqttThread {
 impl MqttThread {
     pub fn new(
         client: Client,
-        mut connection: Connection,
+        connection: Connection,
         subscribe_topic: Vec<String>,
         payload_size_limit: usize,
     ) -> anyhow::Result<Self> {
-        // Iterate until there is a ConnAck. When this fails it still fails in the main thread which is less messy. Happens for example when the host is wrong.
-        for notification in connection.iter() {
-            if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) = notification? {
-                break;
-            }
-        }
-
         for topic in &subscribe_topic {
             client.subscribe(topic, QoS::ExactlyOnce)?;
         }

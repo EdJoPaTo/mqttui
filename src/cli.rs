@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, ValueHint};
+use clap::{Args, Parser, Subcommand, ValueHint};
 use url::Url;
 
 #[allow(clippy::doc_markdown)]
@@ -116,109 +116,6 @@ pub struct Cli {
     #[clap(subcommand)]
     pub subcommands: Option<Subcommands>,
 
-    /// URL which represents how to connect to the MQTT broker.
-    ///
-    /// Examples:
-    /// `mqtt://localhost`
-    /// `mqtt://localhost:1883`
-    /// `mqtts://localhost`
-    /// `mqtts://localhost:8883`
-    /// `ws://localhost/path`
-    /// `ws://localhost:9001/path`
-    /// `wss://localhost/path`
-    /// `wss://localhost:9001/path`
-    #[arg(
-        short,
-        long,
-        env = "MQTTUI_BROKER",
-        value_hint = ValueHint::Url,
-        value_name = "URL",
-        help_heading = "MQTT Connection",
-        global = true,
-        default_value = "mqtt://localhost",
-    )]
-    pub broker: Broker,
-
-    /// Username to access the mqtt broker.
-    ///
-    /// Anonymous access when not supplied.
-    #[arg(
-        short,
-        long,
-        env = "MQTTUI_USERNAME",
-        value_hint = ValueHint::Username,
-        value_name = "STRING",
-        help_heading = "MQTT Connection",
-        requires = "password",
-        global = true,
-    )]
-    pub username: Option<String>,
-
-    /// Password to access the mqtt broker.
-    ///
-    /// Consider using a connection with TLS to the broker.
-    /// Otherwise the password will be transported in plaintext.
-    ///
-    /// Passing the password via command line is insecure as the password can be read from the history!
-    /// You should pass it via environment variable.
-    #[arg(
-        long,
-        env = "MQTTUI_PASSWORD",
-        value_hint = ValueHint::Other,
-        value_name = "STRING",
-        help_heading = "MQTT Connection",
-        hide_env_values = true,
-        requires = "username",
-        global = true,
-    )]
-    pub password: Option<String>,
-
-    /// Specify the client id to connect with
-    #[arg(
-        short = 'i',
-        long,
-        env = "MQTTUI_CLIENTID",
-        value_hint = ValueHint::Other,
-        value_name = "STRING",
-        help_heading = "MQTT Connection",
-        global = true,
-    )]
-    pub client_id: Option<String>,
-
-    /// Path to the TLS client certificate file.
-    ///
-    /// Used together with --client-key to enable TLS client authentication.
-    /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
-    #[arg(
-        long,
-        env = "MQTTUI_CLIENT_CERTIFICATE",
-        value_hint = ValueHint::FilePath,
-        value_name = "FILEPATH",
-        help_heading = "MQTT Connection",
-        requires = "client_key",
-        global = true,
-    )]
-    pub client_cert: Option<std::path::PathBuf>,
-
-    /// Path to the TLS client private key.
-    ///
-    /// Used together with --client-cert to enable TLS client authentication.
-    /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
-    #[arg(
-        long,
-        env = "MQTTUI_CLIENT_PRIVATE_KEY",
-        value_hint = ValueHint::FilePath,
-        value_name = "FILEPATH",
-        help_heading = "MQTT Connection",
-        requires = "client_cert",
-        global = true,
-    )]
-    pub client_key: Option<std::path::PathBuf>,
-
-    /// Allow insecure TLS connections
-    #[arg(long, global = true, help_heading = "MQTT Connection")]
-    pub insecure: bool,
-
     /// Topic to watch
     #[arg(
         env = "MQTTUI_TOPIC",
@@ -239,6 +136,112 @@ pub struct Cli {
         default_value_t = 8_000,
     )]
     pub payload_size_limit: usize,
+
+    // Keep at the end to not mix the next_help_heading with other options
+    #[command(flatten, next_help_heading = "MQTT Connection")]
+    pub mqtt_connection: MqttConnection,
+}
+
+/// Arguments related to the MQTT connection.
+#[derive(Debug, Args)]
+// #[command(next_help_heading = "MQTT Connection")]
+pub struct MqttConnection {
+    /// URL which represents how to connect to the MQTT broker.
+    ///
+    /// Examples:
+    /// `mqtt://localhost`
+    /// `mqtt://localhost:1883`
+    /// `mqtts://localhost`
+    /// `mqtts://localhost:8883`
+    /// `ws://localhost/path`
+    /// `ws://localhost:9001/path`
+    /// `wss://localhost/path`
+    /// `wss://localhost:9001/path`
+    #[arg(
+        short,
+        long,
+        env = "MQTTUI_BROKER",
+        value_hint = ValueHint::Url,
+        value_name = "URL",
+        global = true,
+        default_value = "mqtt://localhost",
+    )]
+    pub broker: Broker,
+
+    /// Username to access the mqtt broker.
+    ///
+    /// Anonymous access when not supplied.
+    #[arg(
+        short,
+        long,
+        env = "MQTTUI_USERNAME",
+        value_hint = ValueHint::Username,
+        value_name = "STRING",
+        requires = "password",
+        global = true,
+    )]
+    pub username: Option<String>,
+
+    /// Password to access the mqtt broker.
+    ///
+    /// Consider using a connection with TLS to the broker.
+    /// Otherwise the password will be transported in plaintext.
+    ///
+    /// Passing the password via command line is insecure as the password can be read from the history!
+    /// You should pass it via environment variable.
+    #[arg(
+        long,
+        env = "MQTTUI_PASSWORD",
+        value_hint = ValueHint::Other,
+        value_name = "STRING",
+        hide_env_values = true,
+        requires = "username",
+        global = true,
+    )]
+    pub password: Option<String>,
+
+    /// Specify the client id to connect with
+    #[arg(
+        short = 'i',
+        long,
+        env = "MQTTUI_CLIENTID",
+        value_hint = ValueHint::Other,
+        value_name = "STRING",
+        global = true,
+    )]
+    pub client_id: Option<String>,
+
+    /// Path to the TLS client certificate file.
+    ///
+    /// Used together with --client-key to enable TLS client authentication.
+    /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
+    #[arg(
+        long,
+        env = "MQTTUI_CLIENT_CERTIFICATE",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        requires = "client_key",
+        global = true,
+    )]
+    pub client_cert: Option<std::path::PathBuf>,
+
+    /// Path to the TLS client private key.
+    ///
+    /// Used together with --client-cert to enable TLS client authentication.
+    /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
+    #[arg(
+        long,
+        env = "MQTTUI_CLIENT_PRIVATE_KEY",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        requires = "client_cert",
+        global = true,
+    )]
+    pub client_key: Option<std::path::PathBuf>,
+
+    /// Allow insecure TLS connections
+    #[arg(long, global = true)]
+    pub insecure: bool,
 }
 
 #[derive(Debug, Clone)]

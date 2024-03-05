@@ -9,13 +9,6 @@ use crate::payload::Payload;
 pub fn clean_retained(client: &Client, mut connection: Connection, dry_run: bool) {
     let mut amount: usize = 0;
     for notification in connection.iter() {
-        if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
-            notification.expect("connection error")
-        {
-            break;
-        }
-    }
-    for notification in connection.iter() {
         match notification {
             Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::Disconnect)) => break,
             Ok(rumqttc::Event::Outgoing(rumqttc::Outgoing::PingReq)) => {

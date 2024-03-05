@@ -6,13 +6,6 @@ use rumqttc::{Client, Connection};
 use crate::payload::Payload;
 
 pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, pretty: bool) {
-    for notification in connection.iter() {
-        if let rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) =
-            notification.expect("connection error")
-        {
-            break;
-        }
-    }
     let mut done = false;
     for notification in connection.iter() {
         match notification {

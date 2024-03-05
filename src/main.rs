@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use clap::Parser;
 use cli::Subcommands;
-use rumqttc::{Client, MqttOptions, QoS, Transport};
+use rumqttc::QoS;
 
 mod clean_retained;
 mod cli;
@@ -17,50 +17,12 @@ mod read_one;
 fn main() -> anyhow::Result<()> {
     let matches = cli::Cli::parse();
 
-    let (client, connection) = {
-        let (transport, host, port) = match &matches.broker {
-            cli::Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
-            cli::Broker::Ssl { host, port } => (
-                Transport::Tls(mqtt::encryption::create_tls_configuration(
-                    matches.insecure,
-                    &matches.client_cert,
-                    &matches.client_key,
-                )?),
-                host.clone(),
-                *port,
-            ),
-            // On WebSockets the port is ignored. See https://github.com/bytebeamio/rumqtt/issues/270
-            cli::Broker::WebSocket(url) => (Transport::Ws, url.to_string(), 666),
-            cli::Broker::WebSocketSsl(url) => (
-                Transport::Wss(mqtt::encryption::create_tls_configuration(
-                    matches.insecure,
-                    &matches.client_cert,
-                    &matches.client_key,
-                )?),
-                url.to_string(),
-                666,
-            ),
-        };
-
-        let client_id = matches
-            .client_id
-            .unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
-
-        let mut mqttoptions = MqttOptions::new(client_id, host, port);
-        mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
-        mqttoptions.set_transport(transport);
-
-        if let Some(password) = matches.password {
-            let username = matches.username.unwrap();
-            mqttoptions.set_credentials(username, password);
-        }
-
-        if let Some(Subcommands::CleanRetained { timeout, .. }) = matches.subcommands {
-            mqttoptions.set_keep_alive(Duration::from_secs_f32(timeout));
-        }
-
-        Client::new(mqttoptions, 10)
+    let keep_alive = if let Some(Subcommands::CleanRetained { timeout, .. }) = matches.subcommands {
+        Some(Duration::from_secs_f32(timeout))
+    } else {
+        None
     };
+    let (broker, client, connection) = mqtt::connect(matches.mqtt_connection, keep_alive)?;
 
     match matches.subcommands {
         Some(Subcommands::CleanRetained { topic, dry_run, .. }) => {
@@ -107,7 +69,7 @@ fn main() -> anyhow::Result<()> {
             interactive::show(
                 client.clone(),
                 connection,
-                &matches.broker,
+                &broker,
                 matches.topic,
                 matches.payload_size_limit,
             )?;

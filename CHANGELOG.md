@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Provide better error output on initial MQTT connection errors
+
 ## [0.20.0] - 2024-02-26
 
 ### Added

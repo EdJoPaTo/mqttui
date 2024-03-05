@@ -1,0 +1,73 @@
+use std::time::Duration;
+
+use rumqttc::{Client, Connection, Event, MqttOptions, Packet, Transport};
+
+use crate::cli::{Broker, MqttConnection};
+
+pub fn connect(
+    MqttConnection {
+        broker,
+        username,
+        password,
+        client_id,
+        client_cert,
+        client_key,
+        insecure,
+    }: MqttConnection,
+    keep_alive: Option<Duration>,
+) -> anyhow::Result<(Broker, Client, Connection)> {
+    let (transport, host, port) = match &broker {
+        Broker::Tcp { ref host, port } => (Transport::Tcp, host.clone(), *port),
+        Broker::Ssl { ref host, port } => (
+            Transport::Tls(super::encryption::create_tls_configuration(
+                insecure,
+                &client_cert,
+                &client_key,
+            )?),
+            host.clone(),
+            *port,
+        ),
+        // On WebSockets the port is ignored. See https://github.com/bytebeamio/rumqtt/issues/270
+        Broker::WebSocket(url) => (Transport::Ws, url.to_string(), 666),
+        Broker::WebSocketSsl(url) => (
+            Transport::Wss(super::encryption::create_tls_configuration(
+                insecure,
+                &client_cert,
+                &client_key,
+            )?),
+            url.to_string(),
+            666,
+        ),
+    };
+
+    let client_id = client_id.unwrap_or_else(|| format!("mqttui-{:x}", rand::random::<u32>()));
+
+    let mut mqttoptions = MqttOptions::new(client_id, host, port);
+    mqttoptions.set_max_packet_size(usize::MAX, usize::MAX);
+    mqttoptions.set_transport(transport);
+
+    if let (Some(username), Some(password)) = (username, password) {
+        mqttoptions.set_credentials(username, password);
+    }
+    if let Some(keep_alive) = keep_alive {
+        mqttoptions.set_keep_alive(keep_alive);
+    }
+
+    let (client, mut connection) = Client::new(mqttoptions, 10);
+
+    for notification in connection.iter() {
+        match notification {
+            Ok(Event::Incoming(Packet::ConnAck(_))) => return Ok((broker, client, connection)),
+            Ok(Event::Incoming(packet)) => eprintln!(
+                "Received an MQTT packet before the ConnAck. This is suspicious behaviour of the broker {broker}. The packet: {packet:?}"
+            ),
+            Ok(Event::Outgoing(_)) => {} // Sending stuff is fine
+            Err(error) => anyhow::bail!(
+                "Failed to connect to the MQTT broker {broker}.\nAre your MQTT connection options correct? For more information on them see --help\n{error}"
+            ),
+        }
+    }
+    Err(anyhow::anyhow!(
+        "The MQTT connection to {broker} ended unexpectedly before it was acknowleged."
+    ))
+}
