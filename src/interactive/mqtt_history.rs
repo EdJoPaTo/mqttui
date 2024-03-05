@@ -124,8 +124,8 @@ impl MqttHistory {
         build_recursive(&prefix, noderef)
     }
 
-    /// Returns (`topic_amount`, `TreeItem`s)
-    pub fn to_tree_items(&self) -> (usize, Vec<TreeItem<'static, String>>) {
+    /// Returns (`topic_amount`, `message_amount`, `TreeItem`s)
+    pub fn to_tree_items(&self) -> (usize, usize, Vec<TreeItem<'static, String>>) {
         fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> RecursiveTreeItemGenerator {
             let Topic { leaf, history } = node.value();
             let mut topic = prefix.to_vec();
@@ -169,14 +169,18 @@ impl MqttHistory {
             .children()
             .map(|node| build_recursive(&[], node));
         let mut topics: usize = 0;
+        let mut messages: usize = 0;
         let mut items = Vec::new();
         for child in children {
             topics = topics
                 .saturating_add(usize::from(child.messages > 0))
                 .saturating_add(child.topics_below);
+            messages = messages
+                .saturating_add(child.messages)
+                .saturating_add(child.messages_below);
             items.push(child.tree_item);
         }
-        (topics, items)
+        (topics, messages, items)
     }
 
     #[cfg(test)]
@@ -214,8 +218,9 @@ fn topics_below_finds_itself_works() {
 #[test]
 fn tree_items_works() {
     let example = MqttHistory::example();
-    let (topics, items) = example.to_tree_items();
+    let (topics, messages, items) = example.to_tree_items();
     assert_eq!(topics, 3);
+    assert_eq!(messages, 4);
     dbg!(&items);
     assert_eq!(items.len(), 2);
     assert!(items[0].child(0).is_some());

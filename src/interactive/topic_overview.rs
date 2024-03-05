@@ -27,10 +27,11 @@ impl TopicOverview {
         frame: &mut Frame,
         area: Rect,
         topic_amount: usize,
+        message_amount: usize,
         tree_items: Vec<TreeItem<String>>,
         has_focus: bool,
     ) {
-        let title = format!("Topics ({topic_amount})");
+        let title = format!("Topics ({topic_amount}, {message_amount} messages)");
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(tree_items)
             .unwrap()

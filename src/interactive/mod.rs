@@ -163,7 +163,7 @@ impl App {
     }
 
     fn get_topic_tree_items(&self) -> Vec<TreeItem<'static, String>> {
-        let (_amount, items) = self.mqtt_thread.get_history().to_tree_items();
+        let (_topics, _messages, items) = self.mqtt_thread.get_history().to_tree_items();
         items
     }
 
@@ -771,11 +771,12 @@ impl App {
                 }
             });
 
-        let (topic_amount, tree_items) = history.to_tree_items();
+        let (topic_amount, message_amount, tree_items) = history.to_tree_items();
         self.topic_overview.draw(
             frame,
             overview_area,
             topic_amount,
+            message_amount,
             tree_items,
             matches!(self.focus, ElementInFocus::TopicOverview),
         );
