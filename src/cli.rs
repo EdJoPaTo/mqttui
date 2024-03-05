@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand, ValueHint};
 use url::Url;
 
+#[allow(clippy::doc_markdown)]
 #[derive(Debug, Subcommand)]
 pub enum Subcommands {
     /// Clean retained messages from the broker.
@@ -108,6 +109,7 @@ pub enum Subcommands {
     },
 }
 
+#[allow(clippy::doc_markdown)]
 #[derive(Debug, Parser)]
 #[command(about, version)]
 pub struct Cli {
