@@ -31,7 +31,7 @@ impl Point {
 
     #[allow(clippy::cast_precision_loss)]
     pub const fn as_graph_x(&self) -> f64 {
-        self.time.timestamp_millis() as f64
+        self.time.and_utc().timestamp_millis() as f64
     }
 }
 
