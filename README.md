@@ -145,9 +145,9 @@ mqttui "topic"
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg)](https://repology.org/project/mqttui/versions)
 
-#### Arch Linux (AUR)
+#### Arch Linux
 
-`paru -S mqttui-bin` or `yay -S mqttui-bin`
+`pacman -S mqttui`
 
 #### Homebrew (Mac or Linux)
 
