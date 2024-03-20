@@ -143,11 +143,13 @@ mqttui "topic"
 
 ### Prebuilt
 
-[![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg)](https://repology.org/project/mqttui/versions)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg?columns=3&exclude_unsupported=1)](https://repology.org/project/mqttui/versions)
 
 #### Arch Linux
 
-`pacman -S mqttui`
+```bash
+pacman -S mqttui
+```
 
 #### Homebrew (Mac or Linux)
 
