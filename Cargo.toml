@@ -32,19 +32,20 @@ url = "2"
 
 [dependencies]
 anyhow = "1"
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] }
 crossterm = "0.27"
 ego-tree = "0.6"
 rand = "0.8"
 ratatui = "0.26"
 ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "main" }
-rmpv = "1"
+rmpv = { version = "1", features = ["with-serde"] }
 rumqttc = { version = "0.24", features = ["websocket"] }
 rustls = "0.22"
 rustls-native-certs = "0.7"
 rustls-pemfile = "2"
 rustls-pki-types = "1"
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tui-tree-widget = "0.19"
 url = "2"

@@ -45,6 +45,10 @@ pub enum Subcommands {
         /// Show full MQTT communication
         #[arg(short, long)]
         verbose: bool,
+
+        /// Output logs as newline-delimited JSON
+        #[arg(short, long)]
+        json: bool,
     },
 
     /// Wait for the first message on the given topic(s) and return its payload to stdout.

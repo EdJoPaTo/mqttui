@@ -3,12 +3,22 @@ use std::time::Duration;
 
 use chrono::Local;
 use rumqttc::Connection;
+use serde::Serialize;
 
 use crate::format;
 use crate::mqtt::Time;
 use crate::payload::Payload;
 
-pub fn show(mut connection: Connection, verbose: bool) {
+#[derive(Serialize)]
+struct JsonLog {
+    time: Time,
+    qos: String,
+    topic: String,
+    size: usize,
+    payload: Payload,
+}
+
+pub fn show(mut connection: Connection, verbose: bool, json: bool) {
     for notification in connection.iter() {
         match notification {
             Ok(rumqttc::Event::Outgoing(outgoing)) => {
@@ -32,7 +42,21 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 let topic = publish.topic;
                 let size = publish.payload.len();
                 let payload = Payload::unlimited(publish.payload.into());
-                println!("{time:12} QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
+
+                if json {
+                    match serde_json::to_string(&JsonLog {
+                        time,
+                        qos: qos.to_string(),
+                        topic,
+                        size,
+                        payload,
+                    }) {
+                        Ok(out) => println!("{out}"),
+                        Err(err) => eprintln!("Failed to format message: {err}"),
+                    };
+                } else {
+                    println!("{time:12} QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
+                };
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {
