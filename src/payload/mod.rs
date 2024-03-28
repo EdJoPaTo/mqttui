@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 mod json;
 mod json_selector;
 mod messagepack;
@@ -6,7 +8,8 @@ pub use json::tree_items as tree_items_from_json;
 pub use json_selector::JsonSelector;
 pub use messagepack::tree_items::tree_items as tree_items_from_messagepack;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(untagged)]
 pub enum Payload {
     /// Might be truncated
     Binary(Box<[u8]>),

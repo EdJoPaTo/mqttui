@@ -1,6 +1,8 @@
 use chrono::NaiveDateTime;
+use serde::Serialize;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(untagged)]
 pub enum Time {
     Retained,
     Local(NaiveDateTime),
