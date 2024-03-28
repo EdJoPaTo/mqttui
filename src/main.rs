@@ -29,11 +29,15 @@ fn main() -> anyhow::Result<()> {
             client.subscribe(topic, QoS::AtLeastOnce)?;
             clean_retained::clean_retained(&client, connection, dry_run);
         }
-        Some(Subcommands::Log { topic, verbose }) => {
+        Some(Subcommands::Log {
+            topic,
+            json,
+            verbose,
+        }) => {
             for topic in topic {
                 client.subscribe(topic, QoS::AtLeastOnce)?;
             }
-            log::show(connection, verbose);
+            log::show(connection, json, verbose);
         }
         Some(Subcommands::ReadOne {
             topic,
