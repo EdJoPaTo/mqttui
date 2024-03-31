@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Provide better error output on initial MQTT connection errors
-- Show total amount of messages in the topic overview title
+- Interactive: Show total amount of messages in the topic overview title
+- Log: Provide machine-readable newline-delimited output with `--json`
+- Log: Print `--verbose` to stderr instead of stdout
 
 ## [0.20.0] - 2024-02-26
 
