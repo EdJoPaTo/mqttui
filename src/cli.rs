@@ -42,6 +42,10 @@ pub enum Subcommands {
         )]
         topic: Vec<String>,
 
+        /// Output incoming packages as newline-delimited JSON
+        #[arg(short, long)]
+        json: bool,
+
         /// Show full MQTT communication
         #[arg(short, long)]
         verbose: bool,

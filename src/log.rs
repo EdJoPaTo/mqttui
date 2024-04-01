@@ -3,17 +3,27 @@ use std::time::Duration;
 
 use chrono::Local;
 use rumqttc::Connection;
+use serde::Serialize;
 
 use crate::format;
 use crate::mqtt::Time;
 use crate::payload::Payload;
 
-pub fn show(mut connection: Connection, verbose: bool) {
+#[derive(Serialize)]
+struct JsonLog {
+    time: Time,
+    qos: u8,
+    topic: String,
+    size: usize,
+    payload: Payload,
+}
+
+pub fn show(mut connection: Connection, json: bool, verbose: bool) {
     for notification in connection.iter() {
         match notification {
             Ok(rumqttc::Event::Outgoing(outgoing)) => {
                 if verbose {
-                    println!("outgoing {outgoing:?}");
+                    eprintln!("outgoing {outgoing:?}");
                 }
                 if outgoing == rumqttc::Outgoing::Disconnect {
                     break;
@@ -28,15 +38,27 @@ pub fn show(mut connection: Connection, verbose: bool) {
                 } else {
                     Time::Local(Local::now().naive_local())
                 };
-                let qos = format::qos(publish.qos);
                 let topic = publish.topic;
                 let size = publish.payload.len();
                 let payload = Payload::unlimited(publish.payload.into());
-                println!("{time:12} QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
+                if json {
+                    let json = serde_json::to_string(&JsonLog {
+                        time,
+                        qos: publish.qos as u8,
+                        topic,
+                        size,
+                        payload,
+                    })
+                    .expect("Should be able to format log line as JSON");
+                    println!("{json}");
+                } else {
+                    let qos = format::qos(publish.qos);
+                    println!("{time:12} QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
+                };
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {
-                    println!("incoming {packet:?}");
+                    eprintln!("incoming {packet:?}");
                 }
             }
             Err(err) => {
