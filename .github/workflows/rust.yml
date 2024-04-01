@@ -3,6 +3,7 @@ name: Test and Build Rust
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   rustfmt:
@@ -19,12 +20,13 @@ jobs:
   clippy:
     name: Clippy ${{ matrix.toolchain }}
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.toolchain == 'nightly' }}
+    continue-on-error: ${{ (matrix.toolchain == 'beta') || (matrix.toolchain == 'nightly') }}
     strategy:
       fail-fast: false
       matrix:
         toolchain:
           - stable
+          - beta
           - nightly
     env:
       RUSTFLAGS: --deny warnings
@@ -48,6 +50,7 @@ jobs:
       matrix:
         toolchain:
           - stable
+          - beta
           - nightly
           - 1.74 # MSRV: minimum supported Rust version
         os:
@@ -61,13 +64,10 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
-
       - uses: actions/checkout@v4
       - run: cargo fetch --locked
       - run: cargo build --offline --all-targets
-
-      - name: Run tests
-        run: cargo test --offline
+      - run: cargo test --offline
 
   github-release:
     name: Release ${{ matrix.triple }}
