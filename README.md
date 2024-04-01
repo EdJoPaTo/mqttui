@@ -129,9 +129,9 @@ mqttui "topic"
 
 ## Install
 
-### Prebuilt
+### Packaged
 
-[![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg?columns=3&exclude_unsupported=1)](https://repology.org/project/mqttui/versions)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg?columns=2&exclude_unsupported=1)](https://repology.org/project/mqttui/versions)
 
 #### Arch Linux
 
@@ -145,7 +145,7 @@ pacman -S mqttui
 brew install mqttui
 ```
 
-#### Other
+### Prebuilt
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
