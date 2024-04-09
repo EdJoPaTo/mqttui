@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Provide better error output on initial MQTT connection errors
+- Interactive: When payload is focused it can occupy more space when needed.
 - Interactive: Show total amount of messages in the topic overview title
 - Log: Provide machine-readable newline-delimited output with `--json`
 - Log: Print `--verbose` to stderr instead of stdout

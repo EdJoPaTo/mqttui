@@ -26,17 +26,17 @@ impl PayloadView {
         &mut self,
         frame: &mut Frame,
         area: Rect,
-        entry: &HistoryEntry,
         has_focus: bool,
+        entry: &HistoryEntry,
     ) -> Rect {
         let size = entry.payload_size;
         match &entry.payload {
-            Payload::Binary(data) => self.draw_binary(frame, area, size, data, has_focus),
-            Payload::Json(json) => self.draw_json(frame, area, size, json, has_focus),
+            Payload::Binary(data) => self.draw_binary(frame, area, has_focus, size, data),
+            Payload::Json(json) => self.draw_json(frame, area, has_focus, size, json),
             Payload::MessagePack(messagepack) => {
-                self.draw_messagepack(frame, area, size, messagepack, has_focus)
+                self.draw_messagepack(frame, area, has_focus, size, messagepack)
             }
-            Payload::String(str) => self.draw_string(frame, area, size, str),
+            Payload::String(str) => self.draw_string(frame, area, has_focus, size, str),
         }
     }
 
@@ -47,8 +47,12 @@ impl PayloadView {
         })
     }
 
-    fn areas(&mut self, area: Rect, content_height: usize) -> (Rect, Rect) {
-        let max_payload_height = area.height / 3;
+    fn areas(&mut self, area: Rect, has_focus: bool, content_height: usize) -> (Rect, Rect) {
+        let max_payload_height = if has_focus {
+            area.height.saturating_mul(2) / 3
+        } else {
+            area.height / 3
+        };
         #[allow(clippy::cast_possible_truncation)]
         let payload_height = min(
             max_payload_height as usize,
@@ -63,9 +67,9 @@ impl PayloadView {
         &mut self,
         frame: &mut Frame,
         area: Rect,
+        has_focus: bool,
         payload_bytes: usize,
         data: &[u8],
-        has_focus: bool,
     ) -> Rect {
         let title = format!("Binary Payload (Bytes: {payload_bytes})");
 
@@ -82,7 +86,7 @@ impl PayloadView {
             );
 
         let max_lines = widget.get_max_lines_of_data_in_area(area);
-        let (payload_area, remaining_area) = self.areas(area, max_lines);
+        let (payload_area, remaining_area) = self.areas(area, has_focus, max_lines);
 
         frame.render_stateful_widget(widget, payload_area, &mut self.binary_state);
         remaining_area
@@ -92,9 +96,9 @@ impl PayloadView {
         &mut self,
         frame: &mut Frame,
         area: Rect,
+        has_focus: bool,
         payload_bytes: usize,
         json: &serde_json::Value,
-        has_focus: bool,
     ) -> Rect {
         let title = format!("JSON Payload (Bytes: {payload_bytes})");
         let items = tree_items_from_json(json);
@@ -104,7 +108,7 @@ impl PayloadView {
             .into_iter()
             .map(|flattened| flattened.item.height())
             .sum::<usize>();
-        let (payload_area, remaining_area) = self.areas(area, content_height);
+        let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(items)
@@ -132,9 +136,9 @@ impl PayloadView {
         &mut self,
         frame: &mut Frame,
         area: Rect,
+        has_focus: bool,
         payload_bytes: usize,
         messagepack: &rmpv::Value,
-        has_focus: bool,
     ) -> Rect {
         let title = format!("MessagePack Payload (Bytes: {payload_bytes})");
         let items = tree_items_from_messagepack(messagepack);
@@ -144,7 +148,7 @@ impl PayloadView {
             .into_iter()
             .map(|flattened| flattened.item.height())
             .sum::<usize>();
-        let (payload_area, remaining_area) = self.areas(area, content_height);
+        let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(items)
@@ -172,12 +176,13 @@ impl PayloadView {
         &mut self,
         frame: &mut Frame,
         area: Rect,
+        has_focus: bool,
         payload_bytes: usize,
         payload: &str,
     ) -> Rect {
         let title = format!("Payload (Bytes: {payload_bytes})");
         let text = Text::from(payload);
-        let (payload_area, remaining_area) = self.areas(area, text.height());
+        let (payload_area, remaining_area) = self.areas(area, has_focus, text.height());
         let widget = Paragraph::new(text).block(
             Block::new()
                 .border_type(BorderType::Rounded)

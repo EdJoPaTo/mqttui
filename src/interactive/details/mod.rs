@@ -57,8 +57,8 @@ impl Details {
         let history_area = self.payload.draw(
             frame,
             full_area,
-            entry,
             matches!(focus, ElementInFocus::Payload),
+            entry,
         );
         let binary_address = self.payload.binary_state.selected_address();
         let json_selector = self.payload.json_state.selected();
