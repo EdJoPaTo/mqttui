@@ -65,7 +65,7 @@ pub fn show(
 ) -> anyhow::Result<()> {
     let mqtt_thread =
         mqtt_thread::MqttThread::new(client, connection, subscribe_topic, payload_size_limit)?;
-    let mut app = App::new(broker, mqtt_thread);
+    let app = App::new(broker, mqtt_thread);
 
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic| {
@@ -85,14 +85,14 @@ pub fn show(
 
     terminal.clear()?;
 
-    let main_loop_result = main_loop(&mut app, &mut terminal);
+    let main_loop_result = main_loop(app, terminal);
 
     reset_terminal()?;
 
     main_loop_result
 }
 
-fn main_loop<B>(app: &mut App, terminal: &mut Terminal<B>) -> anyhow::Result<()>
+fn main_loop<B>(mut app: App, mut terminal: Terminal<B>) -> anyhow::Result<()>
 where
     B: Backend,
 {
