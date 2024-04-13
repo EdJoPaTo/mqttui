@@ -86,6 +86,12 @@ impl Footer {
         }
         let keys = Line::from(keys);
 
+        #[allow(clippy::cast_possible_truncation)]
+        if matches!(app.focus, ElementInFocus::TopicSearch) {
+            let x = area.left().saturating_add(keys.width() as u16);
+            frame.set_cursor(x, area.y);
+        }
+
         // Show version / broker when enough space
         {
             let remaining = (area.width as usize).saturating_sub(keys.width());
