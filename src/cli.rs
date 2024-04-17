@@ -148,7 +148,6 @@ pub struct Cli {
 
 /// Arguments related to the MQTT connection.
 #[derive(Debug, Args)]
-// #[command(next_help_heading = "MQTT Connection")]
 pub struct MqttConnection {
     /// URL which represents how to connect to the MQTT broker.
     ///
