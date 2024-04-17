@@ -24,7 +24,7 @@ impl Details {
             .min(topic_history_length.saturating_sub(1))
     }
 
-    fn table_index_of_click(&self, column: u16, row: u16) -> Option<usize> {
+    const fn table_index_of_click(&self, column: u16, row: u16) -> Option<usize> {
         let area = self.last_table_area;
         if !area.contains(Position { x: column, y: row }) {
             return None;
