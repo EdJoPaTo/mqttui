@@ -54,7 +54,7 @@ impl TopicOverview {
         self.last_area = area;
     }
 
-    pub fn index_of_click(&mut self, column: u16, row: u16) -> Option<usize> {
+    pub const fn index_of_click(&self, column: u16, row: u16) -> Option<usize> {
         if let Some(index) = get_row_inside(self.last_area, column, row) {
             let offset = self.state.get_offset();
             let new_index = (index as usize) + offset;

@@ -69,7 +69,7 @@ impl MqttThread {
         self.history.read().expect("mqtt history thread paniced")
     }
 
-    pub fn clean_below(&mut self, topic: &str) -> anyhow::Result<()> {
+    pub fn clean_below(&self, topic: &str) -> anyhow::Result<()> {
         let topics = self.get_history().get_topics_below(topic);
         for topic in topics {
             self.client.publish(topic, QoS::ExactlyOnce, true, [])?;
