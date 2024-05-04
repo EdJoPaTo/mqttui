@@ -90,8 +90,9 @@ fn display_none() {
 
 #[cfg(test)]
 mod json_tests {
-    use super::*;
     use serde_json::Value;
+
+    use super::*;
 
     #[test]
     fn can_not_get_other_value() {
@@ -168,8 +169,9 @@ mod json_tests {
 
 #[cfg(test)]
 mod messagepack_tests {
-    use super::*;
     use rmpv::Value;
+
+    use super::*;
 
     #[test]
     fn can_not_get_other_value() {

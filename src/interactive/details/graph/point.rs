@@ -96,9 +96,8 @@ fn f64_from_string_works() {
 mod parse_tests {
     use rumqttc::QoS;
 
-    use crate::mqtt::Time;
-
     use super::*;
+    use crate::mqtt::Time;
 
     #[test]
     fn retained() {

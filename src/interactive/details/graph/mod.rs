@@ -5,10 +5,9 @@ use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType};
 use ratatui::{symbols, Frame};
 
+use self::point::Point;
 use crate::mqtt::HistoryEntry;
 use crate::payload::JsonSelector;
-
-use point::Point;
 
 mod point;
 
@@ -96,10 +95,9 @@ impl Graph {
 mod tests {
     use chrono::Timelike;
 
+    use super::*;
     use crate::mqtt::Time;
     use crate::payload::Payload;
-
-    use super::*;
 
     fn entry(time: Time, payload: &str) -> HistoryEntry {
         HistoryEntry {

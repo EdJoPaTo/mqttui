@@ -5,8 +5,7 @@ use std::sync::Arc;
 
 use rumqttc::TlsConfiguration;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
-use rustls::DigitallySignedStruct;
-use rustls::{ClientConfig, SignatureScheme};
+use rustls::{ClientConfig, DigitallySignedStruct, SignatureScheme};
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
 
 #[derive(Debug)]

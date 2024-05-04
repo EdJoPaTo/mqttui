@@ -1,12 +1,11 @@
 use std::time::{Duration, Instant};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
-use ratatui::backend::Backend;
+use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Alignment, Rect};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
-use ratatui::Frame;
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{Frame, Terminal};
 use rumqttc::{Client, Connection};
 use tui_tree_widget::TreeItem;
 
