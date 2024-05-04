@@ -31,8 +31,14 @@ impl Footer {
 
         macro_rules! add {
             ( $key:literal,$text:literal ) => {
-                keys.push(Span::styled(concat![" ", $key, " "], KEY_STYLE));
-                keys.push(Span::raw(concat![" ", $text, " "]));
+                keys.push(Span {
+                    content: std::borrow::Cow::Borrowed(concat![" ", $key, " "]),
+                    style: KEY_STYLE,
+                });
+                keys.push(Span {
+                    content: std::borrow::Cow::Borrowed(concat![" ", $text, " "]),
+                    style: Style::new(),
+                });
             };
         }
 
