@@ -9,8 +9,8 @@ use ratatui::{Frame, Terminal};
 use rumqttc::{Client, Connection};
 use tui_tree_widget::TreeItem;
 
+use self::ui::ElementInFocus;
 use crate::cli::Broker;
-use crate::interactive::ui::ElementInFocus;
 use crate::payload::{tree_items_from_json, tree_items_from_messagepack, Payload};
 
 mod clean_retained;

@@ -257,6 +257,7 @@ pub enum Broker {
 
 impl core::str::FromStr for Broker {
     type Err = anyhow::Error;
+
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let url = Url::parse(input)?;
         anyhow::ensure!(url.has_host(), "Broker requires a Host");

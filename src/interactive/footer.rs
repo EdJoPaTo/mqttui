@@ -30,7 +30,7 @@ impl Footer {
         let mut keys = Vec::new();
 
         macro_rules! add {
-            ( $key:literal,$text:literal ) => {
+            ($key:literal, $text:literal) => {
                 keys.push(Span {
                     content: std::borrow::Cow::Borrowed(concat![" ", $key, " "]),
                     style: KEY_STYLE,
