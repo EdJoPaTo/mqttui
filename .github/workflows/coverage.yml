@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Rust
+        id: rust
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
@@ -20,15 +21,11 @@ jobs:
           tool: cargo-llvm-cov
 
       - uses: actions/checkout@v4
-
+      - run: cargo fetch
       - uses: actions/cache@v4
         with:
-          key: coverage-${{ hashFiles('**/Cargo.lock') }}
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+          key: coverage-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('**/Cargo.*') }}
+          path: target/
 
       - name: Run cargo-llvm-cov
         run: cargo llvm-cov --all-features --html
