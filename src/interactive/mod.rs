@@ -576,19 +576,9 @@ impl App {
             match self.get_selected_payload() {
                 None => return Refresh::Update, // No payload but click into payload area -> redraw
                 Some(Payload::Binary(_)) => {
-                    if let Some(address) = self
-                        .details
-                        .payload
-                        .binary_state
-                        .clicked_address(column, row)
-                    {
-                        self.details
-                            .payload
-                            .binary_state
-                            .select_address(Some(address));
-                        self.focus = ElementInFocus::Payload;
-                        return Refresh::Update;
-                    }
+                    self.details.payload.binary_state.select_at(column, row);
+                    self.focus = ElementInFocus::Payload;
+                    return Refresh::Update;
                 }
                 Some(Payload::Json(json)) => {
                     let items = tree_items_from_json(&json);
