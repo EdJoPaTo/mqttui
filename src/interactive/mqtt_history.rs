@@ -92,36 +92,12 @@ impl MqttHistory {
         topics
     }
 
-    pub fn get_topics_below(&self, topic: &str) -> Vec<String> {
-        fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> Vec<String> {
-            let mut topic = prefix.to_vec();
-            topic.push(&node.value().leaf);
-
-            let mut entries_below = node
-                .children()
-                .flat_map(|node| build_recursive(&topic, node))
-                .collect::<Vec<_>>();
-            if !node.value().history.is_empty() {
-                entries_below.insert(0, topic.join("/"));
-            }
-            entries_below
-        }
-
-        // Get the node of the given topic in the tree
-        let mut noderef = self.tree.root();
-        for part in topic.split('/') {
-            let node = noderef.children().find(|node| &*node.value().leaf == part);
-            if let Some(node) = node {
-                noderef = node;
-            } else {
-                // Node not found -> there are no topics below
-                return Vec::new();
-            }
-        }
-
-        let mut prefix = topic.split('/').collect::<Vec<_>>();
-        prefix.pop(); // The node itself will also be added so its not part of the prefix
-        build_recursive(&prefix, noderef)
+    pub fn get_topics_below(&self, base: &str) -> Vec<String> {
+        self.ids
+            .keys()
+            .filter(|key| is_topic_below(base, key))
+            .cloned()
+            .collect()
     }
 
     /// Returns (`topic_amount`, `message_amount`, `TreeItem`s)
@@ -199,13 +175,27 @@ impl MqttHistory {
         history.add("foo/test".to_owned(), entry("B"));
         history.add("test".to_owned(), entry("C"));
         history.add("foo/bar".to_owned(), entry("D"));
+        history.add("testing/stuff".to_owned(), entry("E"));
         history
     }
 }
 
+fn is_topic_below(base: &str, child: &str) -> bool {
+    if base == child {
+        return true;
+    }
+    if !child.starts_with(base) {
+        return false;
+    }
+    child
+        .get(base.len()..)
+        .is_some_and(|after| after.starts_with('/'))
+}
+
 #[test]
 fn topics_below_works() {
-    let actual = MqttHistory::example().get_topics_below("foo");
+    let mut actual = MqttHistory::example().get_topics_below("foo");
+    actual.sort_unstable();
     assert_eq!(actual, ["foo/bar", "foo/test"]);
 }
 
@@ -219,12 +209,11 @@ fn topics_below_finds_itself_works() {
 fn tree_items_works() {
     let example = MqttHistory::example();
     let (topics, messages, items) = example.to_tree_items();
-    assert_eq!(topics, 3);
-    assert_eq!(messages, 4);
+    assert_eq!(topics, 4);
+    assert_eq!(messages, 5);
     dbg!(&items);
-    assert_eq!(items.len(), 2);
-    assert!(items[0].child(0).is_some());
-    assert!(items[0].child(1).is_some());
-    assert!(items[0].child(2).is_none());
-    assert!(items[1].child(0).is_none());
+    assert_eq!(items.len(), 3);
+    assert_eq!(items[0].children().len(), 2);
+    assert_eq!(items[1].children().len(), 0);
+    assert_eq!(items[2].children().len(), 1);
 }
