@@ -4,10 +4,10 @@ use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType};
 use ratatui::{symbols, Frame};
+use tui_tree_widget::Selector;
 
 use self::point::Point;
 use crate::mqtt::HistoryEntry;
-use crate::payload::JsonSelector;
 
 mod point;
 
@@ -26,7 +26,7 @@ impl Graph {
     pub fn parse(
         entries: &[HistoryEntry],
         binary_address: usize,
-        json_selector: &[JsonSelector],
+        json_selector: &[Selector],
     ) -> Option<Self> {
         let points = entries
             .iter()

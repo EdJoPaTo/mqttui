@@ -1,7 +1,8 @@
 use chrono::NaiveDateTime;
+use tui_tree_widget::{json, Selector};
 
 use crate::mqtt::HistoryEntry;
-use crate::payload::{JsonSelector, Payload};
+use crate::payload::{messagepack, Payload};
 
 pub struct Point {
     pub time: NaiveDateTime,
@@ -12,16 +13,14 @@ impl Point {
     pub fn parse(
         entry: &HistoryEntry,
         binary_address: usize,
-        json_selector: &[JsonSelector],
+        json_selector: &[Selector],
     ) -> Option<Self> {
         let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
             Payload::Binary(data) => data.get(binary_address).copied().map(f64::from),
-            Payload::Json(json) => {
-                f64_from_json(JsonSelector::get_json(json, json_selector).unwrap_or(json))
-            }
+            Payload::Json(json) => f64_from_json(json::select(json, json_selector).unwrap_or(json)),
             Payload::MessagePack(messagepack) => f64_from_messagepack(
-                JsonSelector::get_messagepack(messagepack, json_selector).unwrap_or(messagepack),
+                messagepack::select(messagepack, json_selector).unwrap_or(messagepack),
             ),
             Payload::String(str) => f64_from_string(str),
         }

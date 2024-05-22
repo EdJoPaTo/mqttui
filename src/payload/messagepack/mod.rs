@@ -1,6 +1,10 @@
 use rmpv::Value;
 
-pub mod tree_items;
+pub use self::select::select;
+pub use self::tree_items::tree_items;
+
+mod select;
+mod tree_items;
 
 fn map_key(key: &Value) -> String {
     key.as_str()
@@ -9,7 +13,7 @@ fn map_key(key: &Value) -> String {
 
 /// Attempts to decode [`MessagePack`](rmpv::Value) from the payload.
 /// Tries to find out if data seems valid.
-pub fn decode(mut payload: &[u8]) -> Option<Value> {
+pub(super) fn decode(mut payload: &[u8]) -> Option<Value> {
     let value = rmpv::decode::read_value(&mut payload).ok()?;
     if value.to_string().len() < payload.len() {
         // The JSON should be bigger than the bytes.

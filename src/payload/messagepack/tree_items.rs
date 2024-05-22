@@ -1,18 +1,17 @@
 use rmpv::Value;
-use tui_tree_widget::TreeItem;
+use tui_tree_widget::{Selector, TreeItem};
 
 use super::map_key;
-use crate::payload::JsonSelector;
 
-pub fn tree_items(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
+pub fn tree_items(root: &Value) -> Vec<TreeItem<'_, Selector>> {
     match root {
         Value::Map(object) => from_map(object),
         Value::Array(array) => from_array(array),
-        _ => vec![TreeItem::new_leaf(JsonSelector::None, root.to_string())],
+        _ => vec![TreeItem::new_leaf(Selector::None, root.to_string())],
     }
 }
 
-fn recurse(key: JsonSelector, value: &Value) -> TreeItem<JsonSelector> {
+fn recurse(key: Selector, value: &Value) -> TreeItem<Selector> {
     match value {
         Value::Map(object) => {
             let text = key.to_string();
@@ -29,18 +28,18 @@ fn recurse(key: JsonSelector, value: &Value) -> TreeItem<JsonSelector> {
     }
 }
 
-fn from_map(object: &[(Value, Value)]) -> Vec<TreeItem<'_, JsonSelector>> {
+fn from_map(object: &[(Value, Value)]) -> Vec<TreeItem<'_, Selector>> {
     object
         .iter()
-        .map(|(key, value)| recurse(JsonSelector::ObjectKey(map_key(key)), value))
+        .map(|(key, value)| recurse(Selector::ObjectKey(map_key(key)), value))
         .collect()
 }
 
-fn from_array(array: &[Value]) -> Vec<TreeItem<'_, JsonSelector>> {
+fn from_array(array: &[Value]) -> Vec<TreeItem<'_, Selector>> {
     array
         .iter()
         .enumerate()
-        .map(|(index, value)| recurse(JsonSelector::ArrayIndex(index), value))
+        .map(|(index, value)| recurse(Selector::ArrayIndex(index), value))
         .collect()
 }
 

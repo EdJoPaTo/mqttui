@@ -24,11 +24,14 @@ impl TopicOverview {
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, history: &MqttHistory, has_focus: bool) {
-        let (topic_amount, message_amount, tree_items) = history.to_tree_items();
+        let topic_amount = history.total_topics();
+        let message_amount = history.total_messages();
         let title = format!("Topics ({topic_amount}, {message_amount} messages)");
+
+        let tree_items = history.to_tree_items();
+
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(&tree_items)
-            .unwrap()
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)
                     .begin_symbol(None)

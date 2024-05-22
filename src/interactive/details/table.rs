@@ -6,11 +6,12 @@ use ratatui::widgets::{
     Block, BorderType, Row, ScrollbarOrientation, ScrollbarState, Table, TableState,
 };
 use ratatui::Frame;
+use tui_tree_widget::{json, Selector};
 
 use crate::format;
 use crate::interactive::ui::{focus_color, BORDERS_TOP_RIGHT, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
-use crate::payload::{JsonSelector, Payload};
+use crate::payload::{messagepack, Payload};
 
 #[allow(clippy::cast_precision_loss, clippy::too_many_lines)]
 pub fn draw(
@@ -18,7 +19,7 @@ pub fn draw(
     area: Rect,
     topic_history: &[HistoryEntry],
     binary_address: Option<usize>,
-    json_selector: &[JsonSelector],
+    json_selector: &[Selector],
     state: &mut TableState,
     has_focus: bool,
 ) {
@@ -57,14 +58,12 @@ pub fn draw(
             Payload::Binary(data) => binary_address
                 .and_then(|address| data.get(address).copied())
                 .map_or_else(|| format!("{data:?}"), |data| format!("{data}")),
-            Payload::Json(json) => JsonSelector::get_json(json, json_selector)
+            Payload::Json(json) => json::select(json, json_selector)
                 .unwrap_or(json)
                 .to_string(),
-            Payload::MessagePack(messagepack) => {
-                JsonSelector::get_messagepack(messagepack, json_selector)
-                    .unwrap_or(messagepack)
-                    .to_string()
-            }
+            Payload::MessagePack(messagepack) => messagepack::select(messagepack, json_selector)
+                .unwrap_or(messagepack)
+                .to_string(),
             Payload::String(str) => str.to_string(),
         };
         let row = Row::new(vec![time, qos, value]);

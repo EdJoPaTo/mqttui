@@ -6,16 +6,16 @@ use ratatui::text::Text;
 use ratatui::widgets::{Block, BorderType, Paragraph, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
-use tui_tree_widget::{Tree, TreeState};
+use tui_tree_widget::{Selector, Tree, TreeData, TreeState};
 
 use crate::interactive::ui::{focus_color, split_area_vertically, BORDERS_TOP_RIGHT};
 use crate::mqtt::HistoryEntry;
-use crate::payload::{tree_items_from_json, tree_items_from_messagepack, JsonSelector, Payload};
+use crate::payload::{messagepack, Payload};
 
 #[derive(Default)]
 pub struct PayloadView {
     pub binary_state: BinaryDataWidgetState,
-    pub json_state: TreeState<JsonSelector>,
+    pub json_state: TreeState<Selector>,
     pub last_area: Rect,
 }
 
@@ -92,18 +92,12 @@ impl PayloadView {
         json: &serde_json::Value,
     ) -> Rect {
         let title = format!("JSON Payload (Bytes: {payload_bytes})");
-        let items = tree_items_from_json(json);
 
-        let visible = self.json_state.flatten(&items);
-        let content_height = visible
-            .into_iter()
-            .map(|flattened| flattened.item.height())
-            .sum::<usize>();
+        let content_height = json.total_required_height(self.json_state.opened());
         let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
-        let widget = Tree::new(&items)
-            .unwrap()
+        let widget = Tree::new(json)
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)
                     .begin_symbol(None)
@@ -132,18 +126,13 @@ impl PayloadView {
         messagepack: &rmpv::Value,
     ) -> Rect {
         let title = format!("MessagePack Payload (Bytes: {payload_bytes})");
-        let items = tree_items_from_messagepack(messagepack);
+        let items = messagepack::tree_items(messagepack);
 
-        let visible = self.json_state.flatten(&items);
-        let content_height = visible
-            .into_iter()
-            .map(|flattened| flattened.item.height())
-            .sum::<usize>();
+        let content_height = items.total_required_height(self.json_state.opened());
         let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(&items)
-            .unwrap()
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)
                     .begin_symbol(None)
