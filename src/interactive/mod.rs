@@ -2,16 +2,15 @@ use std::time::{Duration, Instant};
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
 use ratatui::backend::{Backend, CrosstermBackend};
-use ratatui::layout::{Alignment, Rect};
+use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
 use ratatui::{Frame, Terminal};
 use rumqttc::{Client, Connection};
-use tui_tree_widget::TreeItem;
 
 use self::ui::ElementInFocus;
 use crate::cli::Broker;
-use crate::payload::{tree_items_from_json, tree_items_from_messagepack, Payload};
+use crate::payload::Payload;
 
 mod clean_retained;
 mod details;
@@ -161,11 +160,6 @@ impl App {
         }
     }
 
-    fn get_topic_tree_items(&self) -> Vec<TreeItem<'static, String>> {
-        let (_topics, _messages, items) = self.mqtt_thread.get_history().to_tree_items();
-        items
-    }
-
     fn can_switch_to_history_table(&self) -> bool {
         let Some(topic) = self.topic_overview.get_selected() else {
             return false;
@@ -228,24 +222,12 @@ impl App {
                 }
                 KeyCode::Esc => self.topic_overview.state.select(vec![]),
                 KeyCode::Enter | KeyCode::Char(' ') => self.topic_overview.state.toggle_selected(),
-                KeyCode::Down | KeyCode::Char('j') => {
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview.state.key_down(&items)
-                }
-                KeyCode::Up | KeyCode::Char('k') => {
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview.state.key_up(&items)
-                }
+                KeyCode::Down | KeyCode::Char('j') => self.topic_overview.state.key_down(),
+                KeyCode::Up | KeyCode::Char('k') => self.topic_overview.state.key_up(),
                 KeyCode::Left | KeyCode::Char('h') => self.topic_overview.state.key_left(),
                 KeyCode::Right | KeyCode::Char('l') => self.topic_overview.state.key_right(),
-                KeyCode::Home => {
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview.state.select_first(&items)
-                }
-                KeyCode::End => {
-                    let items = self.get_topic_tree_items();
-                    self.topic_overview.state.select_last(&items)
-                }
+                KeyCode::Home => self.topic_overview.state.select_first(),
+                KeyCode::End => self.topic_overview.state.select_last(),
                 KeyCode::PageUp => {
                     let page_jump = (self.topic_overview.last_area.height / 3) as usize;
                     self.topic_overview.state.scroll_up(page_jump)
@@ -357,18 +339,16 @@ impl App {
                         }
                         _ => false,
                     },
-                    Some(Payload::Json(json)) => match key.code {
+                    Some(Payload::Json(_) | Payload::MessagePack(_)) => match key.code {
                         KeyCode::Esc => self.details.payload.json_state.select(vec![]),
                         KeyCode::Enter | KeyCode::Char(' ') => {
                             self.details.payload.json_state.toggle_selected()
                         }
                         KeyCode::Down | KeyCode::Char('j') => {
-                            let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.key_down(&items)
+                            self.details.payload.json_state.key_down()
                         }
                         KeyCode::Up | KeyCode::Char('k') => {
-                            let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.key_up(&items)
+                            self.details.payload.json_state.key_up()
                         }
                         KeyCode::Left | KeyCode::Char('h') => {
                             self.details.payload.json_state.key_left()
@@ -376,51 +356,8 @@ impl App {
                         KeyCode::Right | KeyCode::Char('l') => {
                             self.details.payload.json_state.key_right()
                         }
-                        KeyCode::Home => {
-                            let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.select_first(&items)
-                        }
-                        KeyCode::End => {
-                            let items = tree_items_from_json(&json);
-                            self.details.payload.json_state.select_last(&items)
-                        }
-                        KeyCode::PageUp => self.details.payload.json_state.scroll_up(3),
-                        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.json_state.scroll_up(3)
-                        }
-                        KeyCode::PageDown => self.details.payload.json_state.scroll_down(3),
-                        KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                            self.details.payload.json_state.scroll_down(3)
-                        }
-                        _ => false,
-                    },
-                    Some(Payload::MessagePack(messagepack)) => match key.code {
-                        KeyCode::Esc => self.details.payload.json_state.select(vec![]),
-                        KeyCode::Enter | KeyCode::Char(' ') => {
-                            self.details.payload.json_state.toggle_selected()
-                        }
-                        KeyCode::Down | KeyCode::Char('j') => {
-                            let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.key_down(&items)
-                        }
-                        KeyCode::Up | KeyCode::Char('k') => {
-                            let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.key_up(&items)
-                        }
-                        KeyCode::Left | KeyCode::Char('h') => {
-                            self.details.payload.json_state.key_left()
-                        }
-                        KeyCode::Right | KeyCode::Char('l') => {
-                            self.details.payload.json_state.key_right()
-                        }
-                        KeyCode::Home => {
-                            let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.select_first(&items)
-                        }
-                        KeyCode::End => {
-                            let items = tree_items_from_messagepack(&messagepack);
-                            self.details.payload.json_state.select_last(&items)
-                        }
+                        KeyCode::Home => self.details.payload.json_state.select_first(),
+                        KeyCode::End => self.details.payload.json_state.select_last(),
                         KeyCode::PageUp => self.details.payload.json_state.scroll_up(3),
                         KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                             self.details.payload.json_state.scroll_up(3)
@@ -559,20 +496,30 @@ impl App {
     }
 
     fn on_click(&mut self, column: u16, row: u16) -> Refresh {
-        if let Some(index) = self.topic_overview.index_of_click(column, row) {
-            let items = self.get_topic_tree_items();
-            let changed = self
-                .topic_overview
-                .state
-                .select_visible_index(&items, index);
-            if !changed {
-                self.topic_overview.state.toggle_selected();
+        let position = Position::new(column, row);
+
+        if let Some(identifier) = self.topic_overview.state.rendered_at(position) {
+            let is_already_selected = identifier == self.topic_overview.state.selected();
+            if is_already_selected {
+                // change focus or toggle, don't do both
+                if matches!(self.focus, ElementInFocus::TopicOverview) {
+                    self.topic_overview.state.toggle_selected();
+                } else {
+                    self.focus = ElementInFocus::TopicOverview;
+                }
+            } else {
+                self.focus = ElementInFocus::TopicOverview;
+                self.topic_overview.state.select(identifier.to_vec());
             }
+
+            return Refresh::Update;
+        }
+        if self.topic_overview.state.click_at(position) {
             self.focus = ElementInFocus::TopicOverview;
             return Refresh::Update;
         }
 
-        if let Some(index) = self.details.payload.json_index_of_click(column, row) {
+        if self.details.payload.last_area.contains(position) {
             match self.get_selected_payload() {
                 None => return Refresh::Update, // No payload but click into payload area -> redraw
                 Some(Payload::Binary(_)) => {
@@ -580,29 +527,8 @@ impl App {
                     self.focus = ElementInFocus::Payload;
                     return Refresh::Update;
                 }
-                Some(Payload::Json(json)) => {
-                    let items = tree_items_from_json(&json);
-                    let changed = self
-                        .details
-                        .payload
-                        .json_state
-                        .select_visible_index(&items, index);
-                    if !changed {
-                        self.details.payload.json_state.toggle_selected();
-                    }
-                    self.focus = ElementInFocus::Payload;
-                    return Refresh::Update;
-                }
-                Some(Payload::MessagePack(messagepack)) => {
-                    let items = tree_items_from_messagepack(&messagepack);
-                    let changed = self
-                        .details
-                        .payload
-                        .json_state
-                        .select_visible_index(&items, index);
-                    if !changed {
-                        self.details.payload.json_state.toggle_selected();
-                    }
+                Some(Payload::Json(_) | Payload::MessagePack(_)) => {
+                    self.details.payload.json_state.click_at(position);
                     self.focus = ElementInFocus::Payload;
                     return Refresh::Update;
                 }
@@ -610,7 +536,7 @@ impl App {
             }
         }
 
-        if self.details.table_click(column, row) {
+        if self.details.table_click(position) {
             self.focus = ElementInFocus::HistoryTable;
             return Refresh::Update;
         }
@@ -760,13 +686,10 @@ impl App {
                 }
             });
 
-        let (topic_amount, message_amount, tree_items) = history.to_tree_items();
         self.topic_overview.draw(
             frame,
             overview_area,
-            topic_amount,
-            message_amount,
-            tree_items,
+            &history,
             matches!(self.focus, ElementInFocus::TopicOverview),
         );
         drop(history);

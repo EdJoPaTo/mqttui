@@ -2,9 +2,10 @@ use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, BorderType, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
-use tui_tree_widget::{Tree, TreeItem, TreeState};
+use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::ui::{focus_color, get_row_inside, BORDERS_TOP_RIGHT};
+use super::mqtt_history::MqttHistory;
+use super::ui::{focus_color, BORDERS_TOP_RIGHT};
 
 #[derive(Default)]
 pub struct TopicOverview {
@@ -22,18 +23,11 @@ impl TopicOverview {
         Some(selected.join("/"))
     }
 
-    pub fn draw(
-        &mut self,
-        frame: &mut Frame,
-        area: Rect,
-        topic_amount: usize,
-        message_amount: usize,
-        tree_items: Vec<TreeItem<String>>,
-        has_focus: bool,
-    ) {
+    pub fn draw(&mut self, frame: &mut Frame, area: Rect, history: &MqttHistory, has_focus: bool) {
+        let (topic_amount, message_amount, tree_items) = history.to_tree_items();
         let title = format!("Topics ({topic_amount}, {message_amount} messages)");
         let focus_color = focus_color(has_focus);
-        let widget = Tree::new(tree_items)
+        let widget = Tree::new(&tree_items)
             .unwrap()
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)
@@ -52,15 +46,5 @@ impl TopicOverview {
             );
         frame.render_stateful_widget(widget, area, &mut self.state);
         self.last_area = area;
-    }
-
-    pub const fn index_of_click(&self, column: u16, row: u16) -> Option<usize> {
-        if let Some(index) = get_row_inside(self.last_area, column, row) {
-            let offset = self.state.get_offset();
-            let new_index = (index as usize) + offset;
-            Some(new_index)
-        } else {
-            None
-        }
     }
 }

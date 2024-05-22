@@ -8,9 +8,7 @@ use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::ui::{
-    focus_color, get_row_inside, split_area_vertically, BORDERS_TOP_RIGHT,
-};
+use crate::interactive::ui::{focus_color, split_area_vertically, BORDERS_TOP_RIGHT};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{tree_items_from_json, tree_items_from_messagepack, JsonSelector, Payload};
 
@@ -38,13 +36,6 @@ impl PayloadView {
             }
             Payload::String(str) => self.draw_string(frame, area, has_focus, size, str),
         }
-    }
-
-    pub fn json_index_of_click(&self, column: u16, row: u16) -> Option<usize> {
-        get_row_inside(self.last_area, column, row).map(|index| {
-            let offset = self.json_state.get_offset();
-            (index as usize) + offset
-        })
     }
 
     fn areas(&mut self, area: Rect, has_focus: bool, content_height: usize) -> (Rect, Rect) {
@@ -111,7 +102,7 @@ impl PayloadView {
         let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
-        let widget = Tree::new(items)
+        let widget = Tree::new(&items)
             .unwrap()
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)
@@ -151,7 +142,7 @@ impl PayloadView {
         let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
-        let widget = Tree::new(items)
+        let widget = Tree::new(&items)
             .unwrap()
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)

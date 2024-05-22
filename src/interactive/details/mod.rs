@@ -24,20 +24,20 @@ impl Details {
             .min(topic_history_length.saturating_sub(1))
     }
 
-    const fn table_index_of_click(&self, column: u16, row: u16) -> Option<usize> {
+    const fn table_index_of_click(&self, position: Position) -> Option<usize> {
         let area = self.last_table_area;
-        if !area.contains(Position { x: column, y: row }) {
+        if !area.contains(position) {
             return None;
         }
-        let visible = row.saturating_sub(area.top()).saturating_sub(2); // subtract block & header
+        let visible_index = position.y.saturating_sub(area.top()).saturating_sub(2); // subtract block & header
         let offset = self.table_state.offset();
-        let index = (visible as usize) + offset;
+        let index = (visible_index as usize) + offset;
         Some(index)
     }
 
     /// Handles a click. Checks if its on the table. When it is the index get selected and true is returned.
-    pub fn table_click(&mut self, column: u16, row: u16) -> bool {
-        let Some(index) = self.table_index_of_click(column, row) else {
+    pub fn table_click(&mut self, position: Position) -> bool {
+        let Some(index) = self.table_index_of_click(position) else {
             return false;
         };
         self.table_state.select(Some(index));
@@ -64,7 +64,7 @@ impl Details {
         let json_selector = self.payload.json_state.selected();
 
         let table_area =
-            graph::Graph::parse(topic_history, binary_address.unwrap_or(0), &json_selector).map_or(
+            graph::Graph::parse(topic_history, binary_address.unwrap_or(0), json_selector).map_or(
                 history_area,
                 |graph| {
                     let (table_area, graph_area) =
@@ -79,7 +79,7 @@ impl Details {
             table_area,
             topic_history,
             binary_address,
-            &json_selector,
+            json_selector,
             &mut self.table_state,
             matches!(focus, ElementInFocus::HistoryTable),
         );
