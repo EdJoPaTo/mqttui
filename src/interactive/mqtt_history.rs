@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use ego_tree::{NodeId, NodeRef, Tree};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
-use tui_tree_widget::TreeItem;
+use tui_tree_widget::{Node, TreeData};
 
 use crate::interactive::ui::STYLE_BOLD;
 use crate::mqtt::HistoryEntry;
@@ -23,13 +23,6 @@ impl Topic {
             history: Vec::new(),
         }
     }
-}
-
-struct RecursiveTreeItemGenerator {
-    messages_below: usize,
-    messages: usize,
-    topics_below: usize,
-    tree_item: TreeItem<'static, String>,
 }
 
 pub struct MqttHistory {
@@ -130,67 +123,6 @@ impl MqttHistory {
         (topics, messages)
     }
 
-    /// Returns `TreeItem`s
-    ///
-    /// TODO: implement `TreeData` for `MqttHistory`
-    pub fn to_tree_items(&self) -> Vec<TreeItem<'static, String>> {
-        fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> RecursiveTreeItemGenerator {
-            let Topic { leaf, history } = node.value();
-            let mut topic = prefix.to_vec();
-            topic.push(leaf);
-
-            let entries_below = node.children().map(|node| build_recursive(&topic, node));
-            let mut messages_below: usize = 0;
-            let mut topics_below: usize = 0;
-            let mut children = Vec::new();
-            for below in entries_below {
-                messages_below = messages_below
-                    .saturating_add(below.messages)
-                    .saturating_add(below.messages_below);
-                topics_below = topics_below
-                    .saturating_add(usize::from(below.messages > 0))
-                    .saturating_add(below.topics_below);
-                children.push(below.tree_item);
-            }
-
-            let meta = history.last().map(|entry| &entry.payload).map_or_else(
-                || format!("({topics_below} topics, {messages_below} messages)"),
-                |payload| format!("= {payload}"),
-            );
-            let text = Line::from(vec![
-                Span::styled(leaf.to_string(), STYLE_BOLD),
-                Span::raw(" "),
-                Span::styled(meta, STYLE_DARKGRAY),
-            ]);
-
-            RecursiveTreeItemGenerator {
-                messages_below,
-                messages: history.len(),
-                topics_below,
-                tree_item: TreeItem::new(leaf.to_string(), text, children).unwrap(),
-            }
-        }
-
-        let children = self
-            .tree
-            .root()
-            .children()
-            .map(|node| build_recursive(&[], node));
-        let mut topics: usize = 0;
-        let mut messages: usize = 0;
-        let mut items = Vec::new();
-        for child in children {
-            topics = topics
-                .saturating_add(usize::from(child.messages > 0))
-                .saturating_add(child.topics_below);
-            messages = messages
-                .saturating_add(child.messages)
-                .saturating_add(child.messages_below);
-            items.push(child.tree_item);
-        }
-        items
-    }
-
     #[cfg(test)]
     pub fn example() -> Self {
         fn entry(payload: &str) -> HistoryEntry {
@@ -209,6 +141,78 @@ impl MqttHistory {
         history.add("foo/bar".to_owned(), entry("D"));
         history.add("testing/stuff".to_owned(), entry("E"));
         history
+    }
+}
+
+impl TreeData for MqttHistory {
+    type Identifier = String;
+
+    fn get_nodes(
+        &self,
+        open_identifiers: &HashSet<Vec<Self::Identifier>>,
+    ) -> Vec<Node<Self::Identifier>> {
+        fn recursive(
+            result: &mut Vec<Node<String>>,
+            open_identifiers: &HashSet<Vec<String>>,
+            node: NodeRef<Topic>,
+            prefix: &[&str],
+        ) {
+            let Topic { leaf, .. } = node.value();
+            let mut topic = prefix.to_vec();
+            topic.push(leaf);
+
+            let identifier = topic.iter().map(ToString::to_string).collect();
+
+            let is_open = open_identifiers.contains(&identifier);
+
+            result.push(Node {
+                identifier,
+                has_children: node.has_children(),
+                height: 1,
+            });
+
+            if is_open {
+                for node in node.children() {
+                    recursive(result, open_identifiers, node, &topic);
+                }
+            }
+        }
+
+        let mut result = Vec::new();
+        for node in self.tree.root().children() {
+            recursive(&mut result, open_identifiers, node, &[]);
+        }
+        result
+    }
+
+    fn render(
+        &self,
+        identifier: &[Self::Identifier],
+        area: ratatui::layout::Rect,
+        buffer: &mut ratatui::buffer::Buffer,
+    ) {
+        let leaf = identifier.last().unwrap();
+        let topic = identifier.join("/");
+
+        let payload = self
+            .ids
+            .get(&topic)
+            .and_then(|id| self.tree.get(*id))
+            .and_then(|node| node.value().history.last())
+            .map(|entry| &entry.payload);
+        let meta = payload.map_or_else(
+            || {
+                let (topics, messages) = self.count_topics_and_messages_below(&topic);
+                format!("({topics} topics, {messages} messages)")
+            },
+            |payload| format!("= {payload}"),
+        );
+        let text = Line::from(vec![
+            Span::styled(leaf, STYLE_BOLD),
+            Span::raw(" "),
+            Span::styled(meta, STYLE_DARKGRAY),
+        ]);
+        ratatui::widgets::Widget::render(text, area, buffer);
     }
 }
 
@@ -257,12 +261,28 @@ fn total_works() {
 }
 
 #[test]
-fn tree_items_works() {
+fn tree_data_all_closed_works() {
     let example = MqttHistory::example();
-    let items = example.to_tree_items();
-    dbg!(&items);
-    assert_eq!(items.len(), 3);
-    assert_eq!(items[0].children().len(), 2);
-    assert_eq!(items[1].children().len(), 0);
-    assert_eq!(items[2].children().len(), 1);
+    let open = HashSet::new();
+    let nodes = example.get_nodes(&open);
+    dbg!(&nodes);
+    assert_eq!(nodes.len(), 3);
+    assert_eq!(nodes[0].identifier, &["foo"]);
+    assert_eq!(nodes[1].identifier, &["test"]);
+    assert_eq!(nodes[2].identifier, &["testing"]);
+}
+
+#[test]
+fn tree_data_some_open_works() {
+    let example = MqttHistory::example();
+    let mut open = HashSet::new();
+    open.insert(vec!["foo".to_owned()]);
+    let nodes = example.get_nodes(&open);
+    dbg!(&nodes);
+    assert_eq!(nodes.len(), 5);
+    assert_eq!(nodes[0].identifier, &["foo"]);
+    assert_eq!(nodes[1].identifier, &["foo", "bar"]);
+    assert_eq!(nodes[2].identifier, &["foo", "test"]);
+    assert_eq!(nodes[3].identifier, &["test"]);
+    assert_eq!(nodes[4].identifier, &["testing"]);
 }
