@@ -2,7 +2,6 @@ use rmpv::Value;
 use tui_tree_widget::Selector;
 
 fn apply_messagepack<'v>(selector: &Selector, root: &'v Value) -> Option<&'v Value> {
-    use rmpv::Value;
     match (root, selector) {
         (Value::Array(array), Selector::ArrayIndex(index)) => array.get(*index),
         (Value::Map(object), Selector::ObjectKey(selectkey)) => object
