@@ -161,19 +161,19 @@ impl App {
     }
 
     fn can_switch_to_history_table(&self) -> bool {
-        let Some(topic) = self.topic_overview.get_selected() else {
+        let Some(topic) = self.topic_overview.state.selected() else {
             return false;
         };
-        self.mqtt_thread.get_history().get(&topic).is_some()
+        self.mqtt_thread.get_history().get(topic).is_some()
     }
 
     fn can_switch_to_payload(&self) -> bool {
-        let Some(topic) = self.topic_overview.get_selected() else {
+        let Some(topic) = self.topic_overview.state.selected() else {
             return false;
         };
         self.mqtt_thread
             .get_history()
-            .get(&topic)
+            .get(topic)
             .and_then(|entries| {
                 let index = self.details.selected_history_index(entries.len());
                 entries.get(index)
@@ -188,10 +188,10 @@ impl App {
 
     /// On current topic with the current history table index
     fn get_selected_payload(&self) -> Option<Payload> {
-        let topic = self.topic_overview.get_selected()?;
+        let topic = self.topic_overview.state.selected()?;
         self.mqtt_thread
             .get_history()
-            .get(&topic)
+            .get(topic)
             .and_then(|entries| {
                 let index = self.details.selected_history_index(entries.len());
                 entries.get(index)
@@ -220,7 +220,7 @@ impl App {
                     self.focus = ElementInFocus::TopicSearch;
                     true
                 }
-                KeyCode::Esc => self.topic_overview.state.select(vec![]),
+                KeyCode::Esc => self.topic_overview.state.select(None),
                 KeyCode::Enter | KeyCode::Char(' ') => self.topic_overview.state.toggle_selected(),
                 KeyCode::Down | KeyCode::Char('j') => self.topic_overview.state.key_down(),
                 KeyCode::Up | KeyCode::Char('k') => self.topic_overview.state.key_up(),
@@ -245,8 +245,8 @@ impl App {
                     self.topic_overview.state.scroll_down(page_jump)
                 }
                 KeyCode::Backspace | KeyCode::Delete => {
-                    if let Some(topic) = self.topic_overview.get_selected() {
-                        self.focus = ElementInFocus::CleanRetainedPopup(topic);
+                    if let Some(topic) = self.topic_overview.state.selected() {
+                        self.focus = ElementInFocus::CleanRetainedPopup(topic.clone());
                         true
                     } else {
                         false
@@ -339,8 +339,8 @@ impl App {
                         }
                         _ => false,
                     },
-                    Some(Payload::Json(_) | Payload::MessagePack(_)) => match key.code {
-                        KeyCode::Esc => self.details.payload.json_state.select(vec![]),
+                    Some(Payload::Json(_)) => match key.code {
+                        KeyCode::Esc => self.details.payload.json_state.select(None),
                         KeyCode::Enter | KeyCode::Char(' ') => {
                             self.details.payload.json_state.toggle_selected()
                         }
@@ -365,6 +365,35 @@ impl App {
                         KeyCode::PageDown => self.details.payload.json_state.scroll_down(3),
                         KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                             self.details.payload.json_state.scroll_down(3)
+                        }
+                        _ => false,
+                    },
+                    Some(Payload::MessagePack(_)) => match key.code {
+                        KeyCode::Esc => self.details.payload.indexed_tree_state.select(None),
+                        KeyCode::Enter | KeyCode::Char(' ') => {
+                            self.details.payload.indexed_tree_state.toggle_selected()
+                        }
+                        KeyCode::Down | KeyCode::Char('j') => {
+                            self.details.payload.indexed_tree_state.key_down()
+                        }
+                        KeyCode::Up | KeyCode::Char('k') => {
+                            self.details.payload.indexed_tree_state.key_up()
+                        }
+                        KeyCode::Left | KeyCode::Char('h') => {
+                            self.details.payload.indexed_tree_state.key_left()
+                        }
+                        KeyCode::Right | KeyCode::Char('l') => {
+                            self.details.payload.indexed_tree_state.key_right()
+                        }
+                        KeyCode::Home => self.details.payload.indexed_tree_state.select_first(),
+                        KeyCode::End => self.details.payload.indexed_tree_state.select_last(),
+                        KeyCode::PageUp => self.details.payload.indexed_tree_state.scroll_up(3),
+                        KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.indexed_tree_state.scroll_up(3)
+                        }
+                        KeyCode::PageDown => self.details.payload.indexed_tree_state.scroll_down(3),
+                        KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                            self.details.payload.indexed_tree_state.scroll_down(3)
                         }
                         _ => false,
                     },
@@ -499,7 +528,7 @@ impl App {
         let position = Position::new(column, row);
 
         if let Some(identifier) = self.topic_overview.state.rendered_at(position) {
-            let is_already_selected = identifier == self.topic_overview.state.selected();
+            let is_already_selected = Some(identifier) == self.topic_overview.state.selected();
             if is_already_selected {
                 // change focus or toggle, don't do both
                 if matches!(self.focus, ElementInFocus::TopicOverview) {
@@ -509,9 +538,8 @@ impl App {
                 }
             } else {
                 self.focus = ElementInFocus::TopicOverview;
-                self.topic_overview.state.select(identifier.to_vec());
+                self.topic_overview.state.select(Some(identifier.clone()));
             }
-
             return Refresh::Update;
         }
         if self.topic_overview.state.click_at(position) {
@@ -544,9 +572,9 @@ impl App {
         Refresh::Skip
     }
 
-    // Returns `true` when selection changed
+    /// Returns `true` when selection changed
     fn search_select(&mut self, advance: SearchSelection) -> bool {
-        let selection = self.topic_overview.get_selected();
+        let selection = self.topic_overview.state.selected();
         let history = self.mqtt_thread.get_history();
         let mut topics = history
             .get_all_topics()
@@ -558,7 +586,7 @@ impl App {
             .and_then(|selection| {
                 topics
                     .iter()
-                    .find(|(_, topic)| *topic == &selection)
+                    .find(|(_, topic)| *topic == selection)
                     .map(|(index, _)| *index)
             })
             .unwrap_or(0);
@@ -581,15 +609,14 @@ impl App {
                 .find(|(index, _)| *index > begin_index)
                 .or_else(|| topics.first()),
         };
-        let select = select.map_or(Vec::new(), |(_, topic)| {
-            topic.split('/').map(ToOwned::to_owned).collect()
-        });
+        let select = select.map(|(_, topic)| (*topic).clone());
         drop(history);
-
-        for i in 0..select.len() {
-            self.topic_overview.state.open(select[0..i].to_vec());
+        if let Some(topic) = &select {
+            let parts = topic.split('/').collect::<Vec<_>>();
+            for i in 0..parts.len() {
+                self.topic_overview.state.open(parts[0..i].join("/"));
+            }
         }
-
         self.topic_overview.state.select(select)
     }
 
@@ -604,7 +631,7 @@ impl App {
             .collect::<Vec<_>>();
         for splitted in topics {
             for i in 0..splitted.len() {
-                self.topic_overview.state.open(splitted[0..i].to_vec());
+                self.topic_overview.state.open(splitted[0..i].join("/"));
             }
         }
     }
@@ -646,7 +673,7 @@ impl App {
             ..area
         };
 
-        if let Some(topic) = self.topic_overview.get_selected() {
+        if let Some(topic) = self.topic_overview.state.selected() {
             let paragraph = Paragraph::new(Span::styled(topic, ui::STYLE_BOLD));
             frame.render_widget(paragraph.alignment(Alignment::Center), header_area);
         }
@@ -665,7 +692,8 @@ impl App {
 
         let overview_area = self
             .topic_overview
-            .get_selected()
+            .state
+            .selected()
             .as_ref()
             .and_then(|selected_topic| history.get(selected_topic))
             .map_or(main_area, |topic_history| {

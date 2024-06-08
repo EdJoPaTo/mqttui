@@ -149,11 +149,11 @@ impl TreeData for MqttHistory {
 
     fn get_nodes(
         &self,
-        open_identifiers: &HashSet<Vec<Self::Identifier>>,
+        open_identifiers: &HashSet<Self::Identifier>,
     ) -> Vec<Node<Self::Identifier>> {
         fn recursive(
             result: &mut Vec<Node<String>>,
-            open_identifiers: &HashSet<Vec<String>>,
+            open_identifiers: &HashSet<String>,
             node: NodeRef<Topic>,
             prefix: &[&str],
         ) {
@@ -161,14 +161,15 @@ impl TreeData for MqttHistory {
             let mut topic = prefix.to_vec();
             topic.push(leaf);
 
-            let identifier = topic.iter().map(ToString::to_string).collect();
+            let identifier = topic.join("/");
 
             let is_open = open_identifiers.contains(&identifier);
 
             result.push(Node {
-                identifier,
+                depth: prefix.len(),
                 has_children: node.has_children(),
                 height: 1,
+                identifier,
             });
 
             if is_open {
@@ -187,26 +188,24 @@ impl TreeData for MqttHistory {
 
     fn render(
         &self,
-        identifier: &[Self::Identifier],
+        topic: &Self::Identifier,
         area: ratatui::layout::Rect,
         buffer: &mut ratatui::buffer::Buffer,
     ) {
-        let leaf = identifier.last().unwrap();
-        let topic = identifier.join("/");
-
         let payload = self
             .ids
-            .get(&topic)
+            .get(topic)
             .and_then(|id| self.tree.get(*id))
             .and_then(|node| node.value().history.last())
             .map(|entry| &entry.payload);
         let meta = payload.map_or_else(
             || {
-                let (topics, messages) = self.count_topics_and_messages_below(&topic);
+                let (topics, messages) = self.count_topics_and_messages_below(topic);
                 format!("({topics} topics, {messages} messages)")
             },
             |payload| format!("= {payload}"),
         );
+        let leaf = topic.split('/').last().unwrap();
         let text = Line::from(vec![
             Span::styled(leaf, STYLE_BOLD),
             Span::raw(" "),
@@ -267,22 +266,22 @@ fn tree_data_all_closed_works() {
     let nodes = example.get_nodes(&open);
     dbg!(&nodes);
     assert_eq!(nodes.len(), 3);
-    assert_eq!(nodes[0].identifier, &["foo"]);
-    assert_eq!(nodes[1].identifier, &["test"]);
-    assert_eq!(nodes[2].identifier, &["testing"]);
+    assert_eq!(nodes[0].identifier, "foo");
+    assert_eq!(nodes[1].identifier, "test");
+    assert_eq!(nodes[2].identifier, "testing");
 }
 
 #[test]
 fn tree_data_some_open_works() {
     let example = MqttHistory::example();
     let mut open = HashSet::new();
-    open.insert(vec!["foo".to_owned()]);
+    open.insert("foo".to_owned());
     let nodes = example.get_nodes(&open);
     dbg!(&nodes);
     assert_eq!(nodes.len(), 5);
-    assert_eq!(nodes[0].identifier, &["foo"]);
-    assert_eq!(nodes[1].identifier, &["foo", "bar"]);
-    assert_eq!(nodes[2].identifier, &["foo", "test"]);
-    assert_eq!(nodes[3].identifier, &["test"]);
-    assert_eq!(nodes[4].identifier, &["testing"]);
+    assert_eq!(nodes[0].identifier, "foo");
+    assert_eq!(nodes[1].identifier, "foo/bar");
+    assert_eq!(nodes[2].identifier, "foo/test");
+    assert_eq!(nodes[3].identifier, "test");
+    assert_eq!(nodes[4].identifier, "testing");
 }

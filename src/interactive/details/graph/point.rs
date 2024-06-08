@@ -1,8 +1,10 @@
 use chrono::NaiveDateTime;
-use tui_tree_widget::{json, Selector};
+use tui_tree_widget::third_party::messagepack;
+use tui_tree_widget::KeyValueTreeItem;
 
+use crate::interactive::details::payload_view::PayloadView;
 use crate::mqtt::HistoryEntry;
-use crate::payload::{messagepack, Payload};
+use crate::payload::Payload;
 
 pub struct Point {
     pub time: NaiveDateTime,
@@ -10,18 +12,27 @@ pub struct Point {
 }
 
 impl Point {
-    pub fn parse(
-        entry: &HistoryEntry,
-        binary_address: usize,
-        json_selector: &[Selector],
-    ) -> Option<Self> {
+    pub fn parse(entry: &HistoryEntry, payload_view: &PayloadView) -> Option<Self> {
         let time = *entry.time.as_optional()?;
         let y = match &entry.payload {
-            Payload::Binary(data) => data.get(binary_address).copied().map(f64::from),
-            Payload::Json(json) => f64_from_json(json::select(json, json_selector).unwrap_or(json)),
-            Payload::MessagePack(messagepack) => f64_from_messagepack(
-                messagepack::select(messagepack, json_selector).unwrap_or(messagepack),
-            ),
+            Payload::Binary(data) => data
+                .get(payload_view.binary_state.selected_address().unwrap_or(0))
+                .copied()
+                .map(f64::from),
+            Payload::Json(json) => {
+                let selected = payload_view
+                    .json_state
+                    .selected()
+                    .and_then(|selector| json.get_value_deep(selector));
+                f64_from_json(selected.unwrap_or(json))
+            }
+            Payload::MessagePack(messagepack) => {
+                let selected = payload_view
+                    .indexed_tree_state
+                    .selected()
+                    .and_then(|selector| messagepack::get_value(messagepack, selector));
+                f64_from_messagepack(selected.unwrap_or(messagepack))
+            }
             Payload::String(str) => f64_from_string(str),
         }
         .filter(|y| y.is_finite())?;
@@ -106,7 +117,7 @@ mod parse_tests {
             payload_size: 42,
             payload: Payload::unlimited(vec![]),
         };
-        let point = Point::parse(&entry, 0, &[]);
+        let point = Point::parse(&entry, &PayloadView::default());
         assert!(point.is_none());
     }
 
@@ -120,7 +131,7 @@ mod parse_tests {
             payload_size: 42,
             payload: Payload::Json(Value::Number(Number::from_f64(12.3).unwrap())),
         };
-        let point = Point::parse(&entry, 0, &[]).unwrap();
+        let point = Point::parse(&entry, &PayloadView::default()).unwrap();
         assert_eq!(point.time, date);
         assert!((point.y - 12.3).abs() < 0.1);
     }
@@ -134,7 +145,7 @@ mod parse_tests {
             payload_size: 42,
             payload: Payload::MessagePack(rmpv::Value::F64(12.3)),
         };
-        let point = Point::parse(&entry, 0, &[]).unwrap();
+        let point = Point::parse(&entry, &PayloadView::default()).unwrap();
         assert_eq!(point.time, date);
         assert!((point.y - 12.3).abs() < 0.1);
     }

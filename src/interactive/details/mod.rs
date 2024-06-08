@@ -60,26 +60,20 @@ impl Details {
             matches!(focus, ElementInFocus::Payload),
             entry,
         );
-        let binary_address = self.payload.binary_state.selected_address();
-        let json_selector = self.payload.json_state.selected();
 
         let table_area =
-            graph::Graph::parse(topic_history, binary_address.unwrap_or(0), json_selector).map_or(
-                history_area,
-                |graph| {
-                    let (table_area, graph_area) =
-                        split_area_vertically(history_area, history_area.height / 2);
-                    graph.draw(frame, graph_area);
-                    table_area
-                },
-            );
+            graph::Graph::parse(topic_history, &self.payload).map_or(history_area, |graph| {
+                let (table_area, graph_area) =
+                    split_area_vertically(history_area, history_area.height / 2);
+                graph.draw(frame, graph_area);
+                table_area
+            });
         self.last_table_area = table_area;
         table::draw(
             frame,
             table_area,
             topic_history,
-            binary_address,
-            json_selector,
+            &self.payload,
             &mut self.table_state,
             matches!(focus, ElementInFocus::HistoryTable),
         );

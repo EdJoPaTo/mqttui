@@ -15,14 +15,6 @@ pub struct TopicOverview {
 }
 
 impl TopicOverview {
-    pub fn get_selected(&self) -> Option<String> {
-        let selected = self.state.selected();
-        if selected.is_empty() {
-            return None;
-        }
-        Some(selected.join("/"))
-    }
-
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, history: &MqttHistory, has_focus: bool) {
         let topic_amount = history.total_topics();
         let message_amount = history.total_messages();

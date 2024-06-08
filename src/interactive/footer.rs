@@ -46,7 +46,7 @@ impl Footer {
             ElementInFocus::TopicOverview => {
                 add!("q", "Quit");
                 add!("/", "Search");
-                if app.topic_overview.get_selected().is_some() {
+                if app.topic_overview.state.selected().is_some() {
                     add!("Del", "Clean retained");
                 }
                 if app.can_switch_to_payload() {

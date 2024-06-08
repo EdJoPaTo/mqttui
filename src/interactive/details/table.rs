@@ -6,20 +6,21 @@ use ratatui::widgets::{
     Block, BorderType, Row, ScrollbarOrientation, ScrollbarState, Table, TableState,
 };
 use ratatui::Frame;
-use tui_tree_widget::{json, Selector};
+use tui_tree_widget::third_party::messagepack;
+use tui_tree_widget::KeyValueTreeItem;
 
+use super::payload_view::PayloadView;
 use crate::format;
 use crate::interactive::ui::{focus_color, BORDERS_TOP_RIGHT, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
-use crate::payload::{messagepack, Payload};
+use crate::payload::Payload;
 
 #[allow(clippy::cast_precision_loss, clippy::too_many_lines)]
 pub fn draw(
     frame: &mut Frame,
     area: Rect,
     topic_history: &[HistoryEntry],
-    binary_address: Option<usize>,
-    json_selector: &[Selector],
+    payload_view: &PayloadView,
     state: &mut TableState,
     has_focus: bool,
 ) {
@@ -55,13 +56,21 @@ pub fn draw(
         let time = entry.time.to_string();
         let qos = format::qos(entry.qos).to_owned();
         let value = match &entry.payload {
-            Payload::Binary(data) => binary_address
+            Payload::Binary(data) => payload_view
+                .binary_state
+                .selected_address()
                 .and_then(|address| data.get(address).copied())
                 .map_or_else(|| format!("{data:?}"), |data| format!("{data}")),
-            Payload::Json(json) => json::select(json, json_selector)
+            Payload::Json(json) => payload_view
+                .json_state
+                .selected()
+                .and_then(|selector| json.get_value_deep(selector))
                 .unwrap_or(json)
                 .to_string(),
-            Payload::MessagePack(messagepack) => messagepack::select(messagepack, json_selector)
+            Payload::MessagePack(messagepack) => payload_view
+                .indexed_tree_state
+                .selected()
+                .and_then(|selector| messagepack::get_value(messagepack, selector))
                 .unwrap_or(messagepack)
                 .to_string(),
             Payload::String(str) => str.to_string(),

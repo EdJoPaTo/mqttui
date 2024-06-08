@@ -4,9 +4,9 @@ use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType};
 use ratatui::{symbols, Frame};
-use tui_tree_widget::Selector;
 
 use self::point::Point;
+use super::payload_view::PayloadView;
 use crate::mqtt::HistoryEntry;
 
 mod point;
@@ -23,14 +23,10 @@ pub struct Graph {
 
 impl Graph {
     /// Ensures to create a useful graph (has at least 2 points)
-    pub fn parse(
-        entries: &[HistoryEntry],
-        binary_address: usize,
-        json_selector: &[Selector],
-    ) -> Option<Self> {
+    pub fn parse(entries: &[HistoryEntry], payload_view: &PayloadView) -> Option<Self> {
         let points = entries
             .iter()
-            .filter_map(|entry| Point::parse(entry, binary_address, json_selector))
+            .filter_map(|entry| Point::parse(entry, payload_view))
             .collect::<Box<[_]>>();
 
         let [ref first, .., ref last] = *points else {
@@ -116,7 +112,7 @@ mod tests {
             // After an MQTT reconnect retained are sent again -> also filter them out
             entry(Time::Retained, "12.3"),
         ];
-        let graph = Graph::parse(&entries, 0, &[]);
+        let graph = Graph::parse(&entries, &PayloadView::default());
         assert!(graph.is_none());
     }
 
@@ -132,7 +128,8 @@ mod tests {
             entry(Time::Local(second_date), "12.5"),
         ];
 
-        let graph = Graph::parse(&entries, 0, &[]).expect("Should be possible to create graph");
+        let graph = Graph::parse(&entries, &PayloadView::default())
+            .expect("Should be possible to create graph");
 
         assert_eq!(graph.data.len(), 2);
         assert_eq!(graph.first_time, first_date);

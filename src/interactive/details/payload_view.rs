@@ -6,16 +6,18 @@ use ratatui::text::Text;
 use ratatui::widgets::{Block, BorderType, Paragraph, Scrollbar, ScrollbarOrientation};
 use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
-use tui_tree_widget::{Selector, Tree, TreeData, TreeState};
+use tui_tree_widget::third_party::json::Selector;
+use tui_tree_widget::{Tree, TreeData, TreeState};
 
 use crate::interactive::ui::{focus_color, split_area_vertically, BORDERS_TOP_RIGHT};
 use crate::mqtt::HistoryEntry;
-use crate::payload::{messagepack, Payload};
+use crate::payload::Payload;
 
 #[derive(Default)]
 pub struct PayloadView {
     pub binary_state: BinaryDataWidgetState,
-    pub json_state: TreeState<Selector>,
+    pub indexed_tree_state: TreeState<Vec<usize>>,
+    pub json_state: TreeState<Vec<Selector>>,
     pub last_area: Rect,
 }
 
@@ -126,13 +128,12 @@ impl PayloadView {
         messagepack: &rmpv::Value,
     ) -> Rect {
         let title = format!("MessagePack Payload (Bytes: {payload_bytes})");
-        let items = messagepack::tree_items(messagepack);
 
-        let content_height = items.total_required_height(self.json_state.opened());
+        let content_height = messagepack.total_required_height(self.indexed_tree_state.opened());
         let (payload_area, remaining_area) = self.areas(area, has_focus, content_height);
 
         let focus_color = focus_color(has_focus);
-        let widget = Tree::new(&items)
+        let widget = Tree::new(messagepack)
             .experimental_scrollbar(Some(
                 Scrollbar::new(ScrollbarOrientation::VerticalRight)
                     .begin_symbol(None)
@@ -148,7 +149,7 @@ impl PayloadView {
                     .border_style(Style::new().fg(focus_color))
                     .title(title),
             );
-        frame.render_stateful_widget(widget, payload_area, &mut self.json_state);
+        frame.render_stateful_widget(widget, payload_area, &mut self.indexed_tree_state);
         remaining_area
     }
 
