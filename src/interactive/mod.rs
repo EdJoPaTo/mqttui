@@ -1,13 +1,14 @@
 use std::time::{Duration, Instant};
 
-use crossterm::event::{
+use ratatui::crossterm::event::{
     Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
-use ratatui::{Frame, Terminal};
+use ratatui::{crossterm, Frame, Terminal};
 use rumqttc::{Client, Connection};
 
 use self::ui::ElementInFocus;
