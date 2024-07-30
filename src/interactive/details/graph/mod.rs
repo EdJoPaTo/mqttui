@@ -40,6 +40,7 @@ impl Graph {
         let mut data = Vec::with_capacity(points.len());
         let mut y_min = first.y;
         let mut y_max = y_min;
+        #[allow(clippy::explicit_iter_loop)] // requires rustc 1.80 which is above the MSRV
         for point in points.iter() {
             y_min = y_min.min(point.y);
             y_max = y_max.max(point.y);
