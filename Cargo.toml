@@ -45,6 +45,7 @@ rustls-pki-types = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tui-tree-widget = "0.20"
+unicode-width = "=0.1.12" # remove version pinning when https://github.com/ratatui-org/ratatui/pull/1226 is released
 url = "2"
 
 # https://crates.io/crates/cargo-deb
