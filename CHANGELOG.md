@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Interactive: Show cursor on search input
 
+### Fixed
+
+- Update to ratatui 0.26.3 to prevent panic at truncation of Unicode multi-width characters. See <https://github.com/ratatui-org/ratatui/pull/1089> for more details.
+
 ## [0.21.0] - 2024-04-17
 
 ### Changed
