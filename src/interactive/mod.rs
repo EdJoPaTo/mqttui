@@ -1,6 +1,8 @@
 use std::time::{Duration, Instant};
 
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
+use crossterm::event::{
+    Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
+};
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::text::Span;
@@ -106,6 +108,7 @@ where
         let timeout = debounce.map_or(INTERVAL, |start| DEBOUNCE.saturating_sub(start.elapsed()));
         if crossterm::event::poll(timeout)? {
             let refresh = match crossterm::event::read()? {
+                Event::Key(key) if !matches!(key.kind, KeyEventKind::Press) => Refresh::Skip,
                 Event::Key(key) => app.on_key(key)?,
                 Event::Mouse(mouse) => match mouse.kind {
                     MouseEventKind::Down(MouseButton::Left) => {
