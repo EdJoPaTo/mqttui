@@ -1,10 +1,9 @@
 use std::time::{Duration, Instant};
 
+use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{
     Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEventKind};
-use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
@@ -619,7 +618,7 @@ impl App {
 
         let connection_error = self.mqtt_thread.has_connection_err();
 
-        let area = frame.size();
+        let area = frame.area();
         let Rect { width, height, .. } = area;
         debug_assert_eq!(area.x, 0, "area should fill the whole space");
         debug_assert_eq!(area.y, 0, "area should fill the whole space");
