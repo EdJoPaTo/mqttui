@@ -455,7 +455,7 @@ impl App {
     }
 
     fn on_scroll(&mut self, direction: ScrollDirection, column: u16, row: u16) -> Refresh {
-        let position = ratatui::layout::Position { x: column, y: row };
+        let position = Position { x: column, y: row };
 
         let changed = if self.topic_overview.last_area.contains(position) {
             match direction {

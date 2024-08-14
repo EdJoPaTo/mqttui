@@ -62,7 +62,7 @@ impl MqttThread {
             .read()
             .expect("mqtt history thread paniced")
             .as_ref()
-            .map(std::string::ToString::to_string)
+            .map(ToString::to_string)
     }
 
     pub fn get_history(&self) -> RwLockReadGuard<MqttHistory> {
