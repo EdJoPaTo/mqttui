@@ -9,7 +9,7 @@ jobs:
   rustfmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
           - stable
           - beta
           - nightly
-          - '1.74'
+          - "1.74"
         os:
           - ubuntu-latest
           - macos-latest
