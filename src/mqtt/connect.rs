@@ -17,12 +17,12 @@ pub fn connect(
     keep_alive: Option<Duration>,
 ) -> anyhow::Result<(Broker, Client, Connection)> {
     let (transport, host, port) = match &broker {
-        Broker::Tcp { ref host, port } => (Transport::Tcp, host.clone(), *port),
-        Broker::Ssl { ref host, port } => (
+        Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
+        Broker::Ssl { host, port } => (
             Transport::Tls(super::encryption::create_tls_configuration(
                 insecure,
-                &client_cert,
-                &client_key,
+                client_cert.as_deref(),
+                client_key.as_deref(),
             )?),
             host.clone(),
             *port,
@@ -32,8 +32,8 @@ pub fn connect(
         Broker::WebSocketSsl(url) => (
             Transport::Wss(super::encryption::create_tls_configuration(
                 insecure,
-                &client_cert,
-                &client_key,
+                client_cert.as_deref(),
+                client_key.as_deref(),
             )?),
             url.to_string(),
             666,

@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::BufReader;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 
 use rumqttc::TlsConfiguration;
@@ -61,8 +61,8 @@ impl rustls::client::danger::ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
-    client_certificate_path: &Option<PathBuf>,
-    client_private_key_path: &Option<PathBuf>,
+    client_certificate_path: Option<&Path>,
+    client_private_key_path: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
     let certs = rustls_native_certs::load_native_certs()?;
