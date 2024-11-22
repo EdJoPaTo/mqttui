@@ -60,13 +60,13 @@ impl MqttThread {
     pub fn has_connection_err(&self) -> Option<String> {
         self.connection_err
             .read()
-            .expect("mqtt history thread paniced")
+            .expect("mqtt history thread panicked")
             .as_ref()
             .map(ToString::to_string)
     }
 
     pub fn get_history(&self) -> RwLockReadGuard<MqttHistory> {
-        self.history.read().expect("mqtt history thread paniced")
+        self.history.read().expect("mqtt history thread panicked")
     }
 
     pub fn clean_below(&self, topic: &str) -> anyhow::Result<()> {
