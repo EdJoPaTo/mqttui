@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use anyhow::Context;
 use rumqttc::{Client, Connection, Event, MqttOptions, Packet, Transport};
 
 use crate::cli::{Broker, MqttConnection};
@@ -55,16 +56,16 @@ pub fn connect(
 
     let (client, mut connection) = Client::new(mqttoptions, 10);
 
-    for notification in connection.iter() {
-        match notification {
-            Ok(Event::Incoming(Packet::ConnAck(_))) => return Ok((broker, client, connection)),
-            Ok(Event::Incoming(packet)) => eprintln!(
+    for event in connection.iter() {
+        let event = event.with_context(|| format!(
+            "Failed to connect to the MQTT broker {broker}.\nAre your MQTT connection options correct? For more information on them see --help"
+        ))?;
+        match event {
+            Event::Incoming(Packet::ConnAck(_)) => return Ok((broker, client, connection)),
+            Event::Incoming(packet) => eprintln!(
                 "Received an MQTT packet before the ConnAck. This is suspicious behaviour of the broker {broker}. The packet: {packet:?}"
             ),
-            Ok(Event::Outgoing(_)) => {} // Sending stuff is fine
-            Err(error) => anyhow::bail!(
-                "Failed to connect to the MQTT broker {broker}.\nAre your MQTT connection options correct? For more information on them see --help\n{error}"
-            ),
+            Event::Outgoing(_) => {} // Sending stuff is fine
         }
     }
     Err(anyhow::anyhow!(
