@@ -16,7 +16,7 @@ pub fn clean_retained(client: &Client, mut connection: Connection, dry_run: bool
             }
             Ok(rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish))) => {
                 if publish.payload.is_empty() {
-                    // Thats probably myself cleaning up
+                    // That's probably myself cleaning up
                     continue;
                 }
                 if !publish.retain {

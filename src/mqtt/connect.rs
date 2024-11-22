@@ -68,6 +68,6 @@ pub fn connect(
         }
     }
     Err(anyhow::anyhow!(
-        "The MQTT connection to {broker} ended unexpectedly before it was acknowleged."
+        "The MQTT connection to {broker} ended unexpectedly before it was acknowledged."
     ))
 }
