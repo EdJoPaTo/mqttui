@@ -126,6 +126,6 @@ fn thread_logic(
                 *connection_err.write().unwrap() = Some(err);
                 sleep(Duration::from_millis(25));
             }
-        };
+        }
     }
 }

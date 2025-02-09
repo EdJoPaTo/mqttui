@@ -54,7 +54,7 @@ pub fn show(mut connection: Connection, json: bool, verbose: bool) {
                 } else {
                     let qos = format::qos(publish.qos);
                     println!("{time:12} QoS:{qos:11} {topic:50} Payload({size:>3}): {payload}");
-                };
+                }
             }
             Ok(rumqttc::Event::Incoming(packet)) => {
                 if verbose {
