@@ -51,6 +51,7 @@ url = "2"
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
 depends = ""
+section = "utility"
 assets = [
 	["target/release/mqttui", "/usr/bin/", "755"],
 	["CHANGELOG.md", "/usr/share/doc/mqttui/", "644"],
