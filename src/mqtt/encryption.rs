@@ -65,8 +65,13 @@ pub fn create_tls_configuration(
     client_private_key_path: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
-    let certs = rustls_native_certs::load_native_certs()?;
-    for cert in certs {
+    let native_certs = rustls_native_certs::load_native_certs();
+    for error in native_certs.errors {
+        eprintln!(
+            "Warning: might skip some native certificates because of an error while loading: {error}"
+        );
+    }
+    for cert in native_certs.certs {
         _ = roots.add(cert);
     }
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Only handle key pressed events and ignore released events.
+- Dont fail when some platform certificates can't be loaded. Print a warning and continue. The needed certificates might be included that way.
 
 ## [0.21.1] - 2024-07-30
 

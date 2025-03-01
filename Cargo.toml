@@ -39,7 +39,7 @@ ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary
 rmpv = { version = "1", features = ["with-serde"] }
 rumqttc = { version = "0.24", features = ["websocket"] }
 rustls = "0.22"
-rustls-native-certs = "0.7"
+rustls-native-certs = "0.8" # TODO: migrate to rustls-platform-verifier with rustls upgrade
 rustls-pemfile = "2"
 rustls-pki-types = "1"
 serde = { version = "1", features = ["derive"] }
