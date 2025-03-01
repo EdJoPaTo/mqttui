@@ -255,26 +255,31 @@ impl App {
                         false
                     }
                 }
+                KeyCode::Char('o') => {
+                    self.topic_overview.search.clear();
+                    self.open_all_search_matches()
+                }
+                KeyCode::Char('O') => self.topic_overview.state.close_all(),
                 _ => false,
             },
             ElementInFocus::TopicSearch => match key.code {
                 KeyCode::Char(char) => {
                     self.topic_overview.search += &char.to_lowercase().to_string();
                     self.search_select(SearchSelection::Stay);
-                    true
+                    true // Render new because of search string change
                 }
                 KeyCode::Backspace => {
                     self.topic_overview.search.pop();
                     self.search_select(SearchSelection::Stay);
-                    true
+                    true // Render new because of search string change
                 }
                 KeyCode::Up => self.search_select(SearchSelection::Before),
                 KeyCode::Down => self.search_select(SearchSelection::After),
                 KeyCode::Enter => {
-                    self.search_select(SearchSelection::After);
-                    self.topic_overview.state.close_all();
-                    self.open_all_search_matches();
-                    true
+                    let selection_changed = self.search_select(SearchSelection::After);
+                    self.topic_overview.state.close_all(); // Exclusively open search matches
+                    let open_changed = self.open_all_search_matches();
+                    selection_changed || open_changed
                 }
                 KeyCode::Esc => {
                     self.topic_overview.search = String::new();
@@ -596,7 +601,8 @@ impl App {
         self.topic_overview.state.select(select)
     }
 
-    fn open_all_search_matches(&mut self) {
+    // Returns `true` when the opened topics changed
+    fn open_all_search_matches(&mut self) -> bool {
         let topics = self
             .mqtt_thread
             .get_history()
@@ -605,11 +611,15 @@ impl App {
             .filter(|topic| topic.to_lowercase().contains(&self.topic_overview.search))
             .map(|topic| topic.split('/').map(ToOwned::to_owned).collect::<Vec<_>>())
             .collect::<Vec<_>>();
-        for splitted in topics {
-            for i in 0..splitted.len() {
-                self.topic_overview.state.open(splitted[0..i].to_vec());
+        let mut change = false;
+        for parts in topics {
+            for i in 0..parts.len() {
+                if self.topic_overview.state.open(parts[0..i].to_vec()) {
+                    change = true;
+                }
             }
         }
+        change
     }
 
     fn draw(&mut self, frame: &mut Frame) {

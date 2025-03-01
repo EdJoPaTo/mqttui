@@ -46,6 +46,10 @@ impl Footer {
             ElementInFocus::TopicOverview => {
                 add!("q", "Quit");
                 add!("/", "Search");
+                add!("o", "Open all");
+                if !app.topic_overview.state.opened().is_empty() {
+                    add!("O", "Close all");
+                }
                 if app.topic_overview.get_selected().is_some() {
                     add!("Del", "Clean retained");
                 }
