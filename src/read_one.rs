@@ -30,7 +30,7 @@ pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, 
                     std::io::stdout()
                         .write_all(&publish.payload)
                         .expect("Should be able to write payload to stdout");
-                };
+                }
                 done = true;
                 client.disconnect().unwrap();
             }

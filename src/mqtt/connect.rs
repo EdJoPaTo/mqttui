@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use anyhow::Context;
 use rumqttc::{Client, Connection, Event, MqttOptions, Packet, Transport};
 
 use crate::cli::{Broker, MqttConnection};
@@ -17,12 +18,12 @@ pub fn connect(
     keep_alive: Option<Duration>,
 ) -> anyhow::Result<(Broker, Client, Connection)> {
     let (transport, host, port) = match &broker {
-        Broker::Tcp { ref host, port } => (Transport::Tcp, host.clone(), *port),
-        Broker::Ssl { ref host, port } => (
+        Broker::Tcp { host, port } => (Transport::Tcp, host.clone(), *port),
+        Broker::Ssl { host, port } => (
             Transport::Tls(super::encryption::create_tls_configuration(
                 insecure,
-                &client_cert,
-                &client_key,
+                client_cert.as_deref(),
+                client_key.as_deref(),
             )?),
             host.clone(),
             *port,
@@ -32,8 +33,8 @@ pub fn connect(
         Broker::WebSocketSsl(url) => (
             Transport::Wss(super::encryption::create_tls_configuration(
                 insecure,
-                &client_cert,
-                &client_key,
+                client_cert.as_deref(),
+                client_key.as_deref(),
             )?),
             url.to_string(),
             666,
@@ -55,19 +56,19 @@ pub fn connect(
 
     let (client, mut connection) = Client::new(mqttoptions, 10);
 
-    for notification in connection.iter() {
-        match notification {
-            Ok(Event::Incoming(Packet::ConnAck(_))) => return Ok((broker, client, connection)),
-            Ok(Event::Incoming(packet)) => eprintln!(
+    for event in connection.iter() {
+        let event = event.with_context(|| format!(
+            "Failed to connect to the MQTT broker {broker}.\nAre your MQTT connection options correct? For more information on them see --help"
+        ))?;
+        match event {
+            Event::Incoming(Packet::ConnAck(_)) => return Ok((broker, client, connection)),
+            Event::Incoming(packet) => eprintln!(
                 "Received an MQTT packet before the ConnAck. This is suspicious behaviour of the broker {broker}. The packet: {packet:?}"
             ),
-            Ok(Event::Outgoing(_)) => {} // Sending stuff is fine
-            Err(error) => anyhow::bail!(
-                "Failed to connect to the MQTT broker {broker}.\nAre your MQTT connection options correct? For more information on them see --help\n{error}"
-            ),
+            Event::Outgoing(_) => {} // Sending stuff is fine
         }
     }
     Err(anyhow::anyhow!(
-        "The MQTT connection to {broker} ended unexpectedly before it was acknowleged."
+        "The MQTT connection to {broker} ended unexpectedly before it was acknowledged."
     ))
 }

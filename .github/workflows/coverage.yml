@@ -8,17 +8,11 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Rust
+      - uses: dtolnay/rust-toolchain@stable
         id: rust
-        uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
           components: llvm-tools-preview
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-llvm-cov
+      - uses: taiki-e/install-action@cargo-llvm-cov
 
       - uses: actions/checkout@v4
       - run: cargo fetch
@@ -27,11 +21,9 @@ jobs:
           key: coverage-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('**/Cargo.*') }}
           path: target/
 
-      - name: Run cargo-llvm-cov
-        run: cargo llvm-cov --all-features --html
+      - run: cargo llvm-cov --all-features --html
 
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: target/llvm-cov/html

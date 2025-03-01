@@ -1,7 +1,7 @@
 [package]
 name = "mqttui"
 description = "Subscribe to a MQTT Topic or publish something quickly from the terminal"
-version = "0.21.1"
+version = "0.22.0"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/EdJoPaTo/mqttui"
 authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
@@ -31,14 +31,14 @@ url = "2"
 anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] }
-ego-tree = "0.6"
-rand = "0.8"
+ego-tree = "0.10"
+rand = "0.9"
 ratatui = "0.28"
 ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "ratatui-v0.28" }
 rmpv = { version = "1", features = ["with-serde"] }
 rumqttc = { version = "0.24", features = ["websocket"] }
 rustls = "0.22"
-rustls-native-certs = "0.7"
+rustls-native-certs = "0.8" # TODO: migrate to rustls-platform-verifier with rustls upgrade
 rustls-pemfile = "2"
 rustls-pki-types = "1"
 serde = { version = "1", features = ["derive"] }
@@ -49,6 +49,7 @@ url = "2"
 # https://crates.io/crates/cargo-deb
 [package.metadata.deb]
 depends = ""
+section = "net"
 assets = [
 	["target/release/mqttui", "/usr/bin/", "755"],
 	["CHANGELOG.md", "/usr/share/doc/mqttui/", "644"],

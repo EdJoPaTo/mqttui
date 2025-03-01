@@ -60,15 +60,24 @@ impl MqttThread {
     pub fn has_connection_err(&self) -> Option<String> {
         self.connection_err
             .read()
-            .expect("mqtt history thread paniced")
+            .expect("mqtt history thread panicked")
             .as_ref()
-            .map(std::string::ToString::to_string)
+            .map(ToString::to_string)
     }
 
     pub fn get_history(&self) -> RwLockReadGuard<MqttHistory> {
-        self.history.read().expect("mqtt history thread paniced")
+        self.history.read().expect("mqtt history thread panicked")
     }
 
+    /// Remove from local cache
+    pub fn uncache_topic_entry(&self, topic: &str, index: usize) -> Option<HistoryEntry> {
+        self.history
+            .write()
+            .expect("mqtt history thread panicked")
+            .uncache_topic_entry(topic, index)
+    }
+
+    /// Clean on broker
     pub fn clean_below(&self, topic: &str) -> anyhow::Result<()> {
         let topics = self.get_history().get_topics_below(topic);
         for topic in topics {
@@ -126,6 +135,6 @@ fn thread_logic(
                 *connection_err.write().unwrap() = Some(err);
                 sleep(Duration::from_millis(25));
             }
-        };
+        }
     }
 }

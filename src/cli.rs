@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::{Args, Parser, Subcommand, ValueHint};
 use url::Url;
 
@@ -279,17 +280,11 @@ impl core::str::FromStr for Broker {
 
         let broker = match url.scheme() {
             "mqtt" => Self::Tcp {
-                host: url
-                    .host_str()
-                    .ok_or_else(|| anyhow::anyhow!("Broker requires a Host"))?
-                    .to_owned(),
+                host: url.host_str().context("Broker requires a Host")?.to_owned(),
                 port: url.port().unwrap_or(1883),
             },
             "mqtts" => Self::Ssl {
-                host: url
-                    .host_str()
-                    .ok_or_else(|| anyhow::anyhow!("Broker requires a Host"))?
-                    .to_owned(),
+                host: url.host_str().context("Broker requires a Host")?.to_owned(),
                 port: url.port().unwrap_or(8883),
             },
             "ws" => Self::WebSocket(url),
