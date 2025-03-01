@@ -69,6 +69,15 @@ impl MqttThread {
         self.history.read().expect("mqtt history thread panicked")
     }
 
+    /// Remove from local cache
+    pub fn uncache_topic_entry(&self, topic: &str, index: usize) -> Option<HistoryEntry> {
+        self.history
+            .write()
+            .expect("mqtt history thread panicked")
+            .uncache_topic_entry(topic, index)
+    }
+
+    /// Clean on broker
     pub fn clean_below(&self, topic: &str) -> anyhow::Result<()> {
         let topics = self.get_history().get_topics_below(topic);
         for topic in topics {

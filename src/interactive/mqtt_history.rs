@@ -86,6 +86,18 @@ impl MqttHistory {
         self.tree.get(*id).map(|node| &node.value().history)
     }
 
+    pub fn uncache_topic_entry(&mut self, topic: &str, index: usize) -> Option<HistoryEntry> {
+        let id = self.ids.get(topic)?;
+        let mut node = self.tree.get_mut(*id)?;
+        let topic = node.value();
+        // Prevent removing the newest entry (or out of bounds)
+        if index >= topic.history.len().saturating_sub(1) {
+            return None;
+        }
+        let entry = topic.history.remove(index);
+        Some(entry)
+    }
+
     pub fn get_all_topics(&self) -> Vec<&String> {
         let mut topics = self.ids.keys().collect::<Vec<_>>();
         topics.sort();

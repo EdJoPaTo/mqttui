@@ -442,6 +442,22 @@ impl App {
                     *offset = offset.saturating_add(3);
                     true
                 }
+                KeyCode::Delete | KeyCode::Backspace => {
+                    // This is a more hidden feature as changing the cached history might be weird to understand.
+                    // Clean Retained != Remove from local cache.
+                    // Therefore, its not visible in the footer.
+                    if let Some(selection) = self.details.table_state.selected() {
+                        let topic = self
+                            .topic_overview
+                            .get_selected()
+                            .expect("Should have a selected topic when on history view");
+                        self.mqtt_thread
+                            .uncache_topic_entry(&topic, selection)
+                            .is_some()
+                    } else {
+                        false
+                    }
+                }
                 _ => false,
             },
             ElementInFocus::CleanRetainedPopup(topic) => {

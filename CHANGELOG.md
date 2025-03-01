@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Interactive: `o` on the topic tree opens all currently known topics. `O` (Shift + `o`) closes all topics.
+- Interactive: Remove history entries in the history table with `Del` or `Backspace`. This might be neat to cleanup some graphs while testing devices without restarting mqttui.
+  As this changes the cached history and might be weird to understand (sending an empty payload to cleanup some retained values is something different) this is a somewhat hidden feature and isnt shown in the footer / key hints.
 
 ### Fixed
 
