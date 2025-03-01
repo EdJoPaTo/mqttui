@@ -118,7 +118,7 @@ pub fn draw(
         let mut state = TableState::new().with_selected(Some(topic_history.len() - 1));
         frame.render_stateful_widget(table, area, &mut state);
     } else {
-        table = table.highlight_style(Style::new().fg(Color::Black).bg(focus_color));
+        table = table.row_highlight_style(Style::new().fg(Color::Black).bg(focus_color));
         frame.render_stateful_widget(table, area, state);
     }
 
