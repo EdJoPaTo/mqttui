@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use rumqttc::TlsConfiguration;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
-use rustls::{ClientConfig, DigitallySignedStruct, SignatureScheme};
+use rustls::{ClientConfig, DigitallySignedStruct, KeyLogFile, SignatureScheme};
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
 
 #[derive(Debug)]
@@ -85,6 +85,7 @@ pub fn create_tls_configuration(
         (None, None) => conf.with_no_client_auth(),
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
     };
+    conf.key_log = Arc::new(KeyLogFile::new());
 
     if insecure {
         let mut danger = conf.dangerous();
