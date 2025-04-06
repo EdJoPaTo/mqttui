@@ -36,6 +36,7 @@ ego-tree = "0.10"
 rand = "0.9"
 ratatui = "0.26"
 ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "main" }
+ratatui-logline-table = { git = "https://github.com/EdJoPaTo/ratatui-logline-table", branch = "main" }
 rmpv = { version = "1", features = ["with-serde"] }
 rumqttc = { version = "0.24", features = ["websocket"] }
 rustls = "0.22"

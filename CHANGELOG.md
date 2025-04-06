@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Honors environment variable SSLKEYLOGFILE to dump TLS encryption secrets.
 
+### Changed
+
+- Interactive: Improve render performance of the history table from O(entries) to O(height)
+
+### Fixed
+
+- Interactive: Scrolling behaviour of the history table
+
 ## [0.22.0] - 2025-03-01
 
 ### Added

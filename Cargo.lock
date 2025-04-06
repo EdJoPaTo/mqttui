@@ -915,6 +915,7 @@ dependencies = [
  "rand 0.9.0",
  "ratatui",
  "ratatui-binary-data-widget",
+ "ratatui-logline-table",
  "rmpv",
  "rumqttc",
  "rustls",
@@ -1128,6 +1129,15 @@ version = "0.1.0"
 source = "git+https://github.com/EdJoPaTo/ratatui-binary-data-widget?branch=main#947e0a51a197da9b4c0808fbe9cb244a05dd1884"
 dependencies = [
  "ratatui",
+]
+
+[[package]]
+name = "ratatui-logline-table"
+version = "0.1.0"
+source = "git+https://github.com/EdJoPaTo/ratatui-logline-table?branch=main#fda5ce9afad6115289f81ed5c2720e516efa5459"
+dependencies = [
+ "ratatui",
+ "strum",
 ]
 
 [[package]]

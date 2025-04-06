@@ -389,58 +389,18 @@ impl App {
                     self.focus = ElementInFocus::TopicOverview;
                     true
                 }
-                KeyCode::Esc => {
-                    let selection = self.details.table_state.selected_mut();
-                    let before = *selection;
-                    *selection = None;
-                    before != *selection
-                }
-                KeyCode::Down | KeyCode::Char('j') => {
-                    let selection = self.details.table_state.selected_mut();
-                    let before = *selection;
-                    *selection = Some(selection.map_or(0, |selection| selection.saturating_add(1)));
-                    before != *selection
-                }
-                KeyCode::Up | KeyCode::Char('k') => {
-                    let selection = self.details.table_state.selected_mut();
-                    let before = *selection;
-                    *selection =
-                        Some(selection.map_or(usize::MAX, |selection| selection.saturating_sub(1)));
-                    before != *selection
-                }
-                KeyCode::Home => {
-                    let selection = self.details.table_state.selected_mut();
-                    let before = *selection;
-                    *selection = Some(0);
-                    before != *selection
-                }
-                KeyCode::End => {
-                    let selection = self.details.table_state.selected_mut();
-                    let before = *selection;
-                    *selection = Some(usize::MAX);
-                    before != *selection
-                }
-                KeyCode::PageUp => {
-                    let offset = self.details.table_state.offset_mut();
-                    let before = *offset;
-                    *offset = offset.saturating_sub(3);
-                    before != *offset
-                }
+                KeyCode::Esc => self.details.table_state.select(None),
+                KeyCode::Down | KeyCode::Char('j') => self.details.table_state.select_next(),
+                KeyCode::Up | KeyCode::Char('k') => self.details.table_state.select_previous(),
+                KeyCode::Home => self.details.table_state.select_first(),
+                KeyCode::End => self.details.table_state.select_last(),
+                KeyCode::PageUp => self.details.table_state.scroll_up_by(3),
                 KeyCode::Char('u') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let offset = self.details.table_state.offset_mut();
-                    let before = *offset;
-                    *offset = offset.saturating_sub(3);
-                    before != *offset
+                    self.details.table_state.scroll_up_by(3)
                 }
-                KeyCode::PageDown => {
-                    let offset = self.details.table_state.offset_mut();
-                    *offset = offset.saturating_add(3);
-                    true
-                }
+                KeyCode::PageDown => self.details.table_state.scroll_down_by(3),
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    let offset = self.details.table_state.offset_mut();
-                    *offset = offset.saturating_add(3);
-                    true
+                    self.details.table_state.scroll_down_by(3)
                 }
                 KeyCode::Delete | KeyCode::Backspace => {
                     // This is a more hidden feature as changing the cached history might be weird to understand.
@@ -502,13 +462,10 @@ impl App {
                 Some(Payload::String(_)) | None => return Refresh::Skip,
             }
         } else if self.details.last_table_area.contains(position) {
-            let offset = self.details.table_state.offset_mut();
-            let before = *offset;
             match direction {
-                ScrollDirection::Down => *offset = offset.saturating_add(1),
-                ScrollDirection::Up => *offset = offset.saturating_sub(1),
+                ScrollDirection::Down => self.details.table_state.scroll_down_by(1),
+                ScrollDirection::Up => self.details.table_state.scroll_up_by(1),
             }
-            *offset != before
         } else {
             false
         };
@@ -560,7 +517,7 @@ impl App {
             }
         }
 
-        if self.details.table_click(position) {
+        if self.details.table_state.select_at(position) {
             self.focus = ElementInFocus::HistoryTable;
             return Refresh::Update;
         }

@@ -1,6 +1,6 @@
-use ratatui::layout::{Position, Rect};
-use ratatui::widgets::TableState;
+use ratatui::layout::Rect;
 use ratatui::Frame;
+use ratatui_logline_table::State as TableState;
 
 use crate::interactive::ui::{split_area_vertically, ElementInFocus};
 use crate::mqtt::HistoryEntry;
@@ -22,26 +22,6 @@ impl Details {
             .selected()
             .unwrap_or(usize::MAX)
             .min(topic_history_length.saturating_sub(1))
-    }
-
-    const fn table_index_of_click(&self, position: Position) -> Option<usize> {
-        let area = self.last_table_area;
-        if !area.contains(position) {
-            return None;
-        }
-        let visible_index = position.y.saturating_sub(area.top()).saturating_sub(2); // subtract block & header
-        let offset = self.table_state.offset();
-        let index = (visible_index as usize) + offset;
-        Some(index)
-    }
-
-    /// Handles a click. Checks if its on the table. When it is the index get selected and true is returned.
-    pub fn table_click(&mut self, position: Position) -> bool {
-        let Some(index) = self.table_index_of_click(position) else {
-            return false;
-        };
-        self.table_state.select(Some(index));
-        true
     }
 
     pub fn draw(

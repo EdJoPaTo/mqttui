@@ -2,10 +2,10 @@ use std::fmt::Write;
 
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::widgets::{
-    Block, BorderType, Row, ScrollbarOrientation, ScrollbarState, Table, TableState,
-};
+use ratatui::text::Line;
+use ratatui::widgets::{Block, BorderType};
 use ratatui::Frame;
+use ratatui_logline_table::{State as TableState, Table};
 
 use crate::format;
 use crate::interactive::ui::{focus_color, BORDERS_TOP_RIGHT, STYLE_BOLD};
@@ -50,42 +50,48 @@ pub fn draw(
     title += ")";
 
     let last_index = topic_history.len().saturating_sub(1);
-    let rows = topic_history.iter().enumerate().map(|(index, entry)| {
-        let time = entry.time.to_string();
-        let qos = format::qos(entry.qos).to_owned();
-        let value = match &entry.payload {
-            Payload::Binary(data) => binary_address
-                .and_then(|address| data.get(address).copied())
-                .map_or_else(|| format!("{data:?}"), |data| format!("{data}")),
-            Payload::Json(json) => JsonSelector::get_json(json, json_selector)
-                .unwrap_or(json)
-                .to_string(),
-            Payload::MessagePack(messagepack) => {
-                JsonSelector::get_messagepack(messagepack, json_selector)
-                    .unwrap_or(messagepack)
-                    .to_string()
-            }
-            Payload::String(str) => str.to_string(),
-        };
-        let row = Row::new(vec![time, qos, value]);
-        if index == last_index {
-            row.style(STYLE_BOLD)
-        } else {
-            row
-        }
-    });
-
     let focus_color = focus_color(has_focus);
+    let json_selector = json_selector.to_vec();
 
-    let mut table = Table::new(
-        rows,
+    let table = Table::new(
+        topic_history,
         [
             Constraint::Length(12),
             Constraint::Length(11),
             Constraint::Percentage(100),
         ],
+        move |index, entry| {
+            let time = entry.time.to_string();
+            let qos = format::qos(entry.qos).to_owned();
+            let value = match &entry.payload {
+                Payload::Binary(data) => binary_address
+                    .and_then(|address| data.get(address).copied())
+                    .map_or_else(|| format!("{data:?}"), |data| format!("{data}")),
+                Payload::Json(json) => JsonSelector::get_json(json, &json_selector)
+                    .unwrap_or(json)
+                    .to_string(),
+                Payload::MessagePack(messagepack) => {
+                    JsonSelector::get_messagepack(messagepack, &json_selector)
+                        .unwrap_or(messagepack)
+                        .to_string()
+                }
+                Payload::String(str) => str.to_string(),
+            };
+
+            if index == last_index {
+                [
+                    Line::styled(time, STYLE_BOLD),
+                    Line::styled(qos, STYLE_BOLD),
+                    Line::styled(value, STYLE_BOLD),
+                ]
+            } else {
+                [Line::raw(time), Line::raw(qos), Line::raw(value)]
+            }
+        },
     )
-    .header(Row::new(["Time", "QoS", "Value"]).style(STYLE_BOLD))
+    .header([Line::raw("Time"), Line::raw("QoS"), Line::raw("Value")])
+    .header_style(STYLE_BOLD)
+    .row_highlight_style(Style::new().fg(Color::Black).bg(focus_color))
     .block(
         Block::new()
             .border_type(BorderType::Rounded)
@@ -94,49 +100,5 @@ pub fn draw(
             .border_style(Style::new().fg(focus_color))
             .title(title),
     );
-
-    // Ensure selection is possible
-    if let Some(selection) = state.selected_mut() {
-        *selection = (*selection).min(topic_history.len().saturating_sub(1));
-    }
-
-    // Scroll down offset as much as possible
-    let height = area.height.saturating_sub(2); // remove block and title
-    let offset_with_last_in_view = topic_history.len().saturating_sub(height as usize);
-    if let Some(selection) = state.selected() {
-        // Only scroll when the change will include both end and selection.
-        // When the user manually scrolled away from the end keep the offset.
-        if selection >= offset_with_last_in_view {
-            *state.offset_mut() = offset_with_last_in_view;
-        }
-    } else {
-        *state.offset_mut() = offset_with_last_in_view;
-    }
-
-    // Workaround selection, see https://github.com/ratatui-org/ratatui/issues/174
-    if state.selected().is_none() {
-        let mut state = TableState::new().with_selected(Some(topic_history.len() - 1));
-        frame.render_stateful_widget(table, area, &mut state);
-    } else {
-        table = table.highlight_style(Style::new().fg(Color::Black).bg(focus_color));
-        frame.render_stateful_widget(table, area, state);
-    }
-
-    {
-        let scrollbar = ratatui::widgets::Scrollbar::new(ScrollbarOrientation::VerticalRight)
-            .begin_symbol(None)
-            .track_symbol(None)
-            .end_symbol(None);
-        // Work around overscroll by removing height from total
-        let mut scrollbar_state =
-            ScrollbarState::new(topic_history.len().saturating_sub(usize::from(height)))
-                .position(state.offset())
-                .viewport_content_length(height as usize);
-        let scrollbar_area = Rect {
-            y: area.y.saturating_add(2),
-            height: area.height.saturating_sub(2),
-            ..area
-        };
-        frame.render_stateful_widget(scrollbar, scrollbar_area, &mut scrollbar_state);
-    }
+    frame.render_stateful_widget(table, area, state);
 }
