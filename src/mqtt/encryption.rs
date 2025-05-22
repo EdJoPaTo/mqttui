@@ -63,6 +63,7 @@ pub fn create_tls_configuration(
     insecure: bool,
     client_certificate_path: Option<&Path>,
     client_private_key_path: Option<&Path>,
+    ca_certificate_path: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
     let native_certs = rustls_native_certs::load_native_certs();
@@ -73,6 +74,13 @@ pub fn create_tls_configuration(
     }
     for cert in native_certs.certs {
         _ = roots.add(cert);
+    }
+
+    if let Some(path) = ca_certificate_path {
+        let certificates = read_certificate_file(path)?;
+        for certificate in certificates {
+            roots.add(certificate)?;
+        }
     }
 
     let conf = ClientConfig::builder().with_root_certificates(roots);

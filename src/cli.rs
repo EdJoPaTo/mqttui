@@ -243,6 +243,20 @@ pub struct MqttConnection {
     )]
     pub client_key: Option<std::path::PathBuf>,
 
+    /// Path to the TLS CA certificate file.
+    ///
+    /// Used together with --client-cert, --client-key to enable TLS client
+    /// authentication.
+    /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
+    #[arg(
+        long,
+        env = "MQTTUI_CA_CERTIFICATE",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        global = true,
+    )]
+    pub ca_cert: Option<std::path::PathBuf>,
+
     /// Allow insecure TLS connections
     #[arg(long, global = true)]
     pub insecure: bool,
