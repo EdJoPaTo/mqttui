@@ -12,7 +12,7 @@ pub fn connect(
         password,
         client_id,
         client_cert,
-        client_key,
+        client_private_key,
         insecure,
     }: MqttConnection,
     keep_alive: Option<Duration>,
@@ -23,7 +23,7 @@ pub fn connect(
             Transport::Tls(super::encryption::create_tls_configuration(
                 insecure,
                 client_cert.as_deref(),
-                client_key.as_deref(),
+                client_private_key.as_deref(),
             )?),
             host.clone(),
             *port,
@@ -34,7 +34,7 @@ pub fn connect(
             Transport::Wss(super::encryption::create_tls_configuration(
                 insecure,
                 client_cert.as_deref(),
-                client_key.as_deref(),
+                client_private_key.as_deref(),
             )?),
             url.to_string(),
             666,

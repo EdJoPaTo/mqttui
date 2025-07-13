@@ -61,8 +61,8 @@ impl rustls::client::danger::ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
-    client_certificate_path: Option<&Path>,
-    client_private_key_path: Option<&Path>,
+    client_cert: Option<&Path>,
+    client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
     let native_certs = rustls_native_certs::load_native_certs();
@@ -71,16 +71,14 @@ pub fn create_tls_configuration(
             "Warning: might skip some native certificates because of an error while loading: {error}"
         );
     }
-    for cert in native_certs.certs {
-        _ = roots.add(cert);
-    }
+    roots.add_parsable_certificates(native_certs.certs);
 
     let conf = ClientConfig::builder().with_root_certificates(roots);
 
-    let mut conf = match (client_certificate_path, client_private_key_path) {
-        (Some(certificate_path), Some(private_key_path)) => conf.with_client_auth_cert(
-            read_certificate_file(certificate_path)?,
-            read_private_key_file(private_key_path)?,
+    let mut conf = match (client_cert, client_private_key) {
+        (Some(client_cert), Some(client_private_key)) => conf.with_client_auth_cert(
+            read_certificate_file(client_cert)?,
+            read_private_key_file(client_private_key)?,
         )?,
         (None, None) => conf.with_no_client_auth(),
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
@@ -106,8 +104,8 @@ fn read_certificate_file(file: &Path) -> anyhow::Result<Vec<CertificateDer<'stat
     Ok(result)
 }
 
-fn read_private_key_file(file: &Path) -> anyhow::Result<PrivateKeyDer<'static>> {
-    let file = File::open(file)?;
+fn read_private_key_file(path: &Path) -> anyhow::Result<PrivateKeyDer<'static>> {
+    let file = File::open(path)?;
     let mut file = BufReader::new(file);
     loop {
         match rustls_pemfile::read_one(&mut file)? {
@@ -119,6 +117,6 @@ fn read_private_key_file(file: &Path) -> anyhow::Result<PrivateKeyDer<'static>> 
         }
     }
     Err(anyhow::anyhow!(
-        "no keys found in {file:?} (encrypted keys not supported)"
+        "no keys found in {path:?} (encrypted keys not supported)"
     ))
 }
