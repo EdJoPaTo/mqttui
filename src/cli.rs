@@ -217,19 +217,19 @@ pub struct MqttConnection {
 
     /// Path to the TLS client certificate file.
     ///
-    /// Used together with --client-key to enable TLS client authentication.
+    /// Used together with --client-private-key to enable TLS client authentication.
     /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
     #[arg(
         long,
         env = "MQTTUI_CLIENT_CERTIFICATE",
         value_hint = ValueHint::FilePath,
         value_name = "FILEPATH",
-        requires = "client_key",
+        requires = "client_private_key",
         global = true,
     )]
     pub client_cert: Option<std::path::PathBuf>,
 
-    /// Path to the TLS client private key.
+    /// Path to the TLS client private key file.
     ///
     /// Used together with --client-cert to enable TLS client authentication.
     /// The file has to be a DER-encoded ASN.1 file in PKCS#8 form serialized to PEM.
@@ -238,15 +238,15 @@ pub struct MqttConnection {
         env = "MQTTUI_CLIENT_PRIVATE_KEY",
         value_hint = ValueHint::FilePath,
         value_name = "FILEPATH",
+        alias = "client-key",
         requires = "client_cert",
         global = true,
     )]
-    pub client_key: Option<std::path::PathBuf>,
+    pub client_private_key: Option<std::path::PathBuf>,
 
     /// Path to the TLS CA certificate file.
     ///
-    /// Used together with --client-cert, --client-key to enable TLS client
-    /// authentication.
+    /// Can be used in addition to --client-cert and --client-private-key to enable TLS client authentication.
     /// The file has to be a DER-encoded X.509 certificate serialized to PEM.
     #[arg(
         long,

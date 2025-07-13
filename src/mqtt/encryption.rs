@@ -61,9 +61,9 @@ impl rustls::client::danger::ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
-    client_certificate_path: Option<&Path>,
-    client_private_key_path: Option<&Path>,
-    ca_certificate_path: Option<&Path>,
+    client_cert: Option<&Path>,
+    client_private_key: Option<&Path>,
+    ca_cert: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
     let native_certs = rustls_native_certs::load_native_certs();
@@ -76,7 +76,7 @@ pub fn create_tls_configuration(
         _ = roots.add(cert);
     }
 
-    if let Some(path) = ca_certificate_path {
+    if let Some(path) = ca_cert {
         let certificates = read_certificate_file(path)?;
         for certificate in certificates {
             roots.add(certificate)?;
@@ -85,10 +85,10 @@ pub fn create_tls_configuration(
 
     let conf = ClientConfig::builder().with_root_certificates(roots);
 
-    let mut conf = match (client_certificate_path, client_private_key_path) {
-        (Some(certificate_path), Some(private_key_path)) => conf.with_client_auth_cert(
-            read_certificate_file(certificate_path)?,
-            read_private_key_file(private_key_path)?,
+    let mut conf = match (client_cert, client_private_key) {
+        (Some(client_cert), Some(client_private_key)) => conf.with_client_auth_cert(
+            read_certificate_file(client_cert)?,
+            read_private_key_file(client_private_key)?,
         )?,
         (None, None) => conf.with_no_client_auth(),
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
