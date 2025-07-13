@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Correctly print broker host:port with :
+
 ## [0.22.1] - 2025-04-08
 
 ### Added
