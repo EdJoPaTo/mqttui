@@ -11,7 +11,7 @@ pub fn tree_items(root: &Value) -> Vec<TreeItem<'_, JsonSelector>> {
     }
 }
 
-fn recurse(key: JsonSelector, value: &Value) -> TreeItem<JsonSelector> {
+fn recurse(key: JsonSelector, value: &Value) -> TreeItem<'_, JsonSelector> {
     match value {
         Value::Object(object) => {
             let text = key.to_string();

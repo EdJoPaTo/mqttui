@@ -119,8 +119,8 @@ fn read_certificate_file(file: &Path) -> anyhow::Result<Vec<CertificateDer<'stat
     Ok(result)
 }
 
-fn read_private_key_file(file: &Path) -> anyhow::Result<PrivateKeyDer<'static>> {
-    let file = File::open(file)?;
+fn read_private_key_file(path: &Path) -> anyhow::Result<PrivateKeyDer<'static>> {
+    let file = File::open(path)?;
     let mut file = BufReader::new(file);
     loop {
         match rustls_pemfile::read_one(&mut file)? {
@@ -132,6 +132,6 @@ fn read_private_key_file(file: &Path) -> anyhow::Result<PrivateKeyDer<'static>> 
         }
     }
     Err(anyhow::anyhow!(
-        "no keys found in {file:?} (encrypted keys not supported)"
+        "no keys found in {path:?} (encrypted keys not supported)"
     ))
 }

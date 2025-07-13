@@ -65,7 +65,7 @@ impl MqttThread {
             .map(ToString::to_string)
     }
 
-    pub fn get_history(&self) -> RwLockReadGuard<MqttHistory> {
+    pub fn get_history(&self) -> RwLockReadGuard<'_, MqttHistory> {
         self.history.read().expect("mqtt history thread panicked")
     }
 

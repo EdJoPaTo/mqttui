@@ -317,14 +317,14 @@ impl core::fmt::Display for Broker {
                 if *port == 1883 {
                     write!(fmt, "mqtt://{host}")
                 } else {
-                    write!(fmt, "mqtt://{host}@{port}")
+                    write!(fmt, "mqtt://{host}:{port}")
                 }
             }
             Self::Ssl { host, port } => {
                 if *port == 8883 {
                     write!(fmt, "mqtts://{host}")
                 } else {
-                    write!(fmt, "mqtts://{host}@{port}")
+                    write!(fmt, "mqtts://{host}:{port}")
                 }
             }
             Self::WebSocket(url) | Self::WebSocketSsl(url) => url.fmt(fmt),
