@@ -154,6 +154,13 @@ Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 - Clone this repository
 - `cargo install --path .`
 
+### With Container
+
+```bash
+docker build . -t localhost/mqttui
+docker run --rm -it localhost/mqttui
+```
+
 ## History and Alternatives
 
 Taking a look into existing "lets just view MQTT right now" or "quickly publish something" projects they are always quite bulky and not that fast.
