@@ -149,6 +149,8 @@ brew install mqttui
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
+This includes binaries for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
+
 ### From Source
 
 - Clone this repository
