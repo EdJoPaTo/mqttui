@@ -151,6 +151,33 @@ Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
 This includes binaries for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
 
+There are binaries for different CPU archictures:
+- Intel/AMD - x86-64
+- 64 bit ARM - aarch64
+- 64 bit RISC - riscv64gc
+- 32 bit ARM 7 - armv7
+
+#### Windows
+
+From the latest release, select `mqttui-<version>.1-<arch>-pc-windows-msvc.zip`
+
+There are Intel 64 bit and arm64 binaries for windows.
+
+The Zip containes binaries, and the whole folder needs to be extracted and put somewhere useful.
+
+#### Debian, Ubuntu and Deb based Linux
+
+Download the appropriate .deb for your architecture and run:
+
+`sudo dpkg -i <downloaded file>`
+
+#### Redhat, Centos and RPM based Linux
+
+Download the appropriate .rpm for your architecture and run:
+
+`
+
+
 ### From Source
 
 - Clone this repository
