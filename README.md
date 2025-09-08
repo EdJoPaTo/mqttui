@@ -153,13 +153,14 @@ This includes binaries for Windows, Debian/Ubuntu, RPM based distros, and tarbal
 
 There are binaries for different CPU archictures:
 - Intel/AMD - x86-64
-- 64 bit ARM - aarch64
-- 64 bit RISC - riscv64gc
-- 32 bit ARM 7 - armv7
+- 64 bit ARMv8 - aarch64
+- 64 bit RISC-V - riscv64gc
+- 32 bit ARMv7 - armv7
+- 32 bit ARMv6 - arm
 
 #### Windows
 
-From the latest release, select `mqttui-<version>.1-<arch>-pc-windows-msvc.zip`
+From the latest release, select `mqttui-<version>-<arch>-pc-windows-msvc.zip`
 
 There are Intel 64 bit and arm64 binaries for windows.
 
