@@ -5,7 +5,13 @@ use rumqttc::{Client, Connection};
 
 use crate::payload::Payload;
 
-pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, pretty: bool) {
+pub fn show(
+    client: &Client,
+    mut connection: Connection,
+    ignore_retained: bool,
+    only_retained: bool,
+    pretty: bool,
+) {
     let mut done = false;
     for notification in connection.iter() {
         match notification {
@@ -18,9 +24,14 @@ pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, 
                 if publish.dup || done {
                     continue;
                 }
-                if ignore_retained && publish.retain {
-                    continue;
+
+                match (only_retained, ignore_retained, publish.retain) {
+                    (true, true, _) => unreachable!(),
+                    (true, false, false) => std::process::exit(1),
+                    (false, true, true) => continue,
+                    _ => (),
                 }
+
                 eprintln!("{}", publish.topic);
                 if pretty {
                     let payload = Payload::unlimited(publish.payload.into());

@@ -42,12 +42,13 @@ fn main() -> anyhow::Result<()> {
         Some(Subcommands::ReadOne {
             topic,
             ignore_retained,
+            only_retained,
             pretty,
         }) => {
             for topic in topic {
                 client.subscribe(topic, QoS::AtLeastOnce)?;
             }
-            read_one::show(&client, connection, ignore_retained, pretty);
+            read_one::show(&client, connection, ignore_retained, only_retained, pretty);
         }
         Some(Subcommands::Publish {
             topic,

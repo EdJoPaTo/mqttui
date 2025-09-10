@@ -79,6 +79,10 @@ pub enum Subcommands {
         #[arg(long, short = 'r')]
         ignore_retained: bool,
 
+        /// Only return the retained message, exit with 1 if there is none
+        #[arg(long, short = 'R', conflicts_with = "ignore_retained")]
+        only_retained: bool,
+
         /// Parse the payload and print it in a human readable pretty form.
         ///
         /// This might not be useful for piping the data.
