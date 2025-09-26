@@ -182,8 +182,8 @@ Download the appropriate .rpm for your architecture and run:
 
 #### Tarball for other Linuxes and MacOS
 
-The binaries are also shipped as plain tarballs, targetting each architecture for any Generic Linux.
-There is also an Intel MacOS binary tarball.
+The binaries are also shipped as plain tarballs, targetting each architecture for any generic Linux.
+There are also arm64 and Intel based macOS binary tarballs.
 
 You need to extract the tarball and put the binary somewhere on your path (common locations are `~/bin`, `~/.local/bin` or `/usr/local/bin`).
 
