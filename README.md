@@ -150,6 +150,7 @@ brew install mqttui
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
 This includes binaries for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
+Note that the linux binaries are built for glibc based systems. You will need to compile from source for other libc systems like Alpine Linux.
 
 There are binaries for different CPU architectures:
 
