@@ -117,6 +117,7 @@ fn read_private_key_file(path: &Path) -> anyhow::Result<PrivateKeyDer<'static>> 
         }
     }
     Err(anyhow::anyhow!(
-        "no keys found in {path:?} (encrypted keys not supported)"
+        "no keys found in {} (encrypted keys not supported)",
+        path.display()
     ))
 }
