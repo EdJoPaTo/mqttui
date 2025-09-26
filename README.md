@@ -129,29 +129,11 @@ mqttui "topic"
 
 ## Install
 
-### Packaged
-
 [![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg?columns=2&exclude_unsupported=1)](https://repology.org/project/mqttui/versions)
-
-#### Arch Linux
-
-```bash
-pacman -S mqttui
-```
-
-#### Homebrew (Mac or Linux)
-
-```bash
-brew install mqttui
-```
-
-### Prebuilt
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
-This includes binaries for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
-Note that the linux binaries are built for glibc based systems. You will need to compile [from source](#from-source) for other libc/musl systems like Alpine Linux.
-
+There are binary releases for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
 There are binaries for different CPU architectures:
 
 - Intel/AMD - x86-64
@@ -160,13 +142,19 @@ There are binaries for different CPU architectures:
 - 32 bit ARMv7 - armv7
 - 32 bit ARMv6 - arm
 
-#### Windows
+### Homebrew (Mac or Linux)
 
-From the latest release, select `mqttui-<version>-<arch>-pc-windows-msvc.zip`
+```bash
+brew install mqttui
+```
 
-There are Intel 64 bit and arm64 binaries for windows.
+### Linux package managers
 
-The Zip contains binaries, and the whole folder needs to be extracted and put somewhere useful.
+#### Arch Linux
+
+```bash
+pacman -S mqttui
+```
 
 #### Debian, Ubuntu and Deb based Linux
 
@@ -180,12 +168,21 @@ Download the appropriate .rpm for your architecture and run:
 
 `sudo rpm -i <downloaded file>`
 
-#### Tarball for other Linuxes and MacOS
+### Tarball for other Linuxes and MacOS
 
-The binaries are also shipped as plain tarballs, targetting each architecture for any generic Linux.
-There are also arm64 and Intel based macOS binary tarballs.
+The binaries are also shipped as plain tarballs, targetting each architecture for any generic Linux or macOS.
+
+Note that the linux binaries are built for glibc based systems. You will need to compile [from source](#from-source) for other libc/musl systems like Alpine Linux.
 
 You need to extract the tarball and put the binary somewhere on your path (common locations are `~/bin`, `~/.local/bin` or `/usr/local/bin`).
+
+### Windows
+
+From the latest release, select `mqttui-<version>-<arch>-pc-windows-msvc.zip`
+
+There are Intel 64 bit and arm64 binaries for windows.
+
+The Zip contains binaries, and the whole folder needs to be extracted and put somewhere useful.
 
 ### From Source
 
