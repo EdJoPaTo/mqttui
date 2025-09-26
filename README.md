@@ -151,7 +151,8 @@ Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
 This includes binaries for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
 
-There are binaries for different CPU archictures:
+There are binaries for different CPU architectures:
+
 - Intel/AMD - x86-64
 - 64 bit ARMv8 - aarch64
 - 64 bit RISC-V - riscv64gc
@@ -164,7 +165,7 @@ From the latest release, select `mqttui-<version>-<arch>-pc-windows-msvc.zip`
 
 There are Intel 64 bit and arm64 binaries for windows.
 
-The Zip containes binaries, and the whole folder needs to be extracted and put somewhere useful.
+The Zip contains binaries, and the whole folder needs to be extracted and put somewhere useful.
 
 #### Debian, Ubuntu and Deb based Linux
 
@@ -176,8 +177,14 @@ Download the appropriate .deb for your architecture and run:
 
 Download the appropriate .rpm for your architecture and run:
 
-`
+`sudo rpm -i <downloaded file>`
 
+#### Tarball for other Linuxes and MacOS
+
+The binaries are also shipped as plain tarballs, targetting each architecture.
+There is also an Intel MacOS binary tarball.
+
+You need to extract the tarball and put the binary somewhere on your path.
 
 ### From Source
 
@@ -199,3 +206,4 @@ While [`mosquitto_sub` and `mosquitto_pub`](https://mosquitto.org/) are bundled 
 
 That's why I started building my own terminal based version to quickly watch or publish MQTT stuff.
 It won't be as feature rich as something like the HiveMQ CLI approach, but it aims at being easy to use and fast.
+
