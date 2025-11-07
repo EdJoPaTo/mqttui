@@ -157,7 +157,7 @@ pub struct Cli {
     pub mqtt_connection: MqttConnection,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum OnlyRetained {
     Retained,
     Live,
