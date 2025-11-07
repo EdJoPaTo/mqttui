@@ -1,5 +1,5 @@
 use anyhow::Context;
-use clap::{Args, Parser, Subcommand, ValueHint};
+use clap::{Args, Parser, Subcommand, ValueEnum, ValueHint};
 use url::Url;
 
 #[allow(clippy::doc_markdown)]
@@ -75,13 +75,19 @@ pub enum Subcommands {
         )]
         topic: Vec<String>,
 
-        /// Do not return on a retained message on connection, wait for another message to arrive
-        #[arg(long, short = 'r')]
+        /// Do not return on a retained message on connection, wait for another message to arrive.
+        ///
+        /// Will be removed in the future in favor of `--only=live`.
+        #[arg(long, short = 'r', conflicts_with = "only")]
         ignore_retained: bool,
 
-        /// Only return the retained message, exit with 1 if there is none
-        #[arg(long, short = 'R', conflicts_with = "ignore_retained")]
-        only_retained: bool,
+        /// Only return a specific kind of message, either explicitly a retained one or one that is a current one, not stored on the broker.
+        ///
+        /// Keep in mind that when requesting only a retained message and there is none, this will only get noticed when the first non-retained message arrives.
+        /// So this might take a while.
+        /// When there is no retained message the process exits with the exit code 1.
+        #[arg(long)]
+        only: Option<OnlyRetained>,
 
         /// Parse the payload and print it in a human readable pretty form.
         ///
@@ -149,6 +155,12 @@ pub struct Cli {
     // Keep at the end to not mix the next_help_heading with other options
     #[command(flatten, next_help_heading = "MQTT Connection")]
     pub mqtt_connection: MqttConnection,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum OnlyRetained {
+    Retained,
+    Live,
 }
 
 /// Arguments related to the MQTT connection.
