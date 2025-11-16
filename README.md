@@ -157,10 +157,12 @@ brew install mqttui
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
 
-There are binary releases for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
-There are binaries for different CPU architectures:
+The filenames are similar to this: `mqttui-<version>-<architecture>-<platform>.zip`
+Choose the correct file for your given CPU architecture and platform.
 
-- AMD/Intel: x86-64
+The prebuilt CPU architectures include:
+
+- AMD/Intel: x86_64
 - 64 bit ARMv8: aarch64
 - 64 bit RISC-V: riscv64gc
 - 32 bit ARMv7: armv7
@@ -168,7 +170,7 @@ There are binaries for different CPU architectures:
 
 #### Debian, Ubuntu, and Deb based Linux
 
-Download the appropriate .deb for your architecture and run:
+Download the appropriate `.deb` for your architecture and run:
 
 ```bash
 sudo dpkg -i <downloaded file>
@@ -176,7 +178,7 @@ sudo dpkg -i <downloaded file>
 
 #### Red Hat, CentOS, and RPM based Linux
 
-Download the appropriate .rpm for your architecture and run:
+Download the appropriate `.rpm` for your architecture and run:
 
 ```bash
 sudo rpm -i <downloaded file>
@@ -192,11 +194,7 @@ You need to extract the tarball and put the binary somewhere on your path (commo
 
 #### Windows
 
-From the latest release, select `mqttui-<version>-<arch>-pc-windows-msvc.zip`
-
-There are AMD/Intel 64 bit (x86_64) and arm64 (aarch64) binaries for Windows.
-
-The Zip contains binaries, and the whole folder needs to be extracted and put somewhere useful.
+Download the appropriate `mqttui-<version>-<arch>-pc-windows-msvc.zip` for your architecture and extract the content somewhere useful.
 
 ### From Source
 
