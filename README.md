@@ -129,26 +129,17 @@ mqttui "topic"
 
 ## Install
 
+There are generally 3 ways to install `mqttui`, in the order of preference: From your [package manager](#packaged), [prebuilt](#prebuilt) or [from source](#from-source)
+
+### Packaged
+
 [![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg?columns=2&exclude_unsupported=1)](https://repology.org/project/mqttui/versions)
 
-Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
-
-There are binary releases for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
-There are binaries for different CPU architectures:
-
-- Intel/AMD - x86-64
-- 64 bit ARMv8 - aarch64
-- 64 bit RISC-V - riscv64gc
-- 32 bit ARMv7 - armv7
-- 32 bit ARMv6 - arm
-
-### Homebrew (Mac or Linux)
+#### Alpine
 
 ```bash
-brew install mqttui
+apk add mqttui
 ```
-
-### Linux package managers
 
 #### Arch Linux
 
@@ -156,31 +147,54 @@ brew install mqttui
 pacman -S mqttui
 ```
 
-#### Debian, Ubuntu and Deb based Linux
+#### Homebrew (Mac or Linux)
+
+```bash
+brew install mqttui
+```
+
+### Prebuilt
+
+Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
+
+There are binary releases for Windows, Debian/Ubuntu, RPM based distros, and tarball archives.
+There are binaries for different CPU architectures:
+
+- AMD/Intel: x86-64
+- 64 bit ARMv8: aarch64
+- 64 bit RISC-V: riscv64gc
+- 32 bit ARMv7: armv7
+- 32 bit ARMv6: arm
+
+#### Debian, Ubuntu, and Deb based Linux
 
 Download the appropriate .deb for your architecture and run:
 
-`sudo dpkg -i <downloaded file>`
+```bash
+sudo dpkg -i <downloaded file>
+```
 
-#### Redhat, Centos and RPM based Linux
+#### Red Hat, CentOS, and RPM based Linux
 
 Download the appropriate .rpm for your architecture and run:
 
-`sudo rpm -i <downloaded file>`
+```bash
+sudo rpm -i <downloaded file>
+```
 
-### Tarball for other Linuxes and MacOS
+#### Tarball for other UNIX based systems
 
-The binaries are also shipped as plain tarballs, targetting each architecture for any generic Linux or macOS.
+The binaries are also shipped as plain tarballs, targeting each architecture for any generic Linux or macOS.
 
-Note that the linux binaries are built for glibc based systems. You will need to compile [from source](#from-source) for other libc/musl systems like Alpine Linux.
+Note that the Linux binaries are built for `glibc` based systems. You will need to compile [from source](#from-source) for other `libc`/`musl` systems like Alpine Linux.
 
 You need to extract the tarball and put the binary somewhere on your path (common locations are `~/bin`, `~/.local/bin` or `/usr/local/bin`).
 
-### Windows
+#### Windows
 
 From the latest release, select `mqttui-<version>-<arch>-pc-windows-msvc.zip`
 
-There are Intel 64 bit and arm64 binaries for windows.
+There are AMD/Intel 64 bit (x86_64) and arm64 (aarch64) binaries for Windows.
 
 The Zip contains binaries, and the whole folder needs to be extracted and put somewhere useful.
 
@@ -204,4 +218,3 @@ While [`mosquitto_sub` and `mosquitto_pub`](https://mosquitto.org/) are bundled 
 
 That's why I started building my own terminal based version to quickly watch or publish MQTT stuff.
 It won't be as feature rich as something like the HiveMQ CLI approach, but it aims at being easy to use and fast.
-
