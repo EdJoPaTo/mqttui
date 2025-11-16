@@ -188,7 +188,7 @@ sudo rpm -i <downloaded file>
 
 The binaries are also shipped as plain tarballs, targeting each architecture for any generic Linux or macOS.
 
-Note that the Linux binaries are built for `glibc` based systems. You will need to compile [from source](#from-source) for other `libc`/`musl` systems like Alpine Linux.
+Note that the Linux binaries are built for `glibc` based systems. You will need to compile [from source](#from-source) for other `libc`/`musl` systems like Alpine Linux (or install via repos).
 
 You need to extract the tarball and put the binary somewhere on your path (common locations are `~/bin`, `~/.local/bin` or `/usr/local/bin`).
 
