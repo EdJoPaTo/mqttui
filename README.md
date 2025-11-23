@@ -129,9 +129,17 @@ mqttui "topic"
 
 ## Install
 
+There are generally 3 ways to install `mqttui`, in the order of preference: From your [package manager](#packaged), [prebuilt](#prebuilt) or [from source](#from-source)
+
 ### Packaged
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/mqttui.svg?columns=2&exclude_unsupported=1)](https://repology.org/project/mqttui/versions)
+
+#### Alpine
+
+```bash
+apk add mqttui
+```
 
 #### Arch Linux
 
@@ -148,6 +156,45 @@ brew install mqttui
 ### Prebuilt
 
 Check the [Releases](https://github.com/EdJoPaTo/mqttui/releases).
+
+The filenames are similar to this: `mqttui-<version>-<architecture>-<platform>.zip`
+Choose the correct file for your given CPU architecture and platform.
+
+The prebuilt CPU architectures include:
+
+- AMD/Intel: x86_64
+- 64 bit ARMv8: aarch64
+- 64 bit RISC-V: riscv64gc
+- 32 bit ARMv7: armv7
+- 32 bit ARMv6: arm
+
+#### Debian, Ubuntu, and Deb based Linux
+
+Download the appropriate `.deb` for your architecture and run:
+
+```bash
+sudo dpkg -i <downloaded file>
+```
+
+#### Red Hat, CentOS, and RPM based Linux
+
+Download the appropriate `.rpm` for your architecture and run:
+
+```bash
+sudo rpm -i <downloaded file>
+```
+
+#### Tarball for other UNIX based systems
+
+The binaries are also shipped as plain tarballs, targeting each architecture for any generic Linux or macOS.
+
+Note that the Linux binaries are built for `glibc` based systems. You will need to compile [from source](#from-source) for other `libc`/`musl` systems like Alpine Linux (or install via repos).
+
+You need to extract the tarball and put the binary somewhere on your path (common locations are `~/bin`, `~/.local/bin` or `/usr/local/bin`).
+
+#### Windows
+
+Download the appropriate `mqttui-<version>-<arch>-pc-windows-msvc.zip` for your architecture and extract the content somewhere useful.
 
 ### From Source
 
