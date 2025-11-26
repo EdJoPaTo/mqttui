@@ -1,11 +1,13 @@
+use std::process;
 use std::thread::sleep;
 use std::time::Duration;
 
 use rumqttc::{Client, Connection};
 
+use crate::cli::OnlyRetained;
 use crate::payload::Payload;
 
-pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, pretty: bool) {
+pub fn show(client: &Client, mut connection: Connection, only: Option<OnlyRetained>, pretty: bool) {
     let mut done = false;
     for notification in connection.iter() {
         match notification {
@@ -18,8 +20,10 @@ pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, 
                 if publish.dup || done {
                     continue;
                 }
-                if ignore_retained && publish.retain {
-                    continue;
+                match (only, publish.retain) {
+                    (Some(OnlyRetained::Retained), false) => process::exit(1),
+                    (Some(OnlyRetained::Live), true) => continue,
+                    _ => (),
                 }
                 eprintln!("{}", publish.topic);
                 if pretty {

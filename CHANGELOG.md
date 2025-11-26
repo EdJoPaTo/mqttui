@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Read One: `--only=retained` and `--only=live` to limit the kind of payload to receive.
+
 ### Changed
 
 - CLI: Rename --client-key to --client-private-key. This highlights that the key is private more explicitly. A (hidden) alias for --client-key still exists so this is not breaking existing setups.
