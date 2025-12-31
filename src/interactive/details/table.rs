@@ -1,18 +1,18 @@
 use std::fmt::Write as _;
 
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, BorderType};
-use ratatui::Frame;
 use ratatui_logline_table::{State as TableState, Table};
 
 use crate::format;
-use crate::interactive::ui::{focus_color, BORDERS_TOP_RIGHT, STYLE_BOLD};
+use crate::interactive::ui::{BORDERS_TOP_RIGHT, STYLE_BOLD, focus_color};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
 
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 pub fn draw(
     frame: &mut Frame,
     area: Rect,

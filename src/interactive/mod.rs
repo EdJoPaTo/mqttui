@@ -202,7 +202,7 @@ impl App {
             .map(|entry| entry.payload.clone())
     }
 
-    #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
+    #[expect(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn on_key(&mut self, key: KeyEvent) -> anyhow::Result<Refresh> {
         if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
             return Ok(Refresh::Quit);

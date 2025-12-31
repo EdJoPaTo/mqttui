@@ -1,7 +1,7 @@
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::Frame;
 
 use crate::cli::Broker;
 use crate::interactive::{App, ElementInFocus};
@@ -95,7 +95,7 @@ impl Footer {
         }
         let keys = Line::from(keys);
 
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         if matches!(app.focus, ElementInFocus::TopicSearch) {
             let x = area.left().saturating_add(keys.width() as u16);
             frame.set_cursor(x, area.y);
@@ -114,7 +114,7 @@ impl Footer {
                 None // Not enough space -> show nothing
             };
             if let Some(text) = text {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let area = Rect {
                     x: area.width.saturating_sub(text.len() as u16),
                     width: text.len() as u16,

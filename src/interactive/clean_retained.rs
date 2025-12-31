@@ -1,8 +1,8 @@
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, Clear, Paragraph};
-use ratatui::Frame;
 
 pub fn draw_popup(frame: &mut Frame, topic: &str) {
     let block = Block::bordered()
@@ -31,7 +31,7 @@ pub fn draw_popup(frame: &mut Frame, topic: &str) {
 fn popup_area(area: Rect, text_width: usize) -> Rect {
     let height = area.height.min(6);
     let max_width = area.width.saturating_sub(4);
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     let width = text_width.saturating_add(14).min(max_width as usize) as u16;
     Rect {
         x: area.width.saturating_sub(width) / 2,

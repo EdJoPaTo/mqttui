@@ -1,16 +1,16 @@
 use std::cmp::min;
 
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
 use ratatui::widgets::{Block, BorderType, Paragraph, Scrollbar, ScrollbarOrientation};
-use ratatui::Frame;
 use ratatui_binary_data_widget::{BinaryDataWidget, BinaryDataWidgetState};
 use tui_tree_widget::{Tree, TreeState};
 
-use crate::interactive::ui::{focus_color, split_area_vertically, BORDERS_TOP_RIGHT};
+use crate::interactive::ui::{BORDERS_TOP_RIGHT, focus_color, split_area_vertically};
 use crate::mqtt::HistoryEntry;
-use crate::payload::{tree_items_from_json, tree_items_from_messagepack, JsonSelector, Payload};
+use crate::payload::{JsonSelector, Payload, tree_items_from_json, tree_items_from_messagepack};
 
 #[derive(Default)]
 pub struct PayloadView {
@@ -44,7 +44,7 @@ impl PayloadView {
         } else {
             area.height / 3
         };
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         let payload_height = min(
             max_payload_height as usize,
             content_height.saturating_add(2),

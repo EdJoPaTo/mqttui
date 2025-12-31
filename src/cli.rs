@@ -113,7 +113,7 @@ pub enum Subcommands {
     },
 }
 
-#[allow(clippy::doc_markdown)]
+#[expect(clippy::doc_markdown)]
 #[derive(Debug, Parser)]
 #[command(about, version)]
 pub struct Cli {

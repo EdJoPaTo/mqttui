@@ -1,8 +1,8 @@
-use ratatui::layout::Rect;
 use ratatui::Frame;
+use ratatui::layout::Rect;
 use ratatui_logline_table::State as TableState;
 
-use crate::interactive::ui::{split_area_vertically, ElementInFocus};
+use crate::interactive::ui::{ElementInFocus, split_area_vertically};
 use crate::mqtt::HistoryEntry;
 
 mod graph;

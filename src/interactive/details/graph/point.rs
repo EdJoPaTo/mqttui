@@ -29,13 +29,13 @@ impl Point {
         Some(Self { time, y })
     }
 
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     pub const fn as_graph_x(&self) -> f64 {
         self.time.and_utc().timestamp_millis() as f64
     }
 }
 
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 fn f64_from_json(json: &serde_json::Value) -> Option<f64> {
     use serde_json::Value;
     match json {
@@ -48,7 +48,7 @@ fn f64_from_json(json: &serde_json::Value) -> Option<f64> {
     }
 }
 
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 fn f64_from_messagepack(messagepack: &rmpv::Value) -> Option<f64> {
     use rmpv::Value;
     match messagepack {

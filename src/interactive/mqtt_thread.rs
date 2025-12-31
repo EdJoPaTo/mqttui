@@ -87,7 +87,7 @@ impl MqttThread {
     }
 }
 
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
 fn thread_logic(
     client: Client,
     mut connection: Connection,

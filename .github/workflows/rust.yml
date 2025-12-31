@@ -52,7 +52,7 @@ jobs:
           - stable
           - beta
           - nightly
-          - "1.74"
+          - "1.85"
         os:
           - ubuntu-latest
           - macos-latest

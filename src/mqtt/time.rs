@@ -26,7 +26,7 @@ impl Time {
     }
 
     #[cfg(test)]
-    pub fn datetime_example() -> NaiveDateTime {
+    pub const fn datetime_example() -> NaiveDateTime {
         chrono::NaiveDate::from_ymd_opt(1996, 12, 19)
             .unwrap()
             .and_hms_opt(16, 39, 57)
