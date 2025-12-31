@@ -12,9 +12,13 @@ rust-version = "1.74.0"
 
 [lints.rust]
 unsafe_code = "forbid"
+unused_qualifications = "warn"
 [lints.clippy]
-pedantic = "warn"
-nursery = "warn"
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+allow_attributes = "warn"
+min_ident_chars = "warn"
+unused_trait_names = "warn"
 
 [profile.release]
 codegen-units = 1

@@ -26,7 +26,7 @@ pub fn show(client: &Client, mut connection: Connection, ignore_retained: bool, 
                     let payload = Payload::unlimited(publish.payload.into());
                     println!("{payload:#}");
                 } else {
-                    use std::io::Write;
+                    use std::io::Write as _;
                     std::io::stdout()
                         .write_all(&publish.payload)
                         .expect("Should be able to write payload to stdout");

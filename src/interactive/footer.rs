@@ -78,7 +78,6 @@ impl Footer {
             }
             ElementInFocus::Payload => {
                 add!("q", "Quit");
-                #[allow(clippy::branches_sharing_code)]
                 if app.can_switch_to_history_table() {
                     add!("Tab", "Switch to History");
                 } else {

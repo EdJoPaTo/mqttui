@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use clap::Parser;
+use clap::Parser as _;
 use cli::Subcommands;
 use rumqttc::QoS;
 
@@ -57,7 +57,7 @@ fn main() -> anyhow::Result<()> {
         }) => {
             let payload = payload.map_or_else(
                 || {
-                    use std::io::Read;
+                    use std::io::Read as _;
                     let mut buffer = Vec::new();
                     std::io::stdin()
                         .read_to_end(&mut buffer)

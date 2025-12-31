@@ -94,7 +94,7 @@ impl Graph {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Timelike;
+    use chrono::Timelike as _;
 
     use super::*;
     use crate::mqtt::Time;

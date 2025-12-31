@@ -1,8 +1,10 @@
 # https://github.com/rust-lang/rustfmt/blob/master/Configurations.md
 format_code_in_doc_comments = true
+format_macro_bodies = true
 format_macro_matchers = true
 group_imports = "StdExternalCrate"
 imports_granularity = "Module"
+normalize_comments = true
 normalize_doc_attributes = true
 reorder_impl_items = true
 use_field_init_shorthand = true

@@ -1,8 +1,7 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use clap::{Args, Parser, Subcommand, ValueHint};
 use url::Url;
 
-#[allow(clippy::doc_markdown)]
 #[derive(Debug, Subcommand)]
 pub enum Subcommands {
     /// Clean retained messages from the broker.
@@ -321,6 +320,6 @@ impl core::fmt::Display for Broker {
 
 #[test]
 fn verify() {
-    use clap::CommandFactory;
+    use clap::CommandFactory as _;
     Cli::command().debug_assert();
 }

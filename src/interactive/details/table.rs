@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::fmt::Write as _;
 
 use ratatui::layout::{Alignment, Constraint, Rect};
 use ratatui::style::{Color, Style};
@@ -12,7 +12,7 @@ use crate::interactive::ui::{focus_color, BORDERS_TOP_RIGHT, STYLE_BOLD};
 use crate::mqtt::HistoryEntry;
 use crate::payload::{JsonSelector, Payload};
 
-#[allow(clippy::cast_precision_loss, clippy::too_many_lines)]
+#[allow(clippy::cast_precision_loss)]
 pub fn draw(
     frame: &mut Frame,
     area: Rect,

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::Context as _;
 use rumqttc::{Client, Connection, Event, MqttOptions, Packet, Transport};
 
 use crate::cli::{Broker, MqttConnection};
