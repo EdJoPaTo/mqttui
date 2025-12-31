@@ -8,7 +8,7 @@ authors = ["EdJoPaTo <mqttui-rust@edjopato.de>"]
 keywords = ["mqtt", "iot", "tui", "cli", "terminal"]
 categories = ["command-line-utilities", "network-programming"]
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.86"
 
 [lints.rust]
 unsafe_code = "forbid"
@@ -35,10 +35,9 @@ url = "2"
 anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] }
-crossterm = "0.27"
 ego-tree = "0.10"
 rand = "0.9"
-ratatui = "0.26"
+ratatui = "0.30"
 ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "main" }
 ratatui-logline-table = { git = "https://github.com/EdJoPaTo/ratatui-logline-table", branch = "main" }
 rmpv = { version = "1", features = ["with-serde"] }
@@ -49,8 +48,7 @@ rustls-pemfile = "2"
 rustls-pki-types = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tui-tree-widget = "0.20"
-unicode-width = "=0.1.12" # remove version pinning when https://github.com/ratatui-org/ratatui/pull/1226 is released
+tui-tree-widget = "0.24"
 url = "2"
 
 # https://crates.io/crates/cargo-deb
