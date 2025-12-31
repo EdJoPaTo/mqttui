@@ -12,7 +12,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: cargo fmt --check --verbose
 
   clippy:
@@ -33,9 +33,9 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           components: clippy
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: cargo fetch
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: clippy-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('**/Cargo.*') }}
           path: target/
@@ -62,9 +62,9 @@ jobs:
         id: rust
         with:
           toolchain: ${{ matrix.toolchain }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: cargo fetch
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: test-${{ matrix.os }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('**/Cargo.*') }}
           path: target/
@@ -117,7 +117,7 @@ jobs:
         with:
           tool: cross,cargo-deb,cargo-generate-rpm
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -133,7 +133,7 @@ jobs:
           echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
 
       - run: cargo fetch --locked
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           key: release-${{ matrix.triple }}-${{ steps.rust.outputs.cachekey }}-${{ hashFiles('**/Cargo.*') }}
           path: target/
@@ -164,7 +164,7 @@ jobs:
         if: matrix.rpm
         run: cargo generate-rpm --auto-req disabled --target ${{ matrix.triple }} --output ${{ env.ARTIFACT_NAME }}.rpm
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.triple }}
           path: |
