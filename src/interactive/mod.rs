@@ -1,13 +1,13 @@
 use std::time::{Duration, Instant};
 
-use crossterm::event::{
+use ratatui::backend::{Backend, CrosstermBackend};
+use ratatui::crossterm::event::{
     Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
-use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
-use ratatui::{Frame, Terminal};
+use ratatui::{Frame, Terminal, crossterm};
 use rumqttc::{Client, Connection};
 
 use self::ui::ElementInFocus;
@@ -95,6 +95,7 @@ pub fn show(
 fn main_loop<B>(mut app: App, mut terminal: Terminal<B>) -> anyhow::Result<()>
 where
     B: Backend,
+    B::Error: Sync + Send + 'static,
 {
     const INTERVAL: Duration = Duration::from_millis(500);
     const DEBOUNCE: Duration = Duration::from_millis(20); // 50 FPS
@@ -601,7 +602,7 @@ impl App {
 
         let connection_error = self.mqtt_thread.has_connection_err();
 
-        let area = frame.size();
+        let area = frame.area();
         let Rect { width, height, .. } = area;
         debug_assert_eq!(area.x, 0, "area should fill the whole space");
         debug_assert_eq!(area.y, 0, "area should fill the whole space");
