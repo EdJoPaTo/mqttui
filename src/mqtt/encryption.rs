@@ -3,10 +3,12 @@ use std::io::BufReader;
 use std::path::Path;
 use std::sync::Arc;
 
+use anyhow::Context as _;
 use rumqttc::TlsConfiguration;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
 use rustls::{ClientConfig, DigitallySignedStruct, KeyLogFile, SignatureScheme};
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
+use rustls_platform_verifier::BuilderVerifierExt as _;
 
 #[derive(Debug)]
 struct NoVerifier;
@@ -64,22 +66,18 @@ pub fn create_tls_configuration(
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
-    let mut roots = rustls::RootCertStore::empty();
-    let native_certs = rustls_native_certs::load_native_certs();
-    for error in native_certs.errors {
-        eprintln!(
-            "Warning: might skip some native certificates because of an error while loading: {error}"
-        );
-    }
-    roots.add_parsable_certificates(native_certs.certs);
-
-    let conf = ClientConfig::builder().with_root_certificates(roots);
+    let conf = ClientConfig::builder()
+        .with_platform_verifier()
+        .context("while reading platform verifier")?;
 
     let mut conf = match (client_cert, client_private_key) {
-        (Some(client_cert), Some(client_private_key)) => conf.with_client_auth_cert(
-            read_certificate_file(client_cert)?,
-            read_private_key_file(client_private_key)?,
-        )?,
+        (Some(client_cert), Some(client_private_key)) => conf
+            .with_client_auth_cert(
+                read_certificate_file(client_cert).context("while reading ca-cert")?,
+                read_private_key_file(client_private_key)
+                    .context("while reading client-private-key")?,
+            )
+            .context("while setting client auth cert")?,
         (None, None) => conf.with_no_client_auth(),
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
     };

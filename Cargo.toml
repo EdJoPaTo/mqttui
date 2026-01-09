@@ -41,11 +41,11 @@ ratatui = "0.30"
 ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "main" }
 ratatui-logline-table = { git = "https://github.com/EdJoPaTo/ratatui-logline-table", branch = "main" }
 rmpv = { version = "1", features = ["with-serde"] }
-rumqttc = { version = "0.24", features = ["websocket"] }
-rustls = "0.22"
-rustls-native-certs = "0.8" # TODO: migrate to rustls-platform-verifier with rustls upgrade
+rumqttc = { version = "0.25", features = ["websocket"] }
+rustls = "0.23"
 rustls-pemfile = "2"
 rustls-pki-types = "1"
+rustls-platform-verifier = "0.6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tui-tree-widget = "0.24"
