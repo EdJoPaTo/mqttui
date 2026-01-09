@@ -3,6 +3,7 @@ use std::io::BufReader;
 use std::path::Path;
 use std::sync::Arc;
 
+use anyhow::Context as _;
 use rumqttc::TlsConfiguration;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
 use rustls::{ClientConfig, DigitallySignedStruct, KeyLogFile, SignatureScheme};
@@ -63,6 +64,7 @@ pub fn create_tls_configuration(
     insecure: bool,
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
+    ca_cert: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
     let native_certs = rustls_native_certs::load_native_certs();
@@ -73,13 +75,26 @@ pub fn create_tls_configuration(
     }
     roots.add_parsable_certificates(native_certs.certs);
 
+    if let Some(path) = ca_cert {
+        let certificates = read_certificate_file(path).context("while reading ca-cert")?;
+        anyhow::ensure!(!certificates.is_empty(), "no certificates in ca-cert");
+        for certificate in certificates {
+            roots
+                .add(certificate)
+                .context("while adding ca-cert to cert store")?;
+        }
+    }
+
     let conf = ClientConfig::builder().with_root_certificates(roots);
 
     let mut conf = match (client_cert, client_private_key) {
-        (Some(client_cert), Some(client_private_key)) => conf.with_client_auth_cert(
-            read_certificate_file(client_cert)?,
-            read_private_key_file(client_private_key)?,
-        )?,
+        (Some(client_cert), Some(client_private_key)) => conf
+            .with_client_auth_cert(
+                read_certificate_file(client_cert).context("while reading client-cert")?,
+                read_private_key_file(client_private_key)
+                    .context("while reading client-private-key")?,
+            )
+            .context("while setting client auth cert")?,
         (None, None) => conf.with_no_client_auth(),
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
     };
