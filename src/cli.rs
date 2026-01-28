@@ -246,6 +246,52 @@ pub struct MqttConnection {
     /// Allow insecure TLS connections
     #[arg(long, global = true)]
     pub insecure: bool,
+
+    /// Path to a TLS CA certificate file.
+    ///
+    /// Used to verify the broker's certificate instead of using the system's certificate store.
+    /// Useful for self-signed certificates or private CA (like AWS `IoT` Core).
+    /// The file should contain PEM-encoded CA certificates.
+    #[arg(
+        long,
+        env = "MQTTUI_CA",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        global = true,
+    )]
+    pub ca: Option<std::path::PathBuf>,
+
+    /// TLS ALPN protocol to use.
+    ///
+    /// Required by some brokers like AWS `IoT` Core.
+    /// Common values: "mqtt" for standard MQTT, "x-amzn-mqtt-ca" for AWS `IoT` custom auth.
+    /// Can be specified multiple times for multiple protocols (first is preferred).
+    #[arg(
+        long,
+        env = "MQTTUI_ALPN",
+        value_hint = ValueHint::Other,
+        value_name = "PROTOCOL",
+        global = true,
+    )]
+    pub alpn: Vec<String>,
+
+    /// MQTT `QoS` level for subscriptions and publishing.
+    ///
+    /// 0 = At most once (fire and forget)
+    /// 1 = At least once (acknowledged delivery)
+    /// 2 = Exactly once (assured delivery)
+    ///
+    /// Note: AWS `IoT` Core does not support `QoS` 2. Use --qos 1 for AWS `IoT`.
+    #[arg(
+        long,
+        env = "MQTTUI_QOS",
+        value_hint = ValueHint::Other,
+        value_name = "LEVEL",
+        default_value_t = 2,
+        value_parser = clap::value_parser!(u8).range(0..=2),
+        global = true,
+    )]
+    pub qos: u8,
 }
 
 #[derive(Debug, Clone)]

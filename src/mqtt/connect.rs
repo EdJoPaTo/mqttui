@@ -14,6 +14,9 @@ pub fn connect(
         client_cert,
         client_private_key,
         insecure,
+        ca,
+        alpn,
+        qos: _, // QoS is extracted separately in main.rs before this call
     }: MqttConnection,
     keep_alive: Option<Duration>,
 ) -> anyhow::Result<(Broker, Client, Connection)> {
@@ -24,6 +27,8 @@ pub fn connect(
                 insecure,
                 client_cert.as_deref(),
                 client_private_key.as_deref(),
+                ca.as_deref(),
+                &alpn,
             )?),
             host.clone(),
             *port,
@@ -35,6 +40,8 @@ pub fn connect(
                 insecure,
                 client_cert.as_deref(),
                 client_private_key.as_deref(),
+                ca.as_deref(),
+                &alpn,
             )?),
             url.to_string(),
             666,

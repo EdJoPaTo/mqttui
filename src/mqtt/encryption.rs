@@ -63,15 +63,27 @@ pub fn create_tls_configuration(
     insecure: bool,
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
+    ca_cert: Option<&Path>,
+    alpn_protocols: &[String],
 ) -> anyhow::Result<TlsConfiguration> {
     let mut roots = rustls::RootCertStore::empty();
-    let native_certs = rustls_native_certs::load_native_certs();
-    for error in native_certs.errors {
-        eprintln!(
-            "Warning: might skip some native certificates because of an error while loading: {error}"
-        );
+
+    // Load CA certificates from file if provided, otherwise use the system's native cert store.
+    // Custom CA files are needed for brokers using self-signed certs or private CAs (e.g., AWS IoT Core).
+    if let Some(ca_path) = ca_cert {
+        let ca_certs = read_certificate_file(ca_path)?;
+        for cert in ca_certs {
+            roots.add(cert)?;
+        }
+    } else {
+        let native_certs = rustls_native_certs::load_native_certs();
+        for error in native_certs.errors {
+            eprintln!(
+                "Warning: might skip some native certificates because of an error while loading: {error}"
+            );
+        }
+        roots.add_parsable_certificates(native_certs.certs);
     }
-    roots.add_parsable_certificates(native_certs.certs);
 
     let conf = ClientConfig::builder().with_root_certificates(roots);
 
@@ -84,6 +96,16 @@ pub fn create_tls_configuration(
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
     };
     conf.key_log = Arc::new(KeyLogFile::new());
+
+    // Set ALPN (Application-Layer Protocol Negotiation) protocols if provided.
+    // Required by some brokers like AWS IoT Core to identify the protocol during TLS handshake.
+    // Common values: "mqtt" for standard MQTT, "x-amzn-mqtt-ca" for AWS IoT custom auth.
+    if !alpn_protocols.is_empty() {
+        conf.alpn_protocols = alpn_protocols
+            .iter()
+            .map(|protocol| protocol.as_bytes().to_vec())
+            .collect();
+    }
 
     if insecure {
         let mut danger = conf.dangerous();

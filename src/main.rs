@@ -22,6 +22,13 @@ fn main() -> anyhow::Result<()> {
     } else {
         None
     };
+    // Extract and convert QoS before mqtt_connection is moved
+    let qos = match matches.mqtt_connection.qos {
+        0 => QoS::AtMostOnce,
+        1 => QoS::AtLeastOnce,
+        2 => QoS::ExactlyOnce,
+        _ => unreachable!("QoS value should be 0, 1, or 2 (enforced by clap)"),
+    };
     let (broker, client, connection) = mqtt::connect(matches.mqtt_connection, keep_alive)?;
 
     match matches.subcommands {
@@ -70,12 +77,14 @@ fn main() -> anyhow::Result<()> {
             publish::eventloop(&client, connection, verbose);
         }
         None => {
+            // Only interactive mode uses the --qos flag (default: QoS 2)
             interactive::show(
                 client.clone(),
                 connection,
                 &broker,
                 matches.topic,
                 matches.payload_size_limit,
+                qos,
             )?;
             client.disconnect()?;
         }
