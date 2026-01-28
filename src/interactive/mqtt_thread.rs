@@ -15,6 +15,7 @@ pub struct MqttThread {
     client: Client,
     connection_err: ConnectionErrorArc,
     history: HistoryArc,
+    qos: QoS,
 }
 
 impl MqttThread {
@@ -23,9 +24,10 @@ impl MqttThread {
         connection: Connection,
         subscribe_topic: Vec<String>,
         payload_size_limit: usize,
+        qos: QoS,
     ) -> anyhow::Result<Self> {
         for topic in &subscribe_topic {
-            client.subscribe(topic, QoS::ExactlyOnce)?;
+            client.subscribe(topic, qos)?;
         }
 
         let connection_err = Arc::new(RwLock::new(None));
@@ -43,6 +45,7 @@ impl MqttThread {
                         connection,
                         &subscribe_topic,
                         payload_size_limit,
+                        qos,
                         &connection_err,
                         &history,
                     );
@@ -54,6 +57,7 @@ impl MqttThread {
             client,
             connection_err,
             history,
+            qos,
         })
     }
 
@@ -62,7 +66,17 @@ impl MqttThread {
             .read()
             .expect("mqtt history thread panicked")
             .as_ref()
-            .map(ToString::to_string)
+            .map(|err| {
+                let err_str = err.to_string();
+                // Provide helpful hint for common AWS IoT Core issue (QoS 2 not supported)
+                if err_str.contains("reset") || err_str.contains("closed") {
+                    format!(
+                        "{err_str}\n\nHint: AWS IoT Core doesn't support QoS 2. Try adding: --qos 1"
+                    )
+                } else {
+                    err_str
+                }
+            })
     }
 
     pub fn get_history(&self) -> RwLockReadGuard<'_, MqttHistory> {
@@ -81,7 +95,7 @@ impl MqttThread {
     pub fn clean_below(&self, topic: &str) -> anyhow::Result<()> {
         let topics = self.get_history().get_topics_below(topic);
         for topic in topics {
-            self.client.publish(topic, QoS::ExactlyOnce, true, [])?;
+            self.client.publish(topic, self.qos, true, [])?;
         }
         Ok(())
     }
@@ -93,6 +107,7 @@ fn thread_logic(
     mut connection: Connection,
     subscribe_topic: &[String],
     payload_size_limit: usize,
+    qos: QoS,
     connection_err: &ConnectionErrorArc,
     history: &HistoryArc,
 ) {
@@ -104,7 +119,7 @@ fn thread_logic(
                     rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) => {
                         for topic in subscribe_topic {
                             client
-                                .subscribe(topic, QoS::ExactlyOnce)
+                                .subscribe(topic, qos)
                                 .expect("should be able to subscribe");
                         }
                     }

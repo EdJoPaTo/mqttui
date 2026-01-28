@@ -62,9 +62,10 @@ pub fn show(
     broker: &Broker,
     subscribe_topic: Vec<String>,
     payload_size_limit: usize,
+    qos: rumqttc::QoS,
 ) -> anyhow::Result<()> {
     let mqtt_thread =
-        mqtt_thread::MqttThread::new(client, connection, subscribe_topic, payload_size_limit)?;
+        mqtt_thread::MqttThread::new(client, connection, subscribe_topic, payload_size_limit, qos)?;
     let app = App::new(broker, mqtt_thread);
 
     let original_hook = std::panic::take_hook();
