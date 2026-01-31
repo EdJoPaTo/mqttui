@@ -6,7 +6,7 @@ use rumqttc::{Client, Connection, QoS};
 use crate::format;
 use crate::payload::Payload;
 
-pub fn clean_retained(client: &Client, mut connection: Connection, dry_run: bool) {
+pub fn clean_retained(client: &Client, mut connection: Connection, qos: QoS, dry_run: bool) {
     let mut amount: usize = 0;
     for notification in connection.iter() {
         match notification {
@@ -32,7 +32,7 @@ pub fn clean_retained(client: &Client, mut connection: Connection, dry_run: bool
                 }
                 amount += 1;
                 if !dry_run {
-                    client.publish(topic, QoS::ExactlyOnce, true, []).unwrap();
+                    client.publish(topic, qos, true, []).unwrap();
                 }
             }
             Ok(_) => {}

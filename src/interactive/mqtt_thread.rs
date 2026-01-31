@@ -13,6 +13,7 @@ type HistoryArc = Arc<RwLock<MqttHistory>>;
 
 pub struct MqttThread {
     client: Client,
+    qos: QoS,
     connection_err: ConnectionErrorArc,
     history: HistoryArc,
 }
@@ -22,10 +23,11 @@ impl MqttThread {
         client: Client,
         connection: Connection,
         subscribe_topic: Vec<String>,
+        qos: QoS,
         payload_size_limit: usize,
     ) -> anyhow::Result<Self> {
         for topic in &subscribe_topic {
-            client.subscribe(topic, QoS::ExactlyOnce)?;
+            client.subscribe(topic, qos)?;
         }
 
         let connection_err = Arc::new(RwLock::new(None));
@@ -42,6 +44,7 @@ impl MqttThread {
                         client,
                         connection,
                         &subscribe_topic,
+                        qos,
                         payload_size_limit,
                         &connection_err,
                         &history,
@@ -52,6 +55,7 @@ impl MqttThread {
 
         Ok(Self {
             client,
+            qos,
             connection_err,
             history,
         })
@@ -81,7 +85,7 @@ impl MqttThread {
     pub fn clean_below(&self, topic: &str) -> anyhow::Result<()> {
         let topics = self.get_history().get_topics_below(topic);
         for topic in topics {
-            self.client.publish(topic, QoS::ExactlyOnce, true, [])?;
+            self.client.publish(topic, self.qos, true, [])?;
         }
         Ok(())
     }
@@ -92,6 +96,7 @@ fn thread_logic(
     client: Client,
     mut connection: Connection,
     subscribe_topic: &[String],
+    qos: QoS,
     payload_size_limit: usize,
     connection_err: &ConnectionErrorArc,
     history: &HistoryArc,
@@ -104,7 +109,7 @@ fn thread_logic(
                     rumqttc::Event::Incoming(rumqttc::Packet::ConnAck(_)) => {
                         for topic in subscribe_topic {
                             client
-                                .subscribe(topic, QoS::ExactlyOnce)
+                                .subscribe(topic, qos)
                                 .expect("should be able to subscribe");
                         }
                     }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add --qos for selecting the MQTT Quality of Service for subscribing and publishing.
+
 ### Changed
 
 - CLI: Rename --client-key to --client-private-key. This highlights that the key is private more explicitly. A (hidden) alias for --client-key still exists so this is not breaking existing setups.

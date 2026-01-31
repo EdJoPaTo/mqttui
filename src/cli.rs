@@ -128,6 +128,28 @@ pub struct Cli {
     )]
     pub topic: Vec<String>,
 
+    /// Maximum Quality of Service (`QoS`) for subscriptions and publishing.
+    ///
+    /// The lower Quality of Service level for publisher and subscriber is delivered from broker to subscriber.
+    /// So subscribing with 0 will never receive a 1 or 2.
+    /// Publishing with 2 will be received as 1 when subscribed with 1.
+    ///
+    /// - 0: at most once (fire and forget)
+    ///
+    /// - 1: at least once (acknowledged delivery with potential duplicates)
+    ///
+    /// - 2: exactly once (assured delivery without duplicates)
+    #[arg(
+        long,
+        env = "MQTTUI_QOS",
+        value_hint = ValueHint::Other,
+        value_name = "LEVEL",
+        value_parser = clap::value_parser!(u8).range(0..=2),
+        global = true,
+        default_value_t = 2
+    )]
+    pub qos: u8,
+
     /// Truncate the payloads stored to the given size.
     ///
     /// Payloads bigger than that are truncated and not inspected for formats like JSON or MessagePack.
