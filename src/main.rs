@@ -66,6 +66,11 @@ fn main() -> anyhow::Result<()> {
                 },
                 String::into_bytes,
             );
+            if matches!(qos, rumqttc::QoS::AtMostOnce) {
+                eprintln!(
+                    "With QoS 0 at most once there wont be an acknowledgement from the broker. Waiting for a ping..."
+                );
+            }
             client.publish(topic, qos, retain, payload)?;
             publish::eventloop(&client, connection, verbose);
         }
