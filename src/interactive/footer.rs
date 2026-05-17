@@ -86,6 +86,9 @@ impl Footer {
             }
             ElementInFocus::HistoryTable => {
                 add!("q", "Quit");
+                if app.details.table_state.selected().is_some() {
+                    add!("Esc", "Resume Autoscroll");
+                }
                 add!("Tab", "Switch to Topics");
             }
             ElementInFocus::CleanRetainedPopup(_) => {

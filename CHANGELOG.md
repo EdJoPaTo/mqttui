@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add --qos for selecting the MQTT Quality of Service for subscribing and publishing.
+- Interactive: Add key hint for the history table to resume autoscroll with ESC.
 
 ### Changed
 
