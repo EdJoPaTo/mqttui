@@ -1690,7 +1690,8 @@ dependencies = [
 [[package]]
 name = "ratatui-binary-data-widget"
 version = "0.1.0"
-source = "git+https://github.com/EdJoPaTo/ratatui-binary-data-widget?branch=main#401eb16a6ca6fbf34a9f422ad683f2ecb7b1164d"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4698a5a86020497b73511356d862168c04acd99f2103f18a6f6efc53afa3bed9"
 dependencies = [
  "ratatui-core",
  "ratatui-widgets",

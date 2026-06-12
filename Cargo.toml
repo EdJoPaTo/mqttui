@@ -38,7 +38,7 @@ clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] 
 ego-tree = "0.11"
 rand = "0.10"
 ratatui = "0.30"
-ratatui-binary-data-widget = { git = "https://github.com/EdJoPaTo/ratatui-binary-data-widget", branch = "main" }
+ratatui-binary-data-widget = "0.1.0"
 ratatui-logline-table = { git = "https://github.com/EdJoPaTo/ratatui-logline-table", branch = "main" }
 rmpv = { version = "1", features = ["with-serde"] }
 rumqttc = { version = "0.25", features = ["websocket"] }
