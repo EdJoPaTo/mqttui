@@ -63,9 +63,36 @@ impl rustls::client::danger::ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
+    ca_file: Option<&Path>,
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
+    if let Some(ca_file) = ca_file {
+        let mut builder = native_tls::TlsConnector::builder();
+        for cert in read_certificate_file(ca_file).context("while reading CA file")? {
+            builder.add_root_certificate(
+                native_tls::Certificate::from_der(cert.as_ref())
+                    .context("while adding CA certificate")?,
+            );
+        }
+        match (client_cert, client_private_key) {
+            (Some(client_cert), Some(client_private_key)) => {
+                let identity = native_tls::Identity::from_pkcs8(
+                    &std::fs::read(client_cert).context("while reading client-cert")?,
+                    &std::fs::read(client_private_key)
+                        .context("while reading client-private-key")?,
+                )
+                .context("while setting client auth cert")?;
+                builder.identity(identity);
+            }
+            (None, None) => {}
+            _ => unreachable!("requires both cert and key which should be ensured by clap"),
+        }
+        builder.danger_accept_invalid_certs(insecure);
+        builder.danger_accept_invalid_hostnames(insecure);
+        return Ok(TlsConfiguration::NativeConnector(builder.build()?));
+    }
+
     let conf = ClientConfig::builder()
         .with_platform_verifier()
         .context("while reading platform verifier")?;

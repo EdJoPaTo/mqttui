@@ -236,6 +236,16 @@ pub struct MqttConnection {
     )]
     pub client_id: Option<String>,
 
+    /// Path to a PEM file containing additional trusted CA certificates.
+    #[arg(
+        long,
+        env = "MQTTUI_CA_FILE",
+        value_hint = ValueHint::FilePath,
+        value_name = "FILEPATH",
+        global = true,
+    )]
+    pub ca_file: Option<std::path::PathBuf>,
+
     /// Path to the TLS client certificate file.
     ///
     /// Used together with --client-private-key to enable TLS client authentication.
@@ -344,4 +354,13 @@ impl core::fmt::Display for Broker {
 fn verify() {
     use clap::CommandFactory as _;
     Cli::command().debug_assert();
+}
+
+#[test]
+fn parses_ca_file() {
+    let cli = Cli::try_parse_from(["mqttui", "--ca-file", "root.pem"]).unwrap();
+    assert_eq!(
+        cli.mqtt_connection.ca_file,
+        Some(std::path::PathBuf::from("root.pem"))
+    );
 }
