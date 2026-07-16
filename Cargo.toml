@@ -36,7 +36,7 @@ anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4", features = ["deprecated", "derive", "env", "wrap_help"] }
 ego-tree = "0.11"
-native-tls = "0.2"
+native-tls = { version = "0.2", features = ["vendored"] }
 rand = "0.10"
 ratatui = "0.30"
 ratatui-binary-data-widget = "0.1.0"
