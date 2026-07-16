@@ -127,6 +127,32 @@ export MQTTUI_BROKER=mqtt://pi-home.local
 mqttui "topic"
 ```
 
+### TLS connections
+
+Use an `mqtts://` broker URL to connect over TLS. By default, mqttui verifies the broker using the system's trusted CA certificates.
+
+```bash
+mqttui --broker "mqtts://broker.example.com:8883" "topic"
+```
+
+For brokers using a private CA, provide a PEM-encoded CA file with `--ca-file` or the `MQTTUI_CA_FILE` environment variable:
+
+```bash
+mqttui --broker "mqtts://broker.example.com:8883" --ca-file root-ca.pem "topic"
+```
+
+Mutual TLS connections also require a PEM-encoded client certificate and private key:
+
+```bash
+mqttui --broker "mqtts://broker.example.com:8883" \
+  --ca-file root-ca.pem \
+  --client-cert client.crt \
+  --client-private-key client.key \
+  "topic"
+```
+
+`--insecure` disables certificate and hostname verification and should only be used for testing.
+
 ## Install
 
 There are generally 3 ways to install `mqttui`, in the order of preference: From your [package manager](#packaged), [prebuilt](#prebuilt) or [from source](#from-source)
