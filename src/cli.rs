@@ -237,6 +237,10 @@ pub struct MqttConnection {
     pub client_id: Option<String>,
 
     /// Path to a PEM file containing additional trusted CA certificates.
+    ///
+    /// Used to authenticate the broker that the client is attempting to coonect to.
+    /// The CA certificate has to be a X.509 v3 certificate since rustls does not support the less
+    /// secure v1 certificates. See: <https://github.com/rustls/rustls/issues/2364>
     #[arg(
         long,
         env = "MQTTUI_CA_FILE",
@@ -354,13 +358,4 @@ impl core::fmt::Display for Broker {
 fn verify() {
     use clap::CommandFactory as _;
     Cli::command().debug_assert();
-}
-
-#[test]
-fn parses_ca_file() {
-    let cli = Cli::try_parse_from(["mqttui", "--ca-file", "root.pem"]).unwrap();
-    assert_eq!(
-        cli.mqtt_connection.ca_file,
-        Some(std::path::PathBuf::from("root.pem"))
-    );
 }

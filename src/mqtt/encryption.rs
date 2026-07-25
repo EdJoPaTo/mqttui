@@ -8,7 +8,7 @@ use rumqttc::TlsConfiguration;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
 use rustls::{ClientConfig, DigitallySignedStruct, KeyLogFile, SignatureScheme};
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
-use rustls_platform_verifier::BuilderVerifierExt as _;
+use rustls_platform_verifier::{BuilderVerifierExt as _, Verifier};
 
 #[derive(Debug)]
 struct NoVerifier;
@@ -67,35 +67,21 @@ pub fn create_tls_configuration(
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
-    if let Some(ca_file) = ca_file {
-        let mut builder = native_tls::TlsConnector::builder();
-        for cert in read_certificate_file(ca_file).context("while reading CA file")? {
-            builder.add_root_certificate(
-                native_tls::Certificate::from_der(cert.as_ref())
-                    .context("while adding CA certificate")?,
-            );
-        }
-        match (client_cert, client_private_key) {
-            (Some(client_cert), Some(client_private_key)) => {
-                let identity = native_tls::Identity::from_pkcs8(
-                    &std::fs::read(client_cert).context("while reading client-cert")?,
-                    &std::fs::read(client_private_key)
-                        .context("while reading client-private-key")?,
-                )
-                .context("while setting client auth cert")?;
-                builder.identity(identity);
-            }
-            (None, None) => {}
-            _ => unreachable!("requires both cert and key which should be ensured by clap"),
-        }
-        builder.danger_accept_invalid_certs(insecure);
-        builder.danger_accept_invalid_hostnames(insecure);
-        return Ok(TlsConfiguration::NativeConnector(builder.build()?));
-    }
-
-    let conf = ClientConfig::builder()
-        .with_platform_verifier()
-        .context("while reading platform verifier")?;
+    let conf = if let Some(ca_file) = ca_file {
+        let builder = ClientConfig::builder();
+        let verifier = Verifier::new_with_extra_roots(
+            read_certificate_file(ca_file).context("while reading CA file")?,
+            builder.crypto_provider().clone(),
+        )
+        .context("while adding CA certificates")?;
+        builder
+            .dangerous()
+            .with_custom_certificate_verifier(Arc::new(verifier))
+    } else {
+        ClientConfig::builder()
+            .with_platform_verifier()
+            .context("while reading platform verifier")?
+    };
 
     let mut conf = match (client_cert, client_private_key) {
         (Some(client_cert), Some(client_private_key)) => conf
