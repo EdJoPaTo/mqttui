@@ -11,7 +11,7 @@ pub fn connect(
         username,
         password,
         client_id,
-        ca_file,
+        ca_cert,
         client_cert,
         client_private_key,
         insecure,
@@ -23,7 +23,7 @@ pub fn connect(
         Broker::Ssl { host, port } => (
             Transport::Tls(super::encryption::create_tls_configuration(
                 insecure,
-                ca_file.as_deref(),
+                ca_cert.as_deref(),
                 client_cert.as_deref(),
                 client_private_key.as_deref(),
             )?),
@@ -35,7 +35,7 @@ pub fn connect(
         Broker::WebSocketSsl(url) => (
             Transport::Wss(super::encryption::create_tls_configuration(
                 insecure,
-                ca_file.as_deref(),
+                ca_cert.as_deref(),
                 client_cert.as_deref(),
                 client_private_key.as_deref(),
             )?),

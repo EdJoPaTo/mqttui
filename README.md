@@ -135,17 +135,17 @@ Use an `mqtts://` broker URL to connect over TLS. By default, mqttui verifies th
 mqttui --broker "mqtts://broker.example.com:8883" "topic"
 ```
 
-For brokers using a private CA, provide a PEM-encoded CA file with `--ca-file` or the `MQTTUI_CA_FILE` environment variable:
+For brokers using a private CA, provide a PEM-encoded CA file with `--ca-cert` or the `MQTTUI_CA_CERTIFICATE` environment variable:
 
 ```bash
-mqttui --broker "mqtts://broker.example.com:8883" --ca-file root-ca.pem "topic"
+mqttui --broker "mqtts://broker.example.com:8883" --ca-cert root-ca.pem "topic"
 ```
 
 Mutual TLS connections also require a PEM-encoded client certificate and private key:
 
 ```bash
 mqttui --broker "mqtts://broker.example.com:8883" \
-  --ca-file root-ca.pem \
+  --ca-cert root-ca.pem \
   --client-cert client.crt \
   --client-private-key client.key \
   "topic"

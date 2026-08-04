@@ -63,14 +63,14 @@ impl rustls::client::danger::ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
-    ca_file: Option<&Path>,
+    ca_cert: Option<&Path>,
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
-    let conf = if let Some(ca_file) = ca_file {
+    let conf = if let Some(ca_cert) = ca_cert {
         let builder = ClientConfig::builder();
         let verifier = Verifier::new_with_extra_roots(
-            read_certificate_file(ca_file).context("while reading CA file")?,
+            read_certificate_file(ca_cert).context("while reading CA file")?,
             builder.crypto_provider().clone(),
         )
         .context("while adding CA certificates")?;

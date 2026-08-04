@@ -243,12 +243,12 @@ pub struct MqttConnection {
     /// secure v1 certificates. See: <https://github.com/rustls/rustls/issues/2364>
     #[arg(
         long,
-        env = "MQTTUI_CA_FILE",
+        env = "MQTTUI_CA_CERTIFICATE",
         value_hint = ValueHint::FilePath,
         value_name = "FILEPATH",
         global = true,
     )]
-    pub ca_file: Option<std::path::PathBuf>,
+    pub ca_cert: Option<std::path::PathBuf>,
 
     /// Path to the TLS client certificate file.
     ///
