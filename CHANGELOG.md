@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Encryption: Add `--ca-cert` for verifying the broker certificate.
+- Read One: `--only=retained` and `--only=live` to limit the kind of payload to receive.
 
 ### Changed
 
