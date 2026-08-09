@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Encryption: Add `--ca-cert` for verifying the broker certificate.
+
 ### Changed
 
 - Encryption: switch from `rustls_pemfile` to `rustls_pki_types` for reading PEM files.
