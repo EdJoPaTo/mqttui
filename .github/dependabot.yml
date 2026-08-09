@@ -1,0 +1,17 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "02:42" # UTC
+    commit-message:
+      prefix: "ci(actions):"
+    groups:
+      actions:
+        patterns: ["actions/*"]
+      docker:
+        patterns: ["docker/*"]
