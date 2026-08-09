@@ -43,7 +43,6 @@ ratatui-logline-table = { git = "https://github.com/EdJoPaTo/ratatui-logline-tab
 rmpv = { version = "1", features = ["with-serde"] }
 rumqttc = { version = "0.25", features = ["websocket"] }
 rustls = "0.23"
-rustls-pemfile = "2"
 rustls-pki-types = "1"
 rustls-platform-verifier = "0.7"
 serde = { version = "1", features = ["derive"] }

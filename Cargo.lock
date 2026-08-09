@@ -1144,7 +1144,6 @@ dependencies = [
  "rmpv",
  "rumqttc",
  "rustls",
- "rustls-pemfile",
  "rustls-pki-types",
  "rustls-platform-verifier",
  "serde",
