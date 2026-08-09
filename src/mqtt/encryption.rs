@@ -7,7 +7,7 @@ use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
 use rustls::{ClientConfig, DigitallySignedStruct, KeyLogFile, SignatureScheme};
 use rustls_pki_types::pem::PemObject as _;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
-use rustls_platform_verifier::BuilderVerifierExt as _;
+use rustls_platform_verifier::{BuilderVerifierExt as _, Verifier};
 
 #[derive(Debug)]
 struct NoVerifier;
@@ -62,12 +62,25 @@ impl rustls::client::danger::ServerCertVerifier for NoVerifier {
 
 pub fn create_tls_configuration(
     insecure: bool,
+    ca_cert: Option<&Path>,
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
-    let conf = ClientConfig::builder()
-        .with_platform_verifier()
-        .context("while reading platform verifier")?;
+    let conf = if let Some(ca_cert) = ca_cert {
+        let builder = ClientConfig::builder();
+        let verifier = Verifier::new_with_extra_roots(
+            read_certificate_file(ca_cert).context("while reading ca-cert")?,
+            builder.crypto_provider().clone(),
+        )
+        .context("while adding CA certificates")?;
+        builder
+            .dangerous()
+            .with_custom_certificate_verifier(Arc::new(verifier))
+    } else {
+        ClientConfig::builder()
+            .with_platform_verifier()
+            .context("while reading platform verifier")?
+    };
 
     let mut conf = match (client_cert, client_private_key) {
         (Some(client_cert), Some(client_private_key)) => conf
