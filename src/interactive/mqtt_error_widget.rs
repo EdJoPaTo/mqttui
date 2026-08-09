@@ -1,7 +1,7 @@
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Borders, Paragraph, Wrap};
-use ratatui::Frame;
 
 pub fn draw(frame: &mut Frame, area: Rect, title: &str, error: &str) {
     const STYLE: Style = Style::new().fg(Color::Black).bg(Color::Red);

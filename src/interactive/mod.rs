@@ -1,14 +1,14 @@
 use std::time::{Duration, Instant};
 
-use crossterm::event::{
+use ratatui::backend::{Backend, CrosstermBackend};
+use ratatui::crossterm::event::{
     Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
-use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::layout::{Alignment, Position, Rect};
 use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
-use ratatui::{Frame, Terminal};
-use rumqttc::{Client, Connection};
+use ratatui::{Frame, Terminal, crossterm};
+use rumqttc::{Client, Connection, QoS};
 
 use self::ui::ElementInFocus;
 use crate::cli::Broker;
@@ -61,10 +61,11 @@ pub fn show(
     connection: Connection,
     broker: &Broker,
     subscribe_topic: Vec<String>,
+    qos: QoS,
     payload_size_limit: usize,
 ) -> anyhow::Result<()> {
     let mqtt_thread =
-        mqtt_thread::MqttThread::new(client, connection, subscribe_topic, payload_size_limit)?;
+        mqtt_thread::MqttThread::new(client, connection, subscribe_topic, qos, payload_size_limit)?;
     let app = App::new(broker, mqtt_thread);
 
     let original_hook = std::panic::take_hook();
@@ -95,6 +96,7 @@ pub fn show(
 fn main_loop<B>(mut app: App, mut terminal: Terminal<B>) -> anyhow::Result<()>
 where
     B: Backend,
+    B::Error: Sync + Send + 'static,
 {
     const INTERVAL: Duration = Duration::from_millis(500);
     const DEBOUNCE: Duration = Duration::from_millis(20); // 50 FPS
@@ -202,7 +204,7 @@ impl App {
             .map(|entry| entry.payload.clone())
     }
 
-    #[allow(clippy::too_many_lines, clippy::cognitive_complexity)]
+    #[expect(clippy::too_many_lines, clippy::cognitive_complexity)]
     fn on_key(&mut self, key: KeyEvent) -> anyhow::Result<Refresh> {
         if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
             return Ok(Refresh::Quit);
@@ -601,7 +603,7 @@ impl App {
 
         let connection_error = self.mqtt_thread.has_connection_err();
 
-        let area = frame.size();
+        let area = frame.area();
         let Rect { width, height, .. } = area;
         debug_assert_eq!(area.x, 0, "area should fill the whole space");
         debug_assert_eq!(area.y, 0, "area should fill the whole space");

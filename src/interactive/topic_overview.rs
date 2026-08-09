@@ -1,11 +1,11 @@
+use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, BorderType, Scrollbar, ScrollbarOrientation};
-use ratatui::Frame;
 use tui_tree_widget::{Tree, TreeState};
 
 use super::mqtt_history::MqttHistory;
-use super::ui::{focus_color, BORDERS_TOP_RIGHT};
+use super::ui::{BORDERS_TOP_RIGHT, focus_color};
 
 #[derive(Default)]
 pub struct TopicOverview {

@@ -3,7 +3,7 @@ use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType};
-use ratatui::{symbols, Frame};
+use ratatui::{Frame, symbols};
 
 use self::point::Point;
 use crate::mqtt::HistoryEntry;
@@ -40,8 +40,7 @@ impl Graph {
         let mut data = Vec::with_capacity(points.len());
         let mut y_min = first.y;
         let mut y_max = y_min;
-        #[allow(clippy::explicit_iter_loop)] // requires rustc 1.80 which is above the MSRV
-        for point in points.iter() {
+        for point in &points {
             y_min = y_min.min(point.y);
             y_max = y_max.max(point.y);
             data.push((point.as_graph_x(), point.y));
@@ -94,7 +93,7 @@ impl Graph {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Timelike;
+    use chrono::Timelike as _;
 
     use super::*;
     use crate::mqtt::Time;

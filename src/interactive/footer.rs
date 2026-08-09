@@ -1,7 +1,7 @@
-use ratatui::layout::Rect;
+use ratatui::Frame;
+use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::Frame;
 
 use crate::cli::Broker;
 use crate::interactive::{App, ElementInFocus};
@@ -78,7 +78,6 @@ impl Footer {
             }
             ElementInFocus::Payload => {
                 add!("q", "Quit");
-                #[allow(clippy::branches_sharing_code)]
                 if app.can_switch_to_history_table() {
                     add!("Tab", "Switch to History");
                 } else {
@@ -87,6 +86,9 @@ impl Footer {
             }
             ElementInFocus::HistoryTable => {
                 add!("q", "Quit");
+                if app.details.table_state.selected().is_some() {
+                    add!("Esc", "Resume Autoscroll");
+                }
                 add!("Tab", "Switch to Topics");
             }
             ElementInFocus::CleanRetainedPopup(_) => {
@@ -96,10 +98,10 @@ impl Footer {
         }
         let keys = Line::from(keys);
 
-        #[allow(clippy::cast_possible_truncation)]
+        #[expect(clippy::cast_possible_truncation)]
         if matches!(app.focus, ElementInFocus::TopicSearch) {
             let x = area.left().saturating_add(keys.width() as u16);
-            frame.set_cursor(x, area.y);
+            frame.set_cursor_position(Position { x, y: area.y });
         }
 
         // Show version / broker when enough space
@@ -115,7 +117,7 @@ impl Footer {
                 None // Not enough space -> show nothing
             };
             if let Some(text) = text {
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 let area = Rect {
                     x: area.width.saturating_sub(text.len() as u16),
                     width: text.len() as u16,

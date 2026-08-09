@@ -1,8 +1,7 @@
 use std::time::Duration;
 
-use clap::Parser;
+use clap::Parser as _;
 use cli::Subcommands;
-use rumqttc::QoS;
 
 mod clean_retained;
 mod cli;
@@ -22,12 +21,13 @@ fn main() -> anyhow::Result<()> {
     } else {
         None
     };
+    let qos = rumqttc::qos(matches.qos).unwrap();
     let (broker, client, connection) = mqtt::connect(matches.mqtt_connection, keep_alive)?;
 
     match matches.subcommands {
         Some(Subcommands::CleanRetained { topic, dry_run, .. }) => {
-            client.subscribe(topic, QoS::AtLeastOnce)?;
-            clean_retained::clean_retained(&client, connection, dry_run);
+            client.subscribe(topic, qos)?;
+            clean_retained::clean_retained(&client, connection, qos, dry_run);
         }
         Some(Subcommands::Log {
             topic,
@@ -35,7 +35,7 @@ fn main() -> anyhow::Result<()> {
             verbose,
         }) => {
             for topic in topic {
-                client.subscribe(topic, QoS::AtLeastOnce)?;
+                client.subscribe(topic, qos)?;
             }
             log::show(connection, json, verbose);
         }
@@ -46,7 +46,7 @@ fn main() -> anyhow::Result<()> {
             pretty,
         }) => {
             for topic in topic {
-                client.subscribe(topic, QoS::AtLeastOnce)?;
+                client.subscribe(topic, qos)?;
             }
             if ignore_retained {
                 only = Some(cli::OnlyRetained::Live);
@@ -61,7 +61,7 @@ fn main() -> anyhow::Result<()> {
         }) => {
             let payload = payload.map_or_else(
                 || {
-                    use std::io::Read;
+                    use std::io::Read as _;
                     let mut buffer = Vec::new();
                     std::io::stdin()
                         .read_to_end(&mut buffer)
@@ -70,7 +70,12 @@ fn main() -> anyhow::Result<()> {
                 },
                 String::into_bytes,
             );
-            client.publish(topic, QoS::AtLeastOnce, retain, payload)?;
+            if matches!(qos, rumqttc::QoS::AtMostOnce) {
+                eprintln!(
+                    "With QoS 0 at most once there wont be an acknowledgement from the broker. Waiting for a ping..."
+                );
+            }
+            client.publish(topic, qos, retain, payload)?;
             publish::eventloop(&client, connection, verbose);
         }
         None => {
@@ -79,6 +84,7 @@ fn main() -> anyhow::Result<()> {
                 connection,
                 &broker,
                 matches.topic,
+                qos,
                 matches.payload_size_limit,
             )?;
             client.disconnect()?;

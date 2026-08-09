@@ -1,7 +1,7 @@
 include!("src/cli.rs");
 
 fn main() -> std::io::Result<()> {
-    use clap::{CommandFactory, ValueEnum};
+    use clap::{CommandFactory as _, ValueEnum as _};
     const BIN_NAME: &str = env!("CARGO_PKG_NAME");
 
     println!("cargo:rerun-if-changed=build.rs");

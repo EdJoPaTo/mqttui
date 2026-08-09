@@ -1,12 +1,13 @@
-use std::fs::File;
-use std::io::BufReader;
 use std::path::Path;
 use std::sync::Arc;
 
+use anyhow::Context as _;
 use rumqttc::TlsConfiguration;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified};
 use rustls::{ClientConfig, DigitallySignedStruct, KeyLogFile, SignatureScheme};
+use rustls_pki_types::pem::PemObject as _;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, ServerName, UnixTime};
+use rustls_platform_verifier::BuilderVerifierExt as _;
 
 #[derive(Debug)]
 struct NoVerifier;
@@ -64,22 +65,18 @@ pub fn create_tls_configuration(
     client_cert: Option<&Path>,
     client_private_key: Option<&Path>,
 ) -> anyhow::Result<TlsConfiguration> {
-    let mut roots = rustls::RootCertStore::empty();
-    let native_certs = rustls_native_certs::load_native_certs();
-    for error in native_certs.errors {
-        eprintln!(
-            "Warning: might skip some native certificates because of an error while loading: {error}"
-        );
-    }
-    roots.add_parsable_certificates(native_certs.certs);
-
-    let conf = ClientConfig::builder().with_root_certificates(roots);
+    let conf = ClientConfig::builder()
+        .with_platform_verifier()
+        .context("while reading platform verifier")?;
 
     let mut conf = match (client_cert, client_private_key) {
-        (Some(client_cert), Some(client_private_key)) => conf.with_client_auth_cert(
-            read_certificate_file(client_cert)?,
-            read_private_key_file(client_private_key)?,
-        )?,
+        (Some(client_cert), Some(client_private_key)) => conf
+            .with_client_auth_cert(
+                read_certificate_file(client_cert).context("while reading client-cert")?,
+                PrivateKeyDer::from_pem_file(client_private_key)
+                    .context("while reading client-private-key")?,
+            )
+            .context("while setting client auth cert")?,
         (None, None) => conf.with_no_client_auth(),
         _ => unreachable!("requires both cert and key which should be ensured by clap"),
     };
@@ -93,30 +90,8 @@ pub fn create_tls_configuration(
     Ok(TlsConfiguration::Rustls(Arc::new(conf)))
 }
 
-fn read_certificate_file(file: &Path) -> anyhow::Result<Vec<CertificateDer<'static>>> {
-    let file = File::open(file)?;
-    let mut file = BufReader::new(file);
-    let certs = rustls_pemfile::certs(&mut file);
-    let mut result = Vec::new();
-    for cert in certs {
-        result.push(cert?);
-    }
-    Ok(result)
-}
-
-fn read_private_key_file(path: &Path) -> anyhow::Result<PrivateKeyDer<'static>> {
-    let file = File::open(path)?;
-    let mut file = BufReader::new(file);
-    loop {
-        match rustls_pemfile::read_one(&mut file)? {
-            Some(rustls_pemfile::Item::Pkcs1Key(key)) => return Ok(key.into()),
-            Some(rustls_pemfile::Item::Pkcs8Key(key)) => return Ok(key.into()),
-            Some(rustls_pemfile::Item::Sec1Key(key)) => return Ok(key.into()),
-            None => break,
-            _ => {}
-        }
-    }
-    Err(anyhow::anyhow!(
-        "no keys found in {path:?} (encrypted keys not supported)"
-    ))
+fn read_certificate_file(
+    file: &Path,
+) -> Result<Vec<CertificateDer<'static>>, rustls_pki_types::pem::Error> {
+    CertificateDer::pem_file_iter(file)?.collect()
 }

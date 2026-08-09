@@ -1,5 +1,3 @@
-use serde::Serialize;
-
 pub use self::json::tree_items as tree_items_from_json;
 pub use self::json_selector::JsonSelector;
 pub use self::messagepack::tree_items::tree_items as tree_items_from_messagepack;
@@ -8,7 +6,7 @@ mod json;
 mod json_selector;
 mod messagepack;
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 #[serde(untagged)]
 pub enum Payload {
     /// Might be truncated

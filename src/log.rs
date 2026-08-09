@@ -3,13 +3,12 @@ use std::time::Duration;
 
 use chrono::Local;
 use rumqttc::Connection;
-use serde::Serialize;
 
 use crate::format;
 use crate::mqtt::Time;
 use crate::payload::Payload;
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 struct JsonLog {
     time: Time,
     qos: u8,

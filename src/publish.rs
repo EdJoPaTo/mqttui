@@ -17,9 +17,16 @@ pub fn eventloop(client: &Client, mut connection: Connection, verbose: bool) {
                     println!("incoming {packet:?}");
                 }
 
-                if let rumqttc::Packet::PubAck(_) = packet {
-                    // There was published something -> success -> disconnect
-                    client.disconnect().unwrap();
+                match packet {
+                    rumqttc::Packet::PubAck(_) | rumqttc::Packet::PubComp(_) => {
+                        // There was published something -> success -> disconnect
+                        client.disconnect().unwrap();
+                    }
+                    rumqttc::Packet::PingResp => {
+                        // Inactivity so its likely published
+                        client.disconnect().unwrap();
+                    }
+                    _ => {}
                 }
             }
         }

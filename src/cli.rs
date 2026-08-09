@@ -1,8 +1,7 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use clap::{Args, Parser, Subcommand, ValueEnum, ValueHint};
 use url::Url;
 
-#[allow(clippy::doc_markdown)]
 #[derive(Debug, Subcommand)]
 pub enum Subcommands {
     /// Clean retained messages from the broker.
@@ -124,7 +123,7 @@ pub enum Subcommands {
     },
 }
 
-#[allow(clippy::doc_markdown)]
+#[expect(clippy::doc_markdown)]
 #[derive(Debug, Parser)]
 #[command(about, version)]
 pub struct Cli {
@@ -138,6 +137,28 @@ pub struct Cli {
         default_value = "#",
     )]
     pub topic: Vec<String>,
+
+    /// Maximum Quality of Service (`QoS`) for subscriptions and publishing.
+    ///
+    /// The lower Quality of Service level for publisher and subscriber is delivered from broker to subscriber.
+    /// So subscribing with 0 will never receive a 1 or 2.
+    /// Publishing with 2 will be received as 1 when subscribed with 1.
+    ///
+    /// - 0: at most once (fire and forget)
+    ///
+    /// - 1: at least once (acknowledged delivery with potential duplicates)
+    ///
+    /// - 2: exactly once (assured delivery without duplicates)
+    #[arg(
+        long,
+        env = "MQTTUI_QOS",
+        value_hint = ValueHint::Other,
+        value_name = "LEVEL",
+        value_parser = clap::value_parser!(u8).range(0..=2),
+        global = true,
+        default_value_t = 2
+    )]
+    pub qos: u8,
 
     /// Truncate the payloads stored to the given size.
     ///
@@ -337,6 +358,6 @@ impl core::fmt::Display for Broker {
 
 #[test]
 fn verify() {
-    use clap::CommandFactory;
+    use clap::CommandFactory as _;
     Cli::command().debug_assert();
 }

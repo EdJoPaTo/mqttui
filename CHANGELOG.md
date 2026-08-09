@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Encryption: switch from `rustls_pemfile` to `rustls_pki_types` for reading PEM files.
+
+## [0.23.0] - 2026-05-17
+
+### Added
+
+- Add --qos for selecting the MQTT Quality of Service for subscribing and publishing.
+- Interactive: Add key hint for the history table to resume autoscroll with ESC.
+
+### Changed
+
 - CLI: Rename --client-key to --client-private-key. This highlights that the key is private more explicitly. A (hidden) alias for --client-key still exists so this is not breaking existing setups.
 
 ### Fixed
