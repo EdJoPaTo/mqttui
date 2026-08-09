@@ -69,7 +69,7 @@ pub fn create_tls_configuration(
     let conf = if let Some(ca_cert) = ca_cert {
         let builder = ClientConfig::builder();
         let verifier = Verifier::new_with_extra_roots(
-            read_certificate_file(ca_cert).context("while reading CA file")?,
+            read_certificate_file(ca_cert).context("while reading ca-cert")?,
             builder.crypto_provider().clone(),
         )
         .context("while adding CA certificates")?;
