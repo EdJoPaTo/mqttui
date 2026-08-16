@@ -225,7 +225,18 @@ impl App {
                     self.focus = ElementInFocus::TopicSearch;
                     true
                 }
-                KeyCode::Esc => self.topic_overview.state.select(vec![]),
+                KeyCode::Char('f') => {
+                    self.focus = ElementInFocus::TopicFilter;
+                    true
+                }
+                KeyCode::Esc => {
+                    if self.topic_overview.filter.is_empty() {
+                        self.topic_overview.state.select(vec![])
+                    } else {
+                        self.topic_overview.filter.clear();
+                        true
+                    }
+                }
                 KeyCode::Enter | KeyCode::Char(' ') => self.topic_overview.state.toggle_selected(),
                 KeyCode::Down | KeyCode::Char('j') => self.topic_overview.state.key_down(),
                 KeyCode::Up | KeyCode::Char('k') => self.topic_overview.state.key_up(),
@@ -299,6 +310,31 @@ impl App {
                 KeyCode::Tab => {
                     self.focus = ElementInFocus::TopicOverview;
                     true
+                }
+                _ => false,
+            },
+            ElementInFocus::TopicFilter => match key.code {
+                KeyCode::Char(char) => {
+                    self.topic_overview.filter += &char.to_lowercase().to_string();
+                    true
+                }
+                KeyCode::Backspace => self.topic_overview.filter.pop().is_some(),
+                KeyCode::Esc => {
+                    self.topic_overview.filter.clear();
+                    self.focus = ElementInFocus::TopicOverview;
+                    true
+                }
+                KeyCode::Enter | KeyCode::Tab => {
+                    self.focus = ElementInFocus::TopicOverview;
+                    true
+                }
+                KeyCode::PageUp => {
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_up(page_jump)
+                }
+                KeyCode::PageDown => {
+                    let page_jump = (self.topic_overview.last_area.height / 3) as usize;
+                    self.topic_overview.state.scroll_down(page_jump)
                 }
                 _ => false,
             },

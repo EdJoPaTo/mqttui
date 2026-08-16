@@ -8,6 +8,7 @@ pub const STYLE_BOLD: Style = Style::new().add_modifier(Modifier::BOLD);
 pub enum ElementInFocus {
     TopicOverview,
     TopicSearch,
+    TopicFilter,
     Payload,
     HistoryTable,
     CleanRetainedPopup(String),

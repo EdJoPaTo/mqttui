@@ -26,6 +26,28 @@ impl Footer {
         }
     }
 
+    fn render_version_info(&self, frame: &mut Frame, area: Rect, keys_width: usize) {
+        let remaining = (area.width as usize).saturating_sub(keys_width);
+        let text = if remaining > self.full_info.len() {
+            Some(&*self.full_info)
+        } else if remaining > self.broker.len() {
+            Some(&*self.broker)
+        } else if remaining > VERSION_TEXT.len() {
+            Some(VERSION_TEXT)
+        } else {
+            None
+        };
+        if let Some(text) = text {
+            #[expect(clippy::cast_possible_truncation)]
+            let info_area = Rect {
+                x: area.width.saturating_sub(text.len() as u16),
+                width: text.len() as u16,
+                ..area
+            };
+            frame.render_widget(Span::styled(text, VERSION_STYLE), info_area);
+        }
+    }
+
     pub fn draw(&self, frame: &mut Frame, area: Rect, app: &App) {
         let mut keys = Vec::new();
 
@@ -46,6 +68,12 @@ impl Footer {
             ElementInFocus::TopicOverview => {
                 add!("q", "Quit");
                 add!("/", "Search");
+                if app.topic_overview.filter.is_empty() {
+                    add!("f", "Filter");
+                } else {
+                    add!("f", "Edit Filter");
+                    add!("Esc", "Clear Filter");
+                }
                 add!("o", "Open all");
                 if !app.topic_overview.state.opened().is_empty() {
                     add!("O", "Close all");
@@ -76,6 +104,19 @@ impl Footer {
                 keys.push(Span::raw(" "));
                 keys.push(Span::raw(&app.topic_overview.search));
             }
+            ElementInFocus::TopicFilter => {
+                add!("Esc", "Clear");
+                add!("Enter", "Confirm");
+                keys.push(Span::styled(
+                    " Filter: ",
+                    Style::new()
+                        .fg(Color::Black)
+                        .bg(Color::LightGreen)
+                        .add_modifier(Modifier::BOLD),
+                ));
+                keys.push(Span::raw(" "));
+                keys.push(Span::raw(&app.topic_overview.filter));
+            }
             ElementInFocus::Payload => {
                 add!("q", "Quit");
                 if app.can_switch_to_history_table() {
@@ -99,34 +140,15 @@ impl Footer {
         let keys = Line::from(keys);
 
         #[expect(clippy::cast_possible_truncation)]
-        if matches!(app.focus, ElementInFocus::TopicSearch) {
+        if matches!(
+            app.focus,
+            ElementInFocus::TopicSearch | ElementInFocus::TopicFilter
+        ) {
             let x = area.left().saturating_add(keys.width() as u16);
             frame.set_cursor_position(Position { x, y: area.y });
         }
 
-        // Show version / broker when enough space
-        {
-            let remaining = (area.width as usize).saturating_sub(keys.width());
-            let text = if remaining > self.full_info.len() {
-                Some(&*self.full_info)
-            } else if remaining > self.broker.len() {
-                Some(&*self.broker)
-            } else if remaining > VERSION_TEXT.len() {
-                Some(VERSION_TEXT)
-            } else {
-                None // Not enough space -> show nothing
-            };
-            if let Some(text) = text {
-                #[expect(clippy::cast_possible_truncation)]
-                let area = Rect {
-                    x: area.width.saturating_sub(text.len() as u16),
-                    width: text.len() as u16,
-                    ..area
-                };
-                frame.render_widget(Span::styled(text, VERSION_STYLE), area);
-            }
-        }
-
+        self.render_version_info(frame, area, keys.width());
         frame.render_widget(keys, area);
     }
 }

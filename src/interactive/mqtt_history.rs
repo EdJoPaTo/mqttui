@@ -112,18 +112,43 @@ impl MqttHistory {
             .collect()
     }
 
-    /// Returns (`topic_amount`, `message_amount`, `TreeItem`s)
-    pub fn to_tree_items(&self) -> (usize, usize, Vec<TreeItem<'static, String>>) {
-        fn build_recursive(prefix: &[&str], node: NodeRef<Topic>) -> RecursiveTreeItemGenerator {
+    /// Returns (`topic_amount`, `message_amount`, `TreeItem`s).
+    ///
+    /// When `filter` is non-empty, only topics whose full path or latest payload contains
+    /// the filter string (case-insensitive) are included. Parent nodes are retained whenever
+    /// at least one descendant matches.
+    pub fn to_tree_items(&self, filter: &str) -> (usize, usize, Vec<TreeItem<'static, String>>) {
+        fn build_recursive(
+            prefix: &[&str],
+            node: NodeRef<Topic>,
+            filter: &str,
+        ) -> Option<RecursiveTreeItemGenerator> {
             let Topic { leaf, history } = node.value();
             let mut topic = prefix.to_vec();
             topic.push(leaf);
 
-            let entries_below = node.children().map(|node| build_recursive(&topic, node));
+            let children_entries: Vec<_> = node
+                .children()
+                .filter_map(|node| build_recursive(&topic, node, filter))
+                .collect();
+
+            let matches = filter.is_empty() || {
+                let filter_lower = filter.to_lowercase();
+                let full_topic = topic.join("/");
+                full_topic.to_lowercase().contains(&filter_lower)
+                    || history.last().is_some_and(|entry| {
+                        entry.payload.to_string().to_lowercase().contains(&filter_lower)
+                    })
+            };
+
+            if !matches && children_entries.is_empty() {
+                return None;
+            }
+
             let mut messages_below: usize = 0;
             let mut topics_below: usize = 0;
             let mut children = Vec::new();
-            for below in entries_below {
+            for below in children_entries {
                 messages_below = messages_below
                     .saturating_add(below.messages)
                     .saturating_add(below.messages_below);
@@ -143,19 +168,19 @@ impl MqttHistory {
                 Span::styled(meta, STYLE_DARKGRAY),
             ]);
 
-            RecursiveTreeItemGenerator {
+            Some(RecursiveTreeItemGenerator {
                 messages_below,
                 messages: history.len(),
                 topics_below,
                 tree_item: TreeItem::new(leaf.to_string(), text, children).unwrap(),
-            }
+            })
         }
 
         let children = self
             .tree
             .root()
             .children()
-            .map(|node| build_recursive(&[], node));
+            .filter_map(|node| build_recursive(&[], node, filter));
         let mut topics: usize = 0;
         let mut messages: usize = 0;
         let mut items = Vec::new();
@@ -220,7 +245,7 @@ fn topics_below_finds_itself_works() {
 #[test]
 fn tree_items_works() {
     let example = MqttHistory::example();
-    let (topics, messages, items) = example.to_tree_items();
+    let (topics, messages, items) = example.to_tree_items("");
     assert_eq!(topics, 4);
     assert_eq!(messages, 5);
     dbg!(&items);
@@ -228,4 +253,26 @@ fn tree_items_works() {
     assert_eq!(items[0].children().len(), 2);
     assert_eq!(items[1].children().len(), 0);
     assert_eq!(items[2].children().len(), 1);
+}
+
+#[test]
+fn tree_items_filtered_works() {
+    let example = MqttHistory::example();
+    // "foo" matches foo/bar and foo/test — "test", "testing/stuff" are hidden
+    let (topics, messages, items) = example.to_tree_items("foo");
+    assert_eq!(topics, 2);
+    assert_eq!(messages, 2);
+    assert_eq!(items.len(), 1); // only "foo" top-level node
+    assert_eq!(items[0].children().len(), 2); // foo/bar and foo/test
+}
+
+#[test]
+fn tree_items_filtered_by_payload_works() {
+    let example = MqttHistory::example();
+    // payload "D" is on "foo/bar"; "d" does not appear in any topic name
+    let (topics, messages, items) = example.to_tree_items("D");
+    assert_eq!(topics, 1);
+    assert_eq!(messages, 1);
+    assert_eq!(items.len(), 1); // only "foo" top-level node
+    assert_eq!(items[0].children().len(), 1); // "bar" only
 }

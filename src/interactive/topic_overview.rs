@@ -9,6 +9,7 @@ use super::ui::{BORDERS_TOP_RIGHT, focus_color};
 
 #[derive(Default)]
 pub struct TopicOverview {
+    pub filter: String,
     pub last_area: Rect,
     pub search: String,
     pub state: TreeState<String>,
@@ -24,8 +25,15 @@ impl TopicOverview {
     }
 
     pub fn draw(&mut self, frame: &mut Frame, area: Rect, history: &MqttHistory, has_focus: bool) {
-        let (topic_amount, message_amount, tree_items) = history.to_tree_items();
-        let title = format!("Topics ({topic_amount}, {message_amount} messages)");
+        let (topic_amount, message_amount, tree_items) = history.to_tree_items(&self.filter);
+        let title = if self.filter.is_empty() {
+            format!("Topics ({topic_amount}, {message_amount} messages)")
+        } else {
+            format!(
+                "Topics ({topic_amount}, {message_amount} messages) [filter: {}]",
+                self.filter
+            )
+        };
         let focus_color = focus_color(has_focus);
         let widget = Tree::new(&tree_items)
             .unwrap()

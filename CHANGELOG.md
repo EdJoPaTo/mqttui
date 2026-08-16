@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Interactive: Press `f` to activate a persistent topic filter. Only topics whose name or latest payload contains the filter string (case-insensitive) are shown. Press `Esc` to clear, `Enter` or `Tab` to confirm and keep the filter while returning to overview navigation. The active filter is shown in the topic pane title.
+
 ## [0.24.0] - 2026-08-09
 
 ### Added
