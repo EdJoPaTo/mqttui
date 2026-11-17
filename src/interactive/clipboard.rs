@@ -69,7 +69,7 @@ fn base64_encode(data: &[u8]) -> String {
 
 /// Transforms the lowest six bits of `bits` into its base64 character.
 fn alphabet_character(bits: u32) -> char {
-    let index = usize::try_from(bits & 0b111111).expect("fits into usize");
+    let index = usize::try_from(bits & 0b11_1111).expect("fits into usize");
     char::from(BASE64_ALPHABET[index])
 }
 
