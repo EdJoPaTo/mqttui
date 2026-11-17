@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Interactive: `y` copies the selected topic into the clipboard of the terminal emulator (OSC 52).
+- Interactive: `Y` copies the payload of the newest message of the selected topic into the clipboard.
+
 ## [0.24.0] - 2026-08-09
 
 ### Added

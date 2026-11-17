@@ -15,6 +15,7 @@ use crate::cli::Broker;
 use crate::payload::Payload;
 
 mod clean_retained;
+mod clipboard;
 mod details;
 mod footer;
 mod mqtt_error_widget;
@@ -151,6 +152,7 @@ pub struct App {
     focus: ElementInFocus,
     footer: footer::Footer,
     mqtt_thread: mqtt_thread::MqttThread,
+    status_message: Option<(&'static str, Instant)>,
     topic_overview: topic_overview::TopicOverview,
 }
 
@@ -161,8 +163,13 @@ impl App {
             focus: ElementInFocus::TopicOverview,
             footer: footer::Footer::new(broker),
             mqtt_thread,
+            status_message: None,
             topic_overview: topic_overview::TopicOverview::default(),
         }
+    }
+
+    fn flash_status(&mut self, message: &'static str) {
+        self.status_message = Some((message, Instant::now()));
     }
 
     fn can_switch_to_history_table(&self) -> bool {
@@ -202,6 +209,44 @@ impl App {
                 entries.get(index)
             })
             .map(|entry| entry.payload.clone())
+    }
+
+    /// Copies the topic of the current selection into the clipboard of the terminal.
+    /// Returns `true` when the status message has to be shown.
+    fn copy_selected_topic(&mut self) -> bool {
+        let Some(topic) = self.topic_overview.get_selected() else {
+            return false;
+        };
+        if clipboard::copy(&topic) {
+            self.flash_status("Topic copied to clipboard");
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Copies the payload of the newest message of the current selection into
+    /// the clipboard of the terminal.
+    /// Returns `true` when the status message has to be shown.
+    fn copy_selected_value(&mut self) -> bool {
+        let Some(topic) = self.topic_overview.get_selected() else {
+            return false;
+        };
+        let value = self
+            .mqtt_thread
+            .get_history()
+            .get(&topic)
+            .and_then(|entries| entries.last())
+            .map(|entry| entry.payload.to_string());
+        let Some(value) = value else {
+            return false;
+        };
+        if clipboard::copy(&value) {
+            self.flash_status("Value copied to clipboard");
+            true
+        } else {
+            false
+        }
     }
 
     #[expect(clippy::too_many_lines, clippy::cognitive_complexity)]
@@ -262,6 +307,8 @@ impl App {
                     self.open_all_search_matches()
                 }
                 KeyCode::Char('O') => self.topic_overview.state.close_all(),
+                KeyCode::Char('y') => self.copy_selected_topic(),
+                KeyCode::Char('Y') => self.copy_selected_value(),
                 _ => false,
             },
             ElementInFocus::TopicSearch => match key.code {
