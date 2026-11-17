@@ -27,76 +27,7 @@ impl Footer {
     }
 
     pub fn draw(&self, frame: &mut Frame, area: Rect, app: &App) {
-        let mut keys = Vec::new();
-
-        macro_rules! add {
-            ($key:literal, $text:literal) => {
-                keys.push(Span {
-                    content: std::borrow::Cow::Borrowed(concat![" ", $key, " "]),
-                    style: KEY_STYLE,
-                });
-                keys.push(Span {
-                    content: std::borrow::Cow::Borrowed(concat![" ", $text, " "]),
-                    style: Style::new(),
-                });
-            };
-        }
-
-        match app.focus {
-            ElementInFocus::TopicOverview => {
-                add!("q", "Quit");
-                add!("/", "Search");
-                add!("o", "Open all");
-                if !app.topic_overview.state.opened().is_empty() {
-                    add!("O", "Close all");
-                }
-                if app.topic_overview.get_selected().is_some() {
-                    add!("Del", "Clean retained");
-                }
-                if app.can_switch_to_payload() {
-                    add!("Tab", "Switch to Payload");
-                } else if app.can_switch_to_history_table() {
-                    add!("Tab", "Switch to History");
-                } else {
-                    // Changing somewhere is pointless currently
-                }
-            }
-            ElementInFocus::TopicSearch => {
-                add!("↑", "Before");
-                add!("↓", "Next");
-                add!("Enter", "Open All");
-                add!("Esc", "Clear");
-                keys.push(Span::styled(
-                    " Search: ",
-                    Style::new()
-                        .fg(Color::Black)
-                        .bg(Color::LightGreen)
-                        .add_modifier(Modifier::BOLD),
-                ));
-                keys.push(Span::raw(" "));
-                keys.push(Span::raw(&app.topic_overview.search));
-            }
-            ElementInFocus::Payload => {
-                add!("q", "Quit");
-                if app.can_switch_to_history_table() {
-                    add!("Tab", "Switch to History");
-                } else {
-                    add!("Tab", "Switch to Topics");
-                }
-            }
-            ElementInFocus::HistoryTable => {
-                add!("q", "Quit");
-                if app.details.table_state.selected().is_some() {
-                    add!("Esc", "Resume Autoscroll");
-                }
-                add!("Tab", "Switch to Topics");
-            }
-            ElementInFocus::CleanRetainedPopup(_) => {
-                add!("Enter", "Clean topic tree");
-                add!("Any", "Abort");
-            }
-        }
-        let keys = Line::from(keys);
+        let keys = Line::from(key_hints(app));
 
         #[expect(clippy::cast_possible_truncation)]
         if matches!(app.focus, ElementInFocus::TopicSearch) {
@@ -129,4 +60,77 @@ impl Footer {
 
         frame.render_widget(keys, area);
     }
+}
+
+fn key_hints(app: &App) -> Vec<Span<'_>> {
+    let mut keys = Vec::new();
+
+    macro_rules! add {
+        ($key:literal, $text:literal) => {
+            keys.push(Span {
+                content: std::borrow::Cow::Borrowed(concat![" ", $key, " "]),
+                style: KEY_STYLE,
+            });
+            keys.push(Span {
+                content: std::borrow::Cow::Borrowed(concat![" ", $text, " "]),
+                style: Style::new(),
+            });
+        };
+    }
+
+    match app.focus {
+        ElementInFocus::TopicOverview => {
+            add!("q", "Quit");
+            add!("/", "Search");
+            add!("o", "Open all");
+            if !app.topic_overview.state.opened().is_empty() {
+                add!("O", "Close all");
+            }
+            if app.topic_overview.get_selected().is_some() {
+                add!("Del", "Clean retained");
+            }
+            if app.can_switch_to_payload() {
+                add!("Tab", "Switch to Payload");
+            } else if app.can_switch_to_history_table() {
+                add!("Tab", "Switch to History");
+            } else {
+                // Changing somewhere is pointless currently
+            }
+        }
+        ElementInFocus::TopicSearch => {
+            add!("↑", "Before");
+            add!("↓", "Next");
+            add!("Enter", "Open All");
+            add!("Esc", "Clear");
+            keys.push(Span::styled(
+                " Search: ",
+                Style::new()
+                    .fg(Color::Black)
+                    .bg(Color::LightGreen)
+                    .add_modifier(Modifier::BOLD),
+            ));
+            keys.push(Span::raw(" "));
+            keys.push(Span::raw(&app.topic_overview.search));
+        }
+        ElementInFocus::Payload => {
+            add!("q", "Quit");
+            if app.can_switch_to_history_table() {
+                add!("Tab", "Switch to History");
+            } else {
+                add!("Tab", "Switch to Topics");
+            }
+        }
+        ElementInFocus::HistoryTable => {
+            add!("q", "Quit");
+            if app.details.table_state.selected().is_some() {
+                add!("Esc", "Resume Autoscroll");
+            }
+            add!("Tab", "Switch to Topics");
+        }
+        ElementInFocus::CleanRetainedPopup(_) => {
+            add!("Enter", "Clean topic tree");
+            add!("Any", "Abort");
+        }
+    }
+    keys
 }
