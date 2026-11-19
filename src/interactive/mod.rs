@@ -510,13 +510,12 @@ impl App {
                 }
                 Some(Payload::String(_)) | None => return Refresh::Skip,
             }
-        } else if self.details.last_table_area.contains(position) {
-            match direction {
-                ScrollDirection::Down => self.details.table_state.scroll_down_by(1),
-                ScrollDirection::Up => self.details.table_state.scroll_up_by(1),
-            }
         } else {
-            false
+            self.details.last_table_area.contains(position)
+                && match direction {
+                    ScrollDirection::Down => self.details.table_state.scroll_down_by(1),
+                    ScrollDirection::Up => self.details.table_state.scroll_up_by(1),
+                }
         };
         if changed {
             Refresh::Update
