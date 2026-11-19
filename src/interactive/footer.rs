@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use ratatui::Frame;
 use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
@@ -12,6 +14,11 @@ const KEY_STYLE: Style = Style::new()
     .fg(Color::Black)
     .bg(Color::Gray)
     .add_modifier(Modifier::BOLD);
+const STATUS_STYLE: Style = Style::new()
+    .fg(Color::Black)
+    .bg(Color::LightGreen)
+    .add_modifier(Modifier::BOLD);
+const STATUS_DURATION: Duration = Duration::from_secs(2);
 
 pub struct Footer {
     broker: Box<str>,
@@ -62,7 +69,7 @@ impl Footer {
     }
 }
 
-fn key_hints(app: &App) -> Vec<Span<'_>> {
+fn key_hints(app: &App) -> Vec<Span<'static>> {
     let mut keys = Vec::new();
 
     macro_rules! add {
@@ -88,6 +95,8 @@ fn key_hints(app: &App) -> Vec<Span<'_>> {
             }
             if app.topic_overview.get_selected().is_some() {
                 add!("Del", "Clean retained");
+                add!("y", "Copy Topic");
+                add!("Y", "Copy Value");
             }
             if app.can_switch_to_payload() {
                 add!("Tab", "Switch to Payload");
@@ -110,7 +119,7 @@ fn key_hints(app: &App) -> Vec<Span<'_>> {
                     .add_modifier(Modifier::BOLD),
             ));
             keys.push(Span::raw(" "));
-            keys.push(Span::raw(&app.topic_overview.search));
+            keys.push(Span::raw(app.topic_overview.search.clone()));
         }
         ElementInFocus::Payload => {
             add!("q", "Quit");
@@ -132,5 +141,12 @@ fn key_hints(app: &App) -> Vec<Span<'_>> {
             add!("Any", "Abort");
         }
     }
+
+    if let Some((message, timestamp)) = app.status_message
+        && timestamp.elapsed() < STATUS_DURATION
+    {
+        keys.push(Span::styled(format!(" {message} "), STATUS_STYLE));
+    }
+
     keys
 }

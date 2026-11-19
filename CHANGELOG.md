@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Interactive: copy the selected topic (`y`) or payload (`Y`) into the clipboard via terminal emulator escape sequence (OSC 52).
+
 ## [0.24.0] - 2026-08-09
 
 ### Added
